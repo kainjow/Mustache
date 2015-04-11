@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <functional>
 
 namespace Mustache {
 
@@ -47,10 +48,13 @@ public:
     }
     
 private:
+    using StringSizeType = typename StringType::size_type;
+
     class Tag {
     public:
         std::string name;
         enum class Type {
+            Invalid,
             Variable,
             UnescapedVariable,
             SectionBegin,
@@ -60,7 +64,7 @@ private:
             Partial,
             SetDelimiter,
         };
-        Type type = Type::Variable;
+        Type type = Type::Invalid;
         bool isSectionBegin() const {
             return type == Type::SectionBegin || type == Type::SectionBeginInverted;
         }
@@ -74,6 +78,7 @@ private:
         StringType text;
         Tag tag;
         std::vector<Component> children;
+        StringSizeType position = StringType::npos;
         bool isText() const {
             return !text.empty();
         }
@@ -83,35 +88,37 @@ private:
     };
     
     void parse(const StringType& input) {
-        using size_type = typename StringType::size_type;
         using streamstring = std::basic_ostringstream<typename StringType::value_type>;
         
         const StringType braceDelimiterBegin(2, '{');
         const StringType braceDelimiterEnd(2, '}');
         const StringType braceDelimiterEndUnescaped(3, '}');
-        const size_type inputSize = input.size();
+        const StringSizeType inputSize = input.size();
         
         StringType currentDelimiterBegin(braceDelimiterBegin);
         StringType currentDelimiterEnd(braceDelimiterEnd);
         bool currentDelimiterIsBrace = true;
         
-        size_type inputPosition = 0;
+        std::vector<Component*> sections;
+        sections.push_back(&rootComponent_);
+        
+        StringSizeType inputPosition = 0;
         while (inputPosition != inputSize) {
             
             // Find the next tag start delimiter
-            size_type tagLocationStart = input.find(currentDelimiterBegin, inputPosition);
+            StringSizeType tagLocationStart = input.find(currentDelimiterBegin, inputPosition);
             if (tagLocationStart == StringType::npos) {
                 Component comp;
                 comp.text = StringType(input, inputPosition, inputSize - inputPosition);
-                rootComponent_.children.push_back(comp);
+                sections.back()->children.push_back(comp);
                 break;
             } else if (tagLocationStart != inputPosition) {
                 Component comp;
                 comp.text = StringType(input, inputPosition, tagLocationStart - inputPosition);
-                rootComponent_.children.push_back(comp);
+                sections.back()->children.push_back(comp);
             }
             
-            size_type tagContentsLocation = tagLocationStart + currentDelimiterBegin.size();
+            StringSizeType tagContentsLocation = tagLocationStart + currentDelimiterBegin.size();
             
             // Find the next tag end delimiter
             const bool tagIsUnescapedVar = currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == braceDelimiterBegin.at(0);
@@ -119,10 +126,10 @@ private:
             if (tagIsUnescapedVar) {
                 ++tagContentsLocation;
             }
-            size_type tagLocationEnd = input.find(currenttTagDelimiterEnd, tagContentsLocation);
+            StringSizeType tagLocationEnd = input.find(currenttTagDelimiterEnd, tagContentsLocation);
             if (tagLocationEnd == StringType::npos) {
                 streamstring ss;
-                ss << "No tag end delimiter found for start delimiter at: " << tagLocationStart;
+                ss << "No tag end delimiter found for start delimiter at position " << tagLocationStart;
                 errorMessage_.assign(ss.str());
                 return;
             }
@@ -131,32 +138,66 @@ private:
             StringType tagContents(trim(StringType(input, tagContentsLocation, tagLocationEnd - tagContentsLocation)));
             Component comp;
             parseTagContents(tagIsUnescapedVar, tagContents, comp.tag);
-            rootComponent_.children.push_back(comp);
+            comp.position = inputPosition;
+            sections.back()->children.push_back(comp);
+            
+            if (comp.tag.isSectionBegin()) {
+                sections.push_back(&sections.front()->children.back());
+            } else if (comp.tag.isSectionEnd()) {
+                if (sections.empty()) {
+                    streamstring ss;
+                    ss << "Section end tag found without start tag at position " << tagLocationStart;
+                    errorMessage_.assign(ss.str());
+                    return;
+                }
+                sections.pop_back();
+            }
             
             inputPosition = tagLocationEnd + currenttTagDelimiterEnd.size();
         }
         
-        for (const auto& c : rootComponent_.children) {
-            if (c.isTag()) {
-                std::cout << "TAG: " << c.tag.name << std::endl;
+        walk([&](const Component& comp, int level) -> bool {
+            const std::string indent = level >= 1 ? std::string(level, ' ') : "";
+            if (comp.isTag()) {
+                std::cout << indent << "TAG: " << comp.tag.name << std::endl;
             } else {
-                std::cout << "TEXT: " << c.text << std::endl;
+                std::cout << indent << "TXT: " << comp.text << std::endl;
             }
-        }
+            return true;
+        });
 
-        for (auto it = rootComponent_.children.begin(); it != rootComponent_.children.end(); ++it) {
-            auto comp = *it;
-            if (comp.isTag() && comp.tag.isSectionBegin()) {
-                auto endIt = std::find_if(std::next(it), rootComponent_.children.end(), [&comp](const Component& c1) {
-                    return c1.isTag() && c1.tag.isSectionEnd() && c1.tag.name == comp.tag.name;
-                });
-                if (endIt == rootComponent_.children.end()) {
-                    std::cout << "End section for " << comp.tag.name << " not found" << std::endl;
-                } else {
-                    std::cout << "End section for " << comp.tag.name << " found!" << std::endl;
-                }
+        // Check for sections without an ending tag
+        const Component *invalidStartPosition = nullptr;
+        walk([&invalidStartPosition](const Component& comp, int) -> bool {
+            if (comp.tag.isSectionBegin() && (comp.children.empty() || !comp.children.back().tag.isSectionEnd())) {
+                std::cout << "COMP: " << comp.tag.name << std::endl;
+                invalidStartPosition = &comp;
+                return false;
             }
+            return true;
+        });
+        if (invalidStartPosition) {
+            streamstring ss;
+            ss << "No section end tag found for section \"" << invalidStartPosition->tag.name << "\" at position " << invalidStartPosition->position;
+            errorMessage_.assign(ss.str());
+            return;
         }
+    }
+    
+    using WalkCallback = std::function<bool(const Component&, int)>;
+    void walk(const WalkCallback& callback) const {
+        for (const auto& comp : rootComponent_.children) {
+            walk(callback, comp, 0);
+        }
+    }
+    
+    void walk(const WalkCallback& callback, const Component& comp, int level) const {
+        callback(comp, level);
+        ++level;
+        for (const auto& childComp : comp.children) {
+            walk(callback, childComp, level);
+        }
+        --level;
     }
     
     void parseTagContents(bool isUnescapedVar, const StringType& contents, Tag& tag) {
@@ -164,7 +205,8 @@ private:
             tag.type = Tag::Type::UnescapedVariable;
             tag.name = contents;
         } else if (contents.empty()) {
-            // Tag default values apply
+            tag.type = Tag::Type::Invalid;
+            tag.name.clear();
         } else {
             switch (static_cast<char>(contents.at(0))) {
                 case '#':
@@ -184,6 +226,9 @@ private:
                     break;
                 case '!':
                     tag.type = Tag::Type::Comment;
+                    break;
+                default:
+                    tag.type = Tag::Type::Variable;
                     break;
             }
             if (tag.type == Tag::Type::Variable) {
@@ -208,7 +253,7 @@ int main() {
     //std::wstring werrMsg;
     //(void)parse(std::wstring(), werrMsg);
     
-    std::string input = "Hello {{name}}! Today is {{dayOfWeek}}.{{#alive}}You're alive!.{{/alive}}fin{{ender}}hi";
+    std::string input = "{{#START}}Hello {{name}}! Today is {{dayOfWeek}}.{{#alive}}You're alive!.{{/alive}}fin{{ender}}hi";
     Mustache::Mustache<std::string> templ(input);
     if (!templ.isValid()) {
         std::cout << "ERROR: " << templ.errorMessage() << std::endl;
