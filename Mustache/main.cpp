@@ -108,6 +108,19 @@ public:
         });
     }
     
+    template <typename OStream>
+    void print(OStream& stream) {
+        walk([&stream](Component& comp, int depth) -> WalkControl {
+            const StringType indent = depth >= 1 ? StringType(depth, ' ') : StringType();
+            if (comp.isTag()) {
+                stream << indent << "TAG: {{" << comp.tag.name << "}}" << std::endl;
+            } else {
+                stream << indent << "TXT: " << comp.text << std::endl;
+            }
+            return WalkControl::Continue;
+        });
+    }
+    
 private:
     using StringSizeType = typename StringType::size_type;
 
@@ -169,21 +182,22 @@ private:
             // Find the next tag start delimiter
             const StringSizeType tagLocationStart = input.find(currentDelimiterBegin, inputPosition);
             if (tagLocationStart == StringType::npos) {
+                // No tag found. Add the remaining text.
                 Component comp;
                 comp.text = StringType(input, inputPosition, inputSize - inputPosition);
                 comp.position = inputPosition;
                 sections.back()->children.push_back(comp);
                 break;
             } else if (tagLocationStart != inputPosition) {
+                // Tag found, add text up to this tag.
                 Component comp;
                 comp.text = StringType(input, inputPosition, tagLocationStart - inputPosition);
                 comp.position = inputPosition;
                 sections.back()->children.push_back(comp);
             }
             
-            StringSizeType tagContentsLocation = tagLocationStart + currentDelimiterBegin.size();
-            
             // Find the next tag end delimiter
+            StringSizeType tagContentsLocation = tagLocationStart + currentDelimiterBegin.size();
             const bool tagIsUnescapedVar = currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == braceDelimiterBegin.at(0);
             const StringType& currenttTagDelimiterEnd(tagIsUnescapedVar ? braceDelimiterEndUnescaped : currentDelimiterEnd);
             if (tagIsUnescapedVar) {
@@ -204,6 +218,7 @@ private:
             comp.position = tagLocationStart;
             sections.back()->children.push_back(comp);
             
+            // Push or pop sections
             if (comp.tag.isSectionBegin()) {
                 sections.push_back(&sections.back()->children.back());
             } else if (comp.tag.isSectionEnd()) {
@@ -216,21 +231,10 @@ private:
                 sections.pop_back();
             }
             
+            // Start next search after this tag
             inputPosition = tagLocationEnd + currenttTagDelimiterEnd.size();
         }
         
-#if 0
-        walk([](Component& comp, int depth) -> bool {
-            const StringType indent = depth >= 1 ? StringType(depth, ' ') : StringType();
-            if (comp.isTag()) {
-                std::cout << indent << "TAG: {{" << comp.tag.name << "}}" << std::endl;
-            } else {
-                std::cout << indent << "TXT: " << comp.text << std::endl;
-            }
-            return true;
-        });
-#endif
-
         // Check for sections without an ending tag
         const Component *invalidStartPosition = nullptr;
         walk([&invalidStartPosition](Component& comp, int) -> WalkControl {
