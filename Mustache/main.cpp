@@ -10,6 +10,8 @@
 #include <sstream>
 #include <vector>
 #include <functional>
+#include <unordered_map>
+#include <boost/any.hpp>
 
 namespace Mustache {
 
@@ -47,6 +49,100 @@ public:
         }
         return false;
     }
+};
+
+template <typename StringType>
+class Variable {
+public:
+    enum class Type {
+        Object,
+        List,
+        Bool,
+    };
+    
+    using ObjectType = std::unordered_map<StringType, Variable>;
+    using ListType = std::vector<Variable>;
+    
+    // Variable creation
+    explicit Variable() : type_(Type::Object) {
+        data_ = ObjectType();
+    }
+    explicit Variable(const StringType& string) : type_(Type::String) {
+        data_ = string;
+    }
+    explicit Variable(const ListType& list) : type_(Type::List) {
+        data_ = list;
+    }
+    explicit Variable(bool boolean) : type_(Type::Bool) {
+        type_ = boolean;
+    }
+    static Variable Object() {
+        return Variable(ObjectType());
+    }
+    static Variable String() {
+        return Variable(StringType());
+    }
+    static Variable List() {
+        return Variable(ListType());
+    }
+    static Variable Bool() {
+        return Variable(false);
+    }
+    
+    // Type info
+    Type type() const {
+        return type_;
+    }
+    bool isObject() const {
+        return type_ == Type::Bool;
+    }
+    bool isString() const {
+        return type_ == Type::String;
+    }
+    bool isList() const {
+        return type_ == Type::List;
+    }
+    bool isBool() const {
+        return type_ == Type::Bool;
+    }
+    
+    // Object data
+    const Variable& operator[] (const StringType& name) const {
+        ObjectType& obj(boost::any_cast<ObjectType>(data_));
+        return obj[name];
+    }
+    class ObjectVarProxy {
+    public:
+        
+    };
+    Variable& operator[] (const StringType& name) {
+        ObjectType& obj(boost::any_cast<ObjectType>(data_));
+        return obj[name];
+    }
+    
+    // List data
+    void push_back(const Variable& var) {
+        ListType& list(boost::any_cast<ListType>(data_));
+        list.push_back(var);
+    }
+    const Variable& operator[] (size_t i) const {
+        ListType& list(boost::any_cast<ListType>(data_));
+        return list[i];
+    }
+    
+    // Bool data
+    bool boolValue() {
+        return boost::any_cast<bool>(data_);
+    }
+    
+    // String data
+    const StringType& stringValue() {
+        return boost::any_cast<StringType>(data_);
+    }
+    
+private:
+    Type type_;
+    boost::any data_;
 };
 
 template <typename StringType>
