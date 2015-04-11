@@ -52,7 +52,6 @@ private:
 
     class Tag {
     public:
-        std::string name;
         enum class Type {
             Invalid,
             Variable,
@@ -64,6 +63,7 @@ private:
             Partial,
             SetDelimiter,
         };
+        StringType name;
         Type type = Type::Invalid;
         bool isSectionBegin() const {
             return type == Type::SectionBegin || type == Type::SectionBeginInverted;
@@ -142,7 +142,7 @@ private:
             sections.back()->children.push_back(comp);
             
             if (comp.tag.isSectionBegin()) {
-                sections.push_back(&sections.front()->children.back());
+                sections.push_back(&sections.back()->children.back());
             } else if (comp.tag.isSectionEnd()) {
                 if (sections.empty()) {
                     streamstring ss;
@@ -156,8 +156,8 @@ private:
             inputPosition = tagLocationEnd + currenttTagDelimiterEnd.size();
         }
         
-        walk([&](const Component& comp, int level) -> bool {
-            const std::string indent = level >= 1 ? std::string(level, ' ') : "";
+        walk([&](const Component& comp, int depth) -> bool {
+            const StringType indent = depth >= 1 ? StringType(depth, ' ') : "";
             if (comp.isTag()) {
                 std::cout << indent << "TAG: " << comp.tag.name << std::endl;
             } else {
@@ -169,8 +169,10 @@ private:
         // Check for sections without an ending tag
         const Component *invalidStartPosition = nullptr;
         walk([&invalidStartPosition](const Component& comp, int) -> bool {
-            if (comp.tag.isSectionBegin() && (comp.children.empty() || !comp.children.back().tag.isSectionEnd())) {
-                std::cout << "COMP: " << comp.tag.name << std::endl;
+            if (!comp.tag.isSectionBegin()) {
+                return true;
+            }
+            if (comp.children.empty() || !comp.children.back().tag.isSectionEnd() || comp.children.back().tag.name != comp.tag.name) {
                 invalidStartPosition = &comp;
                 return false;
             }
@@ -191,13 +193,13 @@ private:
         }
     }
     
-    void walk(const WalkCallback& callback, const Component& comp, int level) const {
-        callback(comp, level);
-        ++level;
+    void walk(const WalkCallback& callback, const Component& comp, int depth) const {
+        callback(comp, depth);
+        ++depth;
         for (const auto& childComp : comp.children) {
-            walk(callback, childComp, level);
+            walk(callback, childComp, depth);
         }
-        --level;
+        --depth;
     }
     
     void parseTagContents(bool isUnescapedVar, const StringType& contents, Tag& tag) {
@@ -253,7 +255,7 @@ int main() {
     //std::wstring werrMsg;
     //(void)parse(std::wstring(), werrMsg);
     
-    std::string input = "{{#START}}Hello {{name}}! Today is {{dayOfWeek}}.{{#alive}}You're alive!.{{/alive}}fin{{ender}}hi";
+    std::string input = "Hello {{name}}! Today is {{dayOfWeek}}.{{#alive}}You're alive!.{{/alive}}fin{{ender}}hi";
     Mustache::Mustache<std::string> templ(input);
     if (!templ.isValid()) {
         std::cout << "ERROR: " << templ.errorMessage() << std::endl;
