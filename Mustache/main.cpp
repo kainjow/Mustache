@@ -29,7 +29,24 @@ StringType trim(const StringType &s) {
 template <typename StringType>
 class Context {
 public:
-    virtual StringType variable(const StringType& name);
+    bool getVar(const StringType& name, StringType& result) {
+        if (name == "name") {
+            result = "Kevin";
+            return true;
+        } else if (name == "ender") {
+            result = "";
+            return true;
+        } else if (name == "dayOfWeek") {
+            result = "Monday";
+            return true;
+        } else if (name == "alive") {
+            result = "uh";
+            return true;
+        } else {
+            std::cout << "CONTEXT MISSING " << name << std::endl;
+        }
+        return false;
+    }
 };
 
 template <typename StringType>
@@ -45,6 +62,50 @@ public:
 
     const StringType& errorMessage() const {
         return errorMessage_;
+    }
+    
+    template <typename OStream>
+    void render(OStream& stream, Context<StringType>& ctx) {
+        walk([&stream, &ctx](Component& comp, int) -> WalkControl {
+            if (comp.isText()) {
+                stream << comp.text;
+            } else if (comp.isTag()) {
+                const Tag& tag(comp.tag);
+                StringType var;
+                switch (tag.type) {
+                    case Tag::Type::Variable:
+                        if (ctx.getVar(tag.name, var)) {
+                            // TODO: escape
+                            stream << var;
+                        }
+                        break;
+                    case Tag::Type::UnescapedVariable:
+                        if (ctx.getVar(tag.name, var)) {
+                            stream << var;
+                        }
+                        break;
+                    case Tag::Type::SectionBegin:
+                        if (ctx.getVar(tag.name, var)) {
+                            
+                        } else {
+                            return WalkControl::Skip;
+                        }
+                        break;
+                    case Tag::Type::SectionBeginInverted:
+                        std::cout << "RENDER INVSECTION: " << tag.name << std::endl;
+                        break;
+                    case Tag::Type::Partial:
+                        std::cout << "RENDER PARTIAL: " << tag.name << std::endl;
+                        break;
+                    case Tag::Type::SetDelimiter:
+                        std::cout << "RENDER SETDELIM: " << tag.name << std::endl;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return WalkControl::Continue;
+        });
     }
     
 private:
@@ -158,7 +219,8 @@ private:
             inputPosition = tagLocationEnd + currenttTagDelimiterEnd.size();
         }
         
-        walk([&](const Component& comp, int depth) -> bool {
+#if 0
+        walk([](Component& comp, int depth) -> bool {
             const StringType indent = depth >= 1 ? StringType(depth, ' ') : StringType();
             if (comp.isTag()) {
                 std::cout << indent << "TAG: {{" << comp.tag.name << "}}" << std::endl;
@@ -167,18 +229,20 @@ private:
             }
             return true;
         });
+#endif
 
         // Check for sections without an ending tag
         const Component *invalidStartPosition = nullptr;
-        walk([&invalidStartPosition](const Component& comp, int) -> bool {
+        walk([&invalidStartPosition](Component& comp, int) -> WalkControl {
             if (!comp.tag.isSectionBegin()) {
-                return true;
+                return WalkControl::Continue;
             }
             if (comp.children.empty() || !comp.children.back().tag.isSectionEnd() || comp.children.back().tag.name != comp.tag.name) {
                 invalidStartPosition = &comp;
-                return false;
+                return WalkControl::Stop;
             }
-            return true;
+            comp.children.pop_back(); // remove now useless end section component
+            return WalkControl::Continue;
         });
         if (invalidStartPosition) {
             streamstring ss;
@@ -188,20 +252,40 @@ private:
         }
     }
     
-    using WalkCallback = std::function<bool(const Component&, int)>;
+    enum class WalkControl {
+        Continue,
+        Stop,
+        Skip,
+    };
+    using WalkCallback = std::function<WalkControl(Component&, int)>;
     void walk(const WalkCallback& callback) const {
-        for (const auto& comp : rootComponent_.children) {
-            walk(callback, comp, 0);
+        for (auto comp : rootComponent_.children) {
+            const WalkControl control = walk(callback, comp, 0);
+            if (control != WalkControl::Continue) {
+                break;
+            }
         }
     }
     
-    void walk(const WalkCallback& callback, const Component& comp, int depth) const {
-        callback(comp, depth);
+    WalkControl walk(const WalkCallback& callback, Component& comp, int depth) const {
+        WalkControl control = callback(comp, depth);
+        if (control == WalkControl::Stop) {
+            return control;
+        } else if (control == WalkControl::Skip) {
+            return WalkControl::Continue;
+        }
         ++depth;
-        for (const auto& childComp : comp.children) {
-            walk(callback, childComp, depth);
+        for (auto childComp : comp.children) {
+            control = walk(callback, childComp, depth);
+            if (control == WalkControl::Stop) {
+                return control;
+            } else if (control == WalkControl::Skip) {
+                control = WalkControl::Continue;
+                break;
+            }
         }
         --depth;
+        return control;
     }
     
     void parseTagContents(bool isUnescapedVar, const StringType& contents, Tag& tag) {
@@ -260,9 +344,14 @@ int main() {
     Mustache::Mustache<std::string> templ(input);
     if (!templ.isValid()) {
         std::cout << "ERROR: " << templ.errorMessage() << std::endl;
-    } else {
-        std::cout << "No error" << std::endl;
+        return 0;
     }
+    
+    Mustache::Context<std::string> ctx;
+    
+    std::stringstream ss;
+    templ.render(ss, ctx);
+    std::cout << ss.str() << std::endl;
     
     return 0;
 }
