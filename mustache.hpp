@@ -12,7 +12,7 @@
 #include <vector>
 #include <functional>
 #include <unordered_map>
-#include <boost/any.hpp>
+#include <memory>
 
 namespace Mustache {
 
@@ -72,35 +72,56 @@ public:
     using ObjectType = std::unordered_map<StringType, Data>;
     using ListType = std::vector<Data>;
     
-    // Creation
+    // Construction
     Data() : Data(Type::Object) {
     }
     Data(const StringType& string) : type_(Type::String) {
-        data_ = string;
+        str_.reset(new StringType(string));
     }
     Data(const typename StringType::value_type* string) : type_(Type::String) {
-        data_ = StringType(string);
+        str_.reset(new StringType(string));
     }
     Data(const ListType& list) : type_(Type::List) {
-        data_ = list;
-    }
-    Data(bool boolean) : type_(Type::Bool) {
-        data_ = boolean;
+        list_.reset(new ListType(list));
     }
     Data(Type type) : type_(type) {
         switch (type_) {
             case Type::Object:
-                data_ = ObjectType();
+                obj_.reset(new ObjectType());
                 break;
             case Type::String:
-                data_ = StringType();
+                str_.reset(new StringType());
                 break;
             case Type::List:
-                data_ = ListType();
+                list_.reset(new ListType());
                 break;
             default:
                 break;
         }
+    }
+    
+    // Copying
+    Data(const Data& data) : type_(data.type_) {
+        if (data.obj_) {
+            obj_.reset(new ObjectType(*data.obj_));
+        } else if (data.str_) {
+            str_.reset(new StringType(*data.str_));
+        } else if (data.list_) {
+            list_.reset(new ListType(*data.list_));
+        }
+    }
+    Data& operator= (const Data& data) {
+        if (&data != this) {
+            type_ = data.type_;
+            if (data.obj_) {
+                obj_.reset(new ObjectType(*data.obj_));
+            } else if (data.str_) {
+                str_.reset(new StringType(*data.str_));
+            } else if (data.list_) {
+                list_.reset(new ListType(*data.list_));
+            }
+        }
+        return *this;
     }
     
     // Type info
@@ -128,13 +149,13 @@ public:
     
     // Object data
     void set(const StringType& name, const Data& var) {
-        ObjectType& obj = boost::any_cast<ObjectType&>(data_);
-        obj[name] = var;
+        if (isObject()) {
+            obj_->insert(std::pair<StringType,Data>(name, var));
+        }
     }
     bool exists(const StringType& name) {
         if (isObject()) {
-            ObjectType& obj(boost::any_cast<ObjectType>(data_));
-            if (obj.find(name) == obj.end()) {
+            if (obj_->find(name) == obj_->end()) {
                 return true;
             }
         }
@@ -144,9 +165,8 @@ public:
         if (!isObject()) {
             return false;
         }
-        const ObjectType& obj(boost::any_cast<ObjectType>(data_));
-        auto it = obj.find(name);
-        if (it == obj.end()) {
+        const auto& it = obj_->find(name);
+        if (it == obj_->end()) {
             return false;
         }
         var = it->second;
@@ -185,27 +205,30 @@ public:
     
     // List data
     void push_back(const Data& var) {
-        boost::any_cast<ListType&>(data_).push_back(var);
+        if (isList()) {
+            list_->push_back(var);
+        }
     }
     const Data& operator[] (size_t i) const {
-        return boost::any_cast<const ListType&>(data_)[i];
+        return list_->at(i);
     }
     const ListType& list() const {
-        return boost::any_cast<const ListType&>(data_);
+        return *list_;
     }
     bool isEmptyList() {
-        return isList() && boost::any_cast<const ListType&>(data_).empty();
+        return isList() && list_->empty();
     }
     
     // String data
     const StringType& stringValue() const {
-        return boost::any_cast<const StringType&>(data_);
+        return *str_;
     }
-    
+
 private:
-    Data* parent_;
     Type type_;
-    boost::any data_;
+    std::unique_ptr<ObjectType> obj_;
+    std::unique_ptr<StringType> str_;
+    std::unique_ptr<ListType> list_;
 };
 
 template <typename StringType>
@@ -506,7 +529,7 @@ private:
     void renderSection(OStream& stream, const Data<StringType>& data, Component& incomp, const Data<StringType>& var) const {
         auto callback = [&stream, &data, &var](Component&, int) -> WalkControl {
             if (var.isList()) {
-                for (auto item : var.list()) {
+                for (auto& item : var.list()) {
                     (void)item;
                 }
             }
