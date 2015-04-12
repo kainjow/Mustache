@@ -9,5 +9,6 @@ if (UNIX)
 		-Wall
 		-Wextra
 		-Werror
+		-std=c++11
 	)
 endif()
