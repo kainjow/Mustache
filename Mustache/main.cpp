@@ -29,6 +29,35 @@ StringType trim(const StringType &s) {
 }
 
 template <typename StringType>
+StringType escape(const StringType& s) {
+    StringType ret;
+    ret.reserve(s.size()*2);
+    for (const auto ch : s) {
+        switch (static_cast<char>(ch)) {
+            case '&':
+                ret.append("&amp;");
+                break;
+            case '<':
+                ret.append("&lt;");
+                break;
+            case '>':
+                ret.append("&gt;");
+                break;
+            case '\"':
+                ret.append("&quot;");
+                break;
+            case '\'':
+                ret.append("&apos;");
+                break;
+            default:
+                ret.append(1, ch);
+                break;
+        }
+    }
+    return ret;
+}
+
+template <typename StringType>
 class Data {
 public:
     enum class Type {
@@ -205,8 +234,7 @@ public:
                     case Tag::Type::Variable: {
                         if (data.get(tag.name, var)) {
                             if (var.isString()) {
-                                // TODO: escape
-                                stream << var.stringValue();
+                                stream << escape(var.stringValue());
                             } else if (var.isBool()) {
                                 stream << (var.isTrue() ? StringType("true") : StringType("false"));
                             }
@@ -508,8 +536,9 @@ int main() {
         list.push_back(item);
     }
     data.set("names", list);
+    data.set("html", "<b>\"Bold\"</b>");
 
-    std::string input = "{{#names}}secret::{{/names}}Hello {{name}}! Today is {{dayOfWeek}}.";
+    std::string input = "{{html}}{{{html}}}{{#names}}secret::{{/names}}Hello {{name}}! Today is {{dayOfWeek}}.";
     Mustache::Mustache<std::string> templ(input);
     if (!templ.isValid()) {
         std::cout << "ERROR: " << templ.errorMessage() << std::endl;
