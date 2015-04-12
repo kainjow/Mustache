@@ -29,64 +29,48 @@ StringType trim(const StringType &s) {
 }
 
 template <typename StringType>
-class Context {
-public:
-    bool getVar(const StringType& name, StringType& result) {
-        if (name == "name") {
-            result = "Kevin";
-            return true;
-        } else if (name == "ender") {
-            result = "";
-            return true;
-        } else if (name == "dayOfWeek") {
-            result = "Monday";
-            return true;
-        } else if (name == "alive") {
-            result = "uh";
-            return true;
-        } else {
-            std::cout << "CONTEXT MISSING " << name << std::endl;
-        }
-        return false;
-    }
-};
-
-template <typename StringType>
-class Variable {
+class Data {
 public:
     enum class Type {
         Object,
+        String,
         List,
-        Bool,
+        True,
+        False,
     };
     
-    using ObjectType = std::unordered_map<StringType, Variable>;
-    using ListType = std::vector<Variable>;
+    using ObjectType = std::unordered_map<StringType, Data>;
+    using ListType = std::vector<Data>;
     
-    // Variable creation
-    explicit Variable() : type_(Type::Object) {
-        data_ = ObjectType();
+    // Creation
+    Data() : Data(Type::Object) {
     }
-    explicit Variable(const StringType& string) : type_(Type::String) {
+    Data(const StringType& string) : type_(Type::String) {
         data_ = string;
     }
-    explicit Variable(const ListType& list) : type_(Type::List) {
+    Data(const typename StringType::value_type* string) : type_(Type::String) {
+        data_ = StringType(string);
+    }
+    Data(const ListType& list) : type_(Type::List) {
         data_ = list;
     }
-    explicit Variable(bool boolean) : type_(Type::Bool) {
-        type_ = boolean;
+    Data(bool boolean) : type_(Type::Bool) {
+        data_ = boolean;
     }
-    static Variable Object() {
-        return Variable(ObjectType());
-    }
-    static Variable String() {
-        return Variable(StringType());
-    }
-    static Variable List() {
-        return Variable(ListType());
-    }
-    static Variable Bool() {
-        return Variable(false);
+    Data(Type type) : type_(type) {
+        switch (type_) {
+            case Type::Object:
+                data_ = ObjectType();
+                break;
+            case Type::String:
+                data_ = StringType();
+                break;
+            case Type::List:
+                data_ = ListType();
+                break;
+            default:
+                break;
+        }
     }
     
     // Type info
@@ -94,7 +78,7 @@ public:
         return type_;
     }
     bool isObject() const {
-        return type_ == Type::Bool;
+        return type_ == Type::Object;
     }
     bool isString() const {
         return type_ == Type::String;
@@ -103,44 +87,93 @@ public:
         return type_ == Type::List;
     }
     bool isBool() const {
-        return type_ == Type::Bool;
+        return type_ == Type::True || type_ == Type::False;
+    }
+    bool isTrue() const {
+        return type_ == Type::True;
+    }
+    bool isFalse() const {
+        return type_ == Type::False;
     }
     
     // Object data
-    const Variable& operator[] (const StringType& name) const {
+    void set(const StringType& name, const Data& var) {
+        ObjectType& obj = boost::any_cast<ObjectType&>(data_);
+        obj[name] = var;
+    }
+    bool exists(const StringType& name) {
+        if (isObject()) {
+            ObjectType& obj(boost::any_cast<ObjectType>(data_));
+            if (obj.find(name) == obj.end()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    bool get(const StringType& name, Data& var) const {
+        if (!isObject()) {
+            return false;
+        }
+        const ObjectType& obj(boost::any_cast<ObjectType>(data_));
+        auto it = obj.find(name);
+        if (it == obj.end()) {
+            return false;
+        }
+        var = it->second;
+        return true;
+    }
+#if 0
+    const Data& operator[] (const StringType& name) const {
         ObjectType& obj(boost::any_cast<ObjectType>(data_));
         return obj[name];
     }
-    class ObjectVarProxy {
+#endif
+#if 0
+    class ObjectVariableProxy {
     public:
-        
+        ObjectVariableProxy(Data& parent, const StringType& name)
+            : parent_(parent)
+            , name_(name)
+        {}
+        operator Data() {
+            return parent_;
+        }
+        Data& operator= (const Data& var) {
+            if (var != *this) {
+                parent_.set(name_, var);
+            }
+            return *this;
+        }
+    private:
+        Data& parent_;
+        const StringType& name_;
     };
-    Variable& operator[] (const StringType& name) {
-        ObjectType& obj(boost::any_cast<ObjectType>(data_));
-        return obj[name];
+    ObjectVariableProxy& operator[] (const StringType& name) {
+        return ObjectVariableProxy(*this, name);
     }
+#endif
     
     // List data
-    void push_back(const Variable& var) {
-        ListType& list(boost::any_cast<ListType>(data_));
-        list.push_back(var);
+    void push_back(const Data& var) {
+        boost::any_cast<ListType&>(data_).push_back(var);
     }
-    const Variable& operator[] (size_t i) const {
-        ListType& list(boost::any_cast<ListType>(data_));
-        return list[i];
+    const Data& operator[] (size_t i) const {
+        return boost::any_cast<const ListType&>(data_)[i];
     }
-    
-    // Bool data
-    bool boolValue() {
-        return boost::any_cast<bool>(data_);
+    const ListType& list() const {
+        return boost::any_cast<const ListType&>(data_);
+    }
+    bool isEmptyList() {
+        return isList() && boost::any_cast<const ListType&>(data_).empty();
     }
     
     // String data
-    const StringType& stringValue() {
-        return boost::any_cast<StringType>(data_);
+    const StringType& stringValue() const {
+        return boost::any_cast<const StringType&>(data_);
     }
     
 private:
+    Data* parent_;
     Type type_;
     boost::any data_;
 };
@@ -161,34 +194,45 @@ public:
     }
     
     template <typename OStream>
-    void render(OStream& stream, Context<StringType>& ctx) {
-        walk([&stream, &ctx](Component& comp, int) -> WalkControl {
+    void render(OStream& stream, const Data<StringType>& data) {
+        walk([&stream, &data, this](Component& comp, int) -> WalkControl {
             if (comp.isText()) {
                 stream << comp.text;
             } else if (comp.isTag()) {
                 const Tag& tag(comp.tag);
-                StringType var;
+                Data<StringType> var;
                 switch (tag.type) {
-                    case Tag::Type::Variable:
-                        if (ctx.getVar(tag.name, var)) {
-                            // TODO: escape
-                            stream << var;
+                    case Tag::Type::Variable: {
+                        if (data.get(tag.name, var)) {
+                            if (var.isString()) {
+                                // TODO: escape
+                                stream << var.stringValue();
+                            } else if (var.isBool()) {
+                                stream << (var.isTrue() ? StringType("true") : StringType("false"));
+                            }
                         }
                         break;
+                    }
                     case Tag::Type::UnescapedVariable:
-                        if (ctx.getVar(tag.name, var)) {
-                            stream << var;
+                        if (data.get(tag.name, var)) {
+                            if (var.isString()) {
+                                stream << var.stringValue();
+                            } else if (var.isBool()) {
+                                stream << (var.isTrue() ? StringType("true") : StringType("false"));
+                            }
                         }
                         break;
                     case Tag::Type::SectionBegin:
-                        if (ctx.getVar(tag.name, var)) {
-                            
+                        if (!data.get(tag.name, var) || var.isFalse() || var.isEmptyList()) {
+                        } else {
+                            renderSection(stream, data, comp, var);
+                        }
+                        return WalkControl::Skip;
+                    case Tag::Type::SectionBeginInverted:
+                        if (!data.get(tag.name, var) || var.isFalse() || var.isEmptyList()) {
                         } else {
                             return WalkControl::Skip;
                         }
-                        break;
-                    case Tag::Type::SectionBeginInverted:
-                        std::cout << "RENDER INVSECTION: " << tag.name << std::endl;
                         break;
                     case Tag::Type::Partial:
                         std::cout << "RENDER PARTIAL: " << tag.name << std::endl;
@@ -429,6 +473,19 @@ private:
         }
     }
     
+    template <typename OStream>
+    void renderSection(OStream& stream, const Data<StringType>& data, Component& incomp, const Data<StringType>& var) const {
+        auto callback = [&stream, &data, &var](Component&, int) -> WalkControl {
+            if (var.isList()) {
+                for (auto item : var.list()) {
+                    (void)item;
+                }
+            }
+            return WalkControl::Skip;
+        };
+        walk(callback, incomp, 0);
+    }
+
 private:
     StringType errorMessage_;
     Component rootComponent_;
@@ -440,17 +497,27 @@ int main() {
     
     //Mustache::Mustache<std::wstring> templw(L"");
     
-    std::string input = "Hello {{name}}! Today is {{dayOfWeek}}.{{#alive}}You're alive!.{{#inner}}inner stuff{{#deeper}}we must go deeper{{/deeper}}{{/inner}}{{/alive}}fin{{ender}}hi";
+    using Data = Mustache::Data<std::string>;
+    Data data;
+    data.set("name", "Kevin");
+    data.set("dayOfWeek", "Monday");
+    Data list(Data::Type::List);
+    for (auto &name : {"Peter", "Paul", "Mary"}) {
+        Data item;
+        item.set("name", name);
+        list.push_back(item);
+    }
+    data.set("names", list);
+
+    std::string input = "{{#names}}secret::{{/names}}Hello {{name}}! Today is {{dayOfWeek}}.";
     Mustache::Mustache<std::string> templ(input);
     if (!templ.isValid()) {
         std::cout << "ERROR: " << templ.errorMessage() << std::endl;
         return 0;
     }
     
-    Mustache::Context<std::string> ctx;
-    
     std::stringstream ss;
-    templ.render(ss, ctx);
+    templ.render(ss, data);
     std::cout << ss.str() << std::endl;
     
     return 0;
