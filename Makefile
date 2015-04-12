@@ -2,6 +2,7 @@ tests:
 	mkdir -p build
 	cd build && cmake ..
 	cmake --build build
+	./build/mustache
 	
 xcode:
 	mkdir -p build

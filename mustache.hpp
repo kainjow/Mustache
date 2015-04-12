@@ -300,6 +300,13 @@ public:
         });
     }
     
+    StringType render(const Data<StringType>& data) {
+        using streamstring = std::basic_ostringstream<typename StringType::value_type>;
+        streamstring ss;
+        render(ss, data);
+        return ss.str();
+    }
+
     template <typename OStream>
     void print(OStream& stream) {
         walk([&stream](Component& comp, int depth) -> WalkControl {
