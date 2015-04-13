@@ -12,6 +12,7 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
 ## Compilers Tested
 
 - Xcode 6.3 (Clang 3.6)
+- GCC 4.9
 - GCC 4.8
 - Clang 3.4
 - Visual Studio 2013
