@@ -52,5 +52,4 @@ For Visual Studio 2013 (CMake 2.8+ required) open a Visual Studio Command Prompt
 - {{.}} syntax for lists of strings
 - Partials?
 - Lambdas?
-- Visual Studio makefile
 - Test against [spec](https://github.com/mustache/spec)
