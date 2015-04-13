@@ -588,9 +588,6 @@ private:
             case Tag::Type::Partial:
                 std::cout << "RENDER PARTIAL: " << tag.name << std::endl;
                 break;
-            case Tag::Type::SetDelimiter:
-                std::cout << "RENDER SETDELIM: " << tag.name << std::endl;
-                break;
             default:
                 break;
         }
