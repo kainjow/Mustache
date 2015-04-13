@@ -72,7 +72,14 @@ TEST_CASE("variables") {
         data.set("", "Steve");
         CHECK(tmpl.render(data) == "Hello Steve");
     }
-    
+
+    SECTION("braces") {
+        Mustache::Mustache<std::string> tmpl("my {{var}}");
+        Mustache::Data<std::string> data;
+        data.set("var", "{{te}}st");
+        CHECK(tmpl.render(data) == "my {{te}}st");
+    }
+
 }
 
 TEST_CASE("comments") {
@@ -142,6 +149,14 @@ TEST_CASE("sections") {
         data.set("var", Data(Data::Type::List));
         CHECK(tmpl.render(data) == "");
     }
+    
+    SECTION("nested") {
+        Mustache::Mustache<std::string> tmpl("{{#var1}}hello{{#var2}}world{{/var2}}{{/var1}}");
+        Data data;
+        data.set("var1", Data::Type::True);
+        data.set("var2", Data::Type::True);
+        CHECK(tmpl.render(data) == "helloworld");
+    }
 
 }
 
@@ -186,6 +201,28 @@ TEST_CASE("section_lists") {
         Data data;
         data.set("people", people);
         CHECK(tmpl.render(data) == "Hello Steve, Hello Bill, Hello Tim, ");
+    }
+    
+    SECTION("nested") {
+        Mustache::Mustache<std::string> tmpl("{{#families}}surname={{surname}}, members={{#members}}{{given}},{{/members}}|{{/families}}");
+        Data families = Data::List();
+        Data family1;
+        family1.set("surname", "Smith");
+        Data members1 = Data::List();
+        Data member1a; member1a.set("given", "Steve"); members1.push_back(member1a);
+        Data member1b; member1b.set("given", "Joe"); members1.push_back(member1b);
+        family1.set("members", members1);
+        Data family2;
+        family2.set("surname", "Lee");
+        Data members2 = Data::List();
+        Data member2a; member2a.set("given", "Bill"); members2.push_back(member2a);
+        Data member2b; member2b.set("given", "Peter"); members2.push_back(member2b);
+        family2.set("members", members2);
+        families.push_back(family1);
+        families.push_back(family2);
+        Data data;
+        data.set("families", families);
+        CHECK(tmpl.render(data) == "surname=Smith, members=Steve,Joe,|surname=Lee, members=Bill,Peter,|");
     }
     
 }
