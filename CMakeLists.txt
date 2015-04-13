@@ -7,6 +7,11 @@ if (UNIX)
 		-Werror
 		-std=c++11
 	)
+elseif (MSVC)
+	add_definitions(
+		/W3
+		/WX
+	)
 endif()
 add_executable(mustache
 	mustache.hpp # to show in IDE
