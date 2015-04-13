@@ -118,3 +118,55 @@ TEST_CASE("setdelimiter") {
     }
 
 }
+
+TEST_CASE("sections") {
+    
+    using Data = Mustache::Data<std::string>;
+
+    SECTION("nonexistant") {
+        Mustache::Mustache<std::string> tmpl("{{#var}}not shown{{/var}}");
+        Data data;
+        CHECK(tmpl.render(data) == "");
+    }
+
+    SECTION("false") {
+        Mustache::Mustache<std::string> tmpl("{{#var}}not shown{{/var}}");
+        Data data;
+        data.set("var", Data(Data::Type::False));
+        CHECK(tmpl.render(data) == "");
+    }
+
+    SECTION("emptylist") {
+        Mustache::Mustache<std::string> tmpl("{{#var}}not shown{{/var}}");
+        Data data;
+        data.set("var", Data(Data::Type::List));
+        CHECK(tmpl.render(data) == "");
+    }
+
+}
+
+TEST_CASE("sections_inverted") {
+    
+    using Data = Mustache::Data<std::string>;
+    
+    SECTION("nonexistant") {
+        Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
+        Data data;
+        CHECK(tmpl.render(data) == "shown");
+    }
+    
+    SECTION("false") {
+        Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
+        Data data;
+        data.set("var", Data(Data::Type::False));
+        CHECK(tmpl.render(data) == "shown");
+    }
+    
+    SECTION("emptylist") {
+        Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
+        Data data;
+        data.set("var", Data(Data::Type::List));
+        CHECK(tmpl.render(data) == "shown");
+    }
+    
+}
