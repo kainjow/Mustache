@@ -4,10 +4,8 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
 
 ## Example
 
-    using namespace Mustache;
-    Mustache<std::string> tmpl("Hello {{what}}!");
-    Data<std::string> data;
-    data.set("what", "World");
+    Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
+    Mustache::Data<std::string> data("what", "World");
     std::cout << tmpl.render(data) << std::endl;
 
 Result:
