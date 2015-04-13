@@ -178,36 +178,6 @@ public:
         var = it->second;
         return true;
     }
-#if 0
-    const Data& operator[] (const StringType& name) const {
-        ObjectType& obj(boost::any_cast<ObjectType>(data_));
-        return obj[name];
-    }
-#endif
-#if 0
-    class ObjectVariableProxy {
-    public:
-        ObjectVariableProxy(Data& parent, const StringType& name)
-            : parent_(parent)
-            , name_(name)
-        {}
-        operator Data() {
-            return parent_;
-        }
-        Data& operator= (const Data& var) {
-            if (var != *this) {
-                parent_.set(name_, var);
-            }
-            return *this;
-        }
-    private:
-        Data& parent_;
-        const StringType& name_;
-    };
-    ObjectVariableProxy& operator[] (const StringType& name) {
-        return ObjectVariableProxy(*this, name);
-    }
-#endif
     
     // List data
     void push_back(const Data& var) {
