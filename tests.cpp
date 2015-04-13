@@ -175,7 +175,7 @@ TEST_CASE("section_lists") {
     
     using Data = Mustache::Data<std::string>;
     
-    SECTION("basic_object_list") {
+    SECTION("list") {
         Mustache::Mustache<std::string> tmpl("{{#people}}Hello {{name}}, {{/people}}");
         Data people = Data::List();
         for (auto& name : {"Steve", "Bill", "Tim"}) {
@@ -188,4 +188,32 @@ TEST_CASE("section_lists") {
         CHECK(tmpl.render(data) == "Hello Steve, Hello Bill, Hello Tim, ");
     }
     
+}
+
+TEST_CASE("section_object") {
+    
+    using Data = Mustache::Data<std::string>;
+    
+    SECTION("basic") {
+        Mustache::Mustache<std::string> tmpl("{{#employee}}name={{name}}, age={{age}}{{/employee}}");
+        Data person;
+        person.set("name", "Steve");
+        person.set("age", "42");
+        Data data;
+        data.set("employee", person);
+        CHECK(tmpl.render(data) == "name=Steve, age=42");
+    }
+
+    SECTION("basic_parent") {
+        Mustache::Mustache<std::string> tmpl("({{subject}}) {{#employee}}name={{name}}, age={{age}} - {{subject}}{{/employee}}");
+        Data person;
+        person.set("name", "Steve");
+        person.set("age", "42");
+        person.set("subject", "email");
+        Data data;
+        data.set("subject", "test");
+        data.set("employee", person);
+        CHECK(tmpl.render(data) == "(test) name=Steve, age=42 - email");
+    }
+
 }
