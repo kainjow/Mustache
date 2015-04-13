@@ -12,15 +12,11 @@ Result:
 
     Hello World!
 
-## Build
+## Build Tests (CMake 2.8+ required)
 
 To build and run tests:
 
     make
-
-On OS X to generate and open an Xcode project:
-
-    make xcode
 
 ## TODO
 
