@@ -7,10 +7,7 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
     Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
     Mustache::Data<std::string> data("what", "World");
     std::cout << tmpl.render(data) << std::endl;
-
-Result:
-
-    Hello World!
+    // Hello World!
 
 ## Run Tests for Linux and OS X
 
