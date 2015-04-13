@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(mustache)
 if (UNIX)
-	# Travis only has CMake 2.8
 	add_definitions(
 		-Wall
 		-Wextra
