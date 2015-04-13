@@ -17,7 +17,7 @@ To build and run tests:
 
 ## Run Tests for Visual Studio 2013 (CMake 2.8+ required)
 
-Open a Visual Studios Command Prompt, then:
+Open a Visual Studio Command Prompt, then:
 
     cmake .
     cmake --build
