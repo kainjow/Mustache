@@ -9,6 +9,13 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
     std::cout << tmpl.render(data) << std::endl;
     // Hello World!
 
+## Compilers Tested
+
+- Xcode 6.3 (Clang 3.6)
+- GCC 4.8
+- Clang 3.4
+- Visual Studio 2013
+
 ## Run Tests for Linux and OS X
 
 To build and run tests:
