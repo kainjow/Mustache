@@ -247,7 +247,7 @@ public:
     }
     
     template <typename OStream>
-    void render(OStream& stream, const Data<StringType>& data) {
+    void render(OStream& stream, const Data<StringType>& data) const {
         walk([&stream, &data, this](Component& comp, int) -> WalkControl {
             if (comp.isText()) {
                 stream << comp.text;
@@ -300,7 +300,7 @@ public:
         });
     }
     
-    StringType render(const Data<StringType>& data) {
+    StringType render(const Data<StringType>& data) const {
         using streamstring = std::basic_ostringstream<typename StringType::value_type>;
         streamstring ss;
         render(ss, data);
@@ -398,11 +398,12 @@ private:
             // Find the next tag end delimiter
             StringSizeType tagContentsLocation = tagLocationStart + currentDelimiterBegin.size();
             const bool tagIsUnescapedVar = currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == braceDelimiterBegin.at(0);
-            const StringType& currenttTagDelimiterEnd(tagIsUnescapedVar ? braceDelimiterEndUnescaped : currentDelimiterEnd);
+            const StringType& currentTagDelimiterEnd(tagIsUnescapedVar ? braceDelimiterEndUnescaped : currentDelimiterEnd);
+            const auto currentTagDelimiterEndSize = currentTagDelimiterEnd.size();
             if (tagIsUnescapedVar) {
                 ++tagContentsLocation;
             }
-            StringSizeType tagLocationEnd = input.find(currenttTagDelimiterEnd, tagContentsLocation);
+            StringSizeType tagLocationEnd = input.find(currentTagDelimiterEnd, tagContentsLocation);
             if (tagLocationEnd == StringType::npos) {
                 streamstring ss;
                 ss << "No tag end delimiter found for start delimiter at " << tagLocationStart;
@@ -410,8 +411,17 @@ private:
                 return;
             }
             
-            // Create a Tag object representation
+            // Parse tag
             StringType tagContents(trim(StringType(input, tagContentsLocation, tagLocationEnd - tagContentsLocation)));
+            if (!tagContents.empty() && tagContents[0] == '=') {
+                if (!parseSetDelimiterTag(tagContents, currentDelimiterBegin, currentDelimiterEnd)) {
+                    streamstring ss;
+                    ss << "Invalid set delimiter tag found at " << tagLocationStart;
+                    errorMessage_.assign(ss.str());
+                    return;
+                }
+                currentDelimiterIsBrace = currentDelimiterBegin == braceDelimiterBegin && currentDelimiterEnd == braceDelimiterEnd;
+            }
             Component comp;
             parseTagContents(tagIsUnescapedVar, tagContents, comp.tag);
             comp.position = tagLocationStart;
@@ -431,7 +441,7 @@ private:
             }
             
             // Start next search after this tag
-            inputPosition = tagLocationEnd + currenttTagDelimiterEnd.size();
+            inputPosition = tagLocationEnd + currentTagDelimiterEndSize;
         }
         
         // Check for sections without an ending tag
@@ -489,6 +499,25 @@ private:
         }
         --depth;
         return control;
+    }
+    
+    bool parseSetDelimiterTag(const StringType& contents, StringType& startDelimiter, StringType& endDelimiter) {
+        // Smallest legal tag is "=X X="
+        if (contents.size() < 5) {
+            return false;
+        }
+        // Must end with equal sign
+        if (contents.back() != '=') {
+            return false;
+        }
+        // Only 1 space character allowed
+        const auto spacepos = contents.find(' ');
+        if (spacepos == StringType::npos || contents.find(' ', spacepos + 1) != StringType::npos) {
+            return false;
+        }
+        startDelimiter = contents.substr(1, spacepos - 1);
+        endDelimiter = contents.substr(spacepos + 1, contents.size() - (spacepos + 2));
+        return true;
     }
     
     void parseTagContents(bool isUnescapedVar, const StringType& contents, Tag& tag) {

@@ -65,7 +65,14 @@ TEST_CASE("variables") {
         data.set("name", "\"S\"<br>te&v\'e");
         CHECK(tmpl.render(data) == "Hello \"S\"<br>te&v\'e");
     }
-
+    
+    SECTION("empty_name") {
+        Mustache::Mustache<std::string> tmpl("Hello {{}}");
+        Mustache::Data<std::string> data;
+        data.set("", "Steve");
+        CHECK(tmpl.render(data) == "Hello Steve");
+    }
+    
 }
 
 TEST_CASE("comments") {
@@ -80,6 +87,34 @@ TEST_CASE("comments") {
         Mustache::Mustache<std::string> tmpl("Hello\n{{! ignore me }}\nWorld\n");
         Mustache::Data<std::string> data;
         CHECK(tmpl.render(data) == "Hello\n\nWorld\n");
+    }
+
+}
+
+TEST_CASE("setdelimiter") {
+
+    SECTION("basic") {
+        Mustache::Mustache<std::string> tmpl("{{name}}{{=<% %>=}}<% name %><%={{ }}=%>{{ name }}");
+        Mustache::Data<std::string> data;
+        data.set("name", "Steve");
+        CHECK(tmpl.render(data) == "SteveSteveSteve");
+    }
+
+    SECTION("small") {
+        Mustache::Mustache<std::string> tmpl("{{n}}{{=a b=}}anba={{ }}=b{{n}}");
+        Mustache::Data<std::string> data;
+        data.set("n", "s");
+        CHECK(tmpl.render(data) == "sss");
+    }
+    
+    SECTION("noreset") {
+        Mustache::Mustache<std::string> tmpl("{{=[ ]=}}[name] [x] + [y] = [sum]");
+        Mustache::Data<std::string> data;
+        data.set("name", "Steve");
+        data.set("x", "1");
+        data.set("y", "2");
+        data.set("sum", "3");
+        CHECK(tmpl.render(data) == "Steve 1 + 2 = 3");
     }
 
 }
