@@ -99,6 +99,9 @@ public:
                 break;
         }
     }
+    Data(const StringType& name, const Data& var) : Data() {
+        set(name, var);
+    }
     static Data List() {
         return Data(Data::Type::List);
     }

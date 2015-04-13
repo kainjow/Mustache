@@ -166,21 +166,18 @@ TEST_CASE("sections_inverted") {
     
     SECTION("nonexistant") {
         Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
-        Data data;
-        CHECK(tmpl.render(data) == "shown");
+        CHECK(tmpl.render(Data()) == "shown");
     }
     
     SECTION("false") {
         Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
-        Data data;
-        data.set("var", Data(Data::Type::False));
+        Data data("var", Data(Data::Type::False));
         CHECK(tmpl.render(data) == "shown");
     }
     
     SECTION("emptylist") {
         Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
-        Data data;
-        data.set("var", Data(Data::Type::List));
+        Data data("var", Data(Data::Type::List));
         CHECK(tmpl.render(data) == "shown");
     }
     
@@ -194,12 +191,9 @@ TEST_CASE("section_lists") {
         Mustache::Mustache<std::string> tmpl("{{#people}}Hello {{name}}, {{/people}}");
         Data people = Data::List();
         for (auto& name : {"Steve", "Bill", "Tim"}) {
-            Data item;
-            item.set("name", name);
-            people.push_back(item);
+            people.push_back(Data("name", name));
         }
-        Data data;
-        data.set("people", people);
+        Data data("people", people);
         CHECK(tmpl.render(data) == "Hello Steve, Hello Bill, Hello Tim, ");
     }
     
