@@ -12,6 +12,7 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
 ## Compilers Tested
 
 - Xcode 6.3 (Clang 3.6)
+- Xcode 4.6 (Clang 3.2)
 - GCC 4.9
 - GCC 4.8
 - Clang 3.4
@@ -22,6 +23,8 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
 For Linux and OS X:
 
     make
+
+Older versions of OS X may need to build with `make tests_mac`
 
 For Visual Studio 2013 (CMake 2.8+ required) open a Visual Studio Command Prompt, then:
 
