@@ -20,6 +20,7 @@ To build and run tests:
 
 ## TODO
 
+- {{.}} syntax for lists of strings
 - Partials?
 - Lambdas?
 - Visual Studio makefile
