@@ -1,5 +1,5 @@
 language: cpp
 compiler:
-	- gcc
-	- clang
+    - gcc
+    - clang
 script: make
