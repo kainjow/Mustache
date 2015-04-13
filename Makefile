@@ -1,13 +1,11 @@
 tests:
-	mkdir -p build
-	cd build && cmake ..
-	cmake --build build
-	./build/mustache
-	
+	g++ -O3 -Wall -Wextra -Werror -std=c++11 -o mustache tests.cpp
+	./mustache
+
 xcode:
 	mkdir -p build_xcode
 	cd build_xcode && cmake -GXcode ..
 	open build_xcode/*.xcodeproj
 
 clean:
-	rm -rf build build_xcode
+	rm -rf mustache build build_xcode

@@ -12,7 +12,7 @@ Result:
 
     Hello World!
 
-## Build Tests (CMake 2.8+ required)
+## Run Tests for Linux and OS X
 
 To build and run tests:
 
