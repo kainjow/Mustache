@@ -235,9 +235,11 @@ public:
         }
         return false;
     }
+
+    Context(const Context&) = delete;
+    Context& operator= (const Context&) = delete;
+
 private:
-    Context(const Context&);
-    Context& operator= (const Context&);
     std::vector<const DataType*> items_;
 };
 
@@ -251,9 +253,9 @@ public:
     ~ContextPusher() {
         ctx_.pop();
     }
+    ContextPusher(const ContextPusher&) = delete;
+    ContextPusher& operator= (const ContextPusher&) = delete;
 private:
-    ContextPusher(const ContextPusher&);
-    ContextPusher& operator= (const ContextPusher&);
     Context<StringType>& ctx_;
 };
 
