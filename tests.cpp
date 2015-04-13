@@ -170,3 +170,22 @@ TEST_CASE("sections_inverted") {
     }
     
 }
+
+TEST_CASE("section_lists") {
+    
+    using Data = Mustache::Data<std::string>;
+    
+    SECTION("basic_object_list") {
+        Mustache::Mustache<std::string> tmpl("{{#people}}Hello {{name}}, {{/people}}");
+        Data people = Data::List();
+        for (auto& name : {"Steve", "Bill", "Tim"}) {
+            Data item;
+            item.set("name", name);
+            people.push_back(item);
+        }
+        Data data;
+        data.set("people", people);
+        CHECK(tmpl.render(data) == "Hello Steve, Hello Bill, Hello Tim, ");
+    }
+    
+}

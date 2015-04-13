@@ -99,6 +99,9 @@ public:
                 break;
         }
     }
+    static Data List() {
+        return Data(Data::Type::List);
+    }
     
     // Copying
     Data(const Data& data) : type_(data.type_) {
@@ -215,8 +218,11 @@ public:
     const ListType& list() const {
         return *list_;
     }
-    bool isEmptyList() {
+    bool isEmptyList() const {
         return isList() && list_->empty();
+    }
+    bool isNonEmptyList() const {
+        return isList() && !list_->empty();
     }
     
     // String data
@@ -229,6 +235,53 @@ private:
     std::unique_ptr<ObjectType> obj_;
     std::unique_ptr<StringType> str_;
     std::unique_ptr<ListType> list_;
+};
+
+template <typename StringType>
+class Context {
+public:
+    using Data = Data<StringType>;
+    
+    Context(const Data& data) {
+        push(data);
+    }
+    
+    void push(const Data& data) {
+        items_.insert(items_.begin(), &data);
+    }
+    
+    void pop() {
+        items_.erase(items_.begin());
+    }
+    
+    bool get(const StringType& name, Data& var) const {
+        for (const auto& item : items_) {
+            if (item->get(name, var)) {
+                return true;
+            }
+        }
+        return false;
+    }
+private:
+    Context(const Context&);
+    Context& operator= (const Context&);
+    std::vector<const Data*> items_;
+};
+
+// RAII wrapper for Context push/pop
+template <typename StringType>
+class ContextPusher {
+public:
+    ContextPusher(Context<StringType>& ctx, const Data<StringType> &data) : ctx_(ctx) {
+        ctx.push(data);
+    }
+    ~ContextPusher() {
+        ctx_.pop();
+    }
+private:
+    ContextPusher(const ContextPusher&);
+    ContextPusher& operator= (const ContextPusher&);
+    Context<StringType>& ctx_;
 };
 
 template <typename StringType>
@@ -248,55 +301,9 @@ public:
     
     template <typename OStream>
     void render(OStream& stream, const Data<StringType>& data) const {
-        walk([&stream, &data, this](Component& comp, int) -> WalkControl {
-            if (comp.isText()) {
-                stream << comp.text;
-            } else if (comp.isTag()) {
-                const Tag& tag(comp.tag);
-                Data<StringType> var;
-                switch (tag.type) {
-                    case Tag::Type::Variable: {
-                        if (data.get(tag.name, var)) {
-                            if (var.isString()) {
-                                stream << escape(var.stringValue());
-                            } else if (var.isBool()) {
-                                stream << (var.isTrue() ? StringType("true") : StringType("false"));
-                            }
-                        }
-                        break;
-                    }
-                    case Tag::Type::UnescapedVariable:
-                        if (data.get(tag.name, var)) {
-                            if (var.isString()) {
-                                stream << var.stringValue();
-                            } else if (var.isBool()) {
-                                stream << (var.isTrue() ? StringType("true") : StringType("false"));
-                            }
-                        }
-                        break;
-                    case Tag::Type::SectionBegin:
-                        if (!data.get(tag.name, var) || var.isFalse() || var.isEmptyList()) {
-                        } else {
-                            renderSection(stream, data, comp, var);
-                        }
-                        return WalkControl::Skip;
-                    case Tag::Type::SectionBeginInverted:
-                        if (!data.get(tag.name, var) || var.isFalse() || var.isEmptyList()) {
-                        } else {
-                            return WalkControl::Skip;
-                        }
-                        break;
-                    case Tag::Type::Partial:
-                        std::cout << "RENDER PARTIAL: " << tag.name << std::endl;
-                        break;
-                    case Tag::Type::SetDelimiter:
-                        std::cout << "RENDER SETDELIM: " << tag.name << std::endl;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return WalkControl::Continue;
+        Context<StringType> ctx(data);
+        walk([&stream, &ctx, this](Component& comp, int) -> WalkControl {
+            return renderComponent(stream, ctx, comp);
         });
     }
     
@@ -471,16 +478,21 @@ private:
         Skip,
     };
     using WalkCallback = std::function<WalkControl(Component&, int)>;
+    
     void walk(const WalkCallback& callback) const {
-        for (auto comp : rootComponent_.children) {
-            const WalkControl control = walk(callback, comp, 0);
+        walkChildren(callback, rootComponent_);
+    }
+
+    void walkChildren(const WalkCallback& callback, const Component& comp) const {
+        for (auto comp : comp.children) {
+            const WalkControl control = walkComponent(callback, comp);
             if (control != WalkControl::Continue) {
                 break;
             }
         }
     }
     
-    WalkControl walk(const WalkCallback& callback, Component& comp, int depth) const {
+    WalkControl walkComponent(const WalkCallback& callback, Component& comp, int depth = 0) const {
         WalkControl control = callback(comp, depth);
         if (control == WalkControl::Stop) {
             return control;
@@ -489,7 +501,7 @@ private:
         }
         ++depth;
         for (auto childComp : comp.children) {
-            control = walk(callback, childComp, depth);
+            control = walkComponent(callback, childComp, depth);
             if (control == WalkControl::Stop) {
                 return control;
             } else if (control == WalkControl::Skip) {
@@ -562,16 +574,73 @@ private:
     }
     
     template <typename OStream>
-    void renderSection(OStream& stream, const Data<StringType>& data, Component& incomp, const Data<StringType>& var) const {
-        auto callback = [&stream, &data, &var](Component&, int) -> WalkControl {
-            if (var.isList()) {
-                for (auto& item : var.list()) {
-                    (void)item;
+    WalkControl renderComponent(OStream& stream, Context<StringType>& ctx, Component& comp) const {
+        if (comp.isText()) {
+            stream << comp.text;
+            return WalkControl::Continue;
+        }
+        
+        const Tag& tag(comp.tag);
+        Data<StringType> var;
+        switch (tag.type) {
+            case Tag::Type::Variable: {
+                if (ctx.get(tag.name, var)) {
+                    if (var.isString()) {
+                        stream << escape(var.stringValue());
+                    } else if (var.isBool()) {
+                        stream << (var.isTrue() ? StringType("true") : StringType("false"));
+                    }
                 }
+                break;
             }
-            return WalkControl::Skip;
+            case Tag::Type::UnescapedVariable:
+                if (ctx.get(tag.name, var)) {
+                    if (var.isString()) {
+                        stream << var.stringValue();
+                    } else if (var.isBool()) {
+                        stream << (var.isTrue() ? StringType("true") : StringType("false"));
+                    }
+                }
+                break;
+            case Tag::Type::SectionBegin:
+                if (ctx.get(tag.name, var) && !var.isFalse() && !var.isEmptyList()) {
+                    renderSection(stream, ctx, comp, var);
+                }
+                return WalkControl::Skip;
+            case Tag::Type::SectionBeginInverted:
+                if (!ctx.get(tag.name, var) || var.isFalse() || var.isEmptyList()) {
+                    renderSection(stream, ctx, comp, var);
+                }
+                return WalkControl::Skip;
+            case Tag::Type::Partial:
+                std::cout << "RENDER PARTIAL: " << tag.name << std::endl;
+                break;
+            case Tag::Type::SetDelimiter:
+                std::cout << "RENDER SETDELIM: " << tag.name << std::endl;
+                break;
+            default:
+                break;
+        }
+        
+        return WalkControl::Continue;
+    }
+    
+    template <typename OStream>
+    void renderSection(OStream& stream, Context<StringType>& ctx, Component& incomp, const Data<StringType>& var) const {
+        const auto callback = [&stream, &ctx, this](Component& comp, int) -> WalkControl {
+            return renderComponent(stream, ctx, comp);
         };
-        walk(callback, incomp, 0);
+        if (var.isNonEmptyList()) {
+            for (const auto& item : var.list()) {
+                ContextPusher<StringType> ctxpusher(ctx, item);
+                walkChildren(callback, incomp);
+            }
+        } else if (var.isObject()) {
+            ContextPusher<StringType> ctxpusher(ctx, var);
+            walkChildren(callback, incomp);
+        } else {
+            walkChildren(callback, incomp);
+        }
     }
 
 private:
