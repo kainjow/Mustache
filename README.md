@@ -18,6 +18,14 @@ To build and run tests:
 
     make
 
+## Run Tests for Visual Studio 2013 (CMake 2.8+ required)
+
+Open a Visual Studios Command Prompt, then:
+
+    cmake .
+    cmake --build
+    Debug\mustache.exe
+
 ## TODO
 
 - {{.}} syntax for lists of strings
