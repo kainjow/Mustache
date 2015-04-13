@@ -4,21 +4,25 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
 
 ## Example 1
 
-    Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
-    Mustache::Data<std::string> data("what", "World");
-    std::cout << tmpl.render(data) << std::endl;
-    // Hello World!
+````cpp
+Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
+Mustache::Data<std::string> data("what", "World");
+std::cout << tmpl.render(data) << std::endl;
+// Hello World!
+````
 
 ## Example 2
 
-    Mustache::Mustache<std::string> tmpl("{{#employees}}{{name}}, {{/employees}}");
-    Mustache::Data<std::string> data;
-    Data employees(Data::List());
-    employees.push_back(Data("name", "Steve"));
-    employees.push_back(Data("name", "Bill"));
-    data.set("employees", employees);
-    tmpl.render(std::cout, data);
-    // Steve, Bill, 
+````cpp
+Mustache::Mustache<std::string> tmpl("{{#employees}}{{name}}, {{/employees}}");
+Mustache::Data<std::string> data;
+Data employees(Data::List());
+employees.push_back(Data("name", "Steve"));
+employees.push_back(Data("name", "Bill"));
+data.set("employees", employees);
+tmpl.render(std::cout, data);
+// Steve, Bill, 
+````
 
 ## Compilers Tested
 
