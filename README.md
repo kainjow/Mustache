@@ -16,15 +16,13 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no depend
 - Clang 3.4
 - Visual Studio 2013
 
-## Run Tests for Linux and OS X
+## Run Tests
 
-To build and run tests:
+For Linux and OS X:
 
     make
 
-## Run Tests for Visual Studio 2013 (CMake 2.8+ required)
-
-Open a Visual Studio Command Prompt, then:
+For Visual Studio 2013 (CMake 2.8+ required) open a Visual Studio Command Prompt, then:
 
     cmake .
     cmake --build
