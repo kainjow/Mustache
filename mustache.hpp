@@ -213,13 +213,13 @@ private:
 template <typename StringType>
 class Context {
 public:
-    using Data = Data<StringType>;
+    using DataType = Data<StringType>;
     
-    Context(const Data& data) {
+    Context(const DataType& data) {
         push(data);
     }
     
-    void push(const Data& data) {
+    void push(const DataType& data) {
         items_.insert(items_.begin(), &data);
     }
     
@@ -227,7 +227,7 @@ public:
         items_.erase(items_.begin());
     }
     
-    bool get(const StringType& name, Data& var) const {
+    bool get(const StringType& name, DataType& var) const {
         for (const auto& item : items_) {
             if (item->get(name, var)) {
                 return true;
@@ -238,7 +238,7 @@ public:
 private:
     Context(const Context&);
     Context& operator= (const Context&);
-    std::vector<const Data*> items_;
+    std::vector<const DataType*> items_;
 };
 
 // RAII wrapper for Context push/pop
@@ -457,8 +457,8 @@ private:
     }
 
     void walkChildren(const WalkCallback& callback, const Component& comp) const {
-        for (auto comp : comp.children) {
-            const WalkControl control = walkComponent(callback, comp);
+        for (auto childComp : comp.children) {
+            const WalkControl control = walkComponent(callback, childComp);
             if (control != WalkControl::Continue) {
                 break;
             }
