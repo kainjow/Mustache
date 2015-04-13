@@ -273,18 +273,18 @@ public:
     }
     
     template <typename OStream>
-    void render(OStream& stream, const Data<StringType>& data) const {
+    OStream& render(OStream& stream, const Data<StringType>& data) const {
         Context<StringType> ctx(data);
         walk([&stream, &ctx, this](Component& comp, int) -> WalkControl {
             return renderComponent(stream, ctx, comp);
         });
+        return stream;
     }
     
     StringType render(const Data<StringType>& data) const {
         using streamstring = std::basic_ostringstream<typename StringType::value_type>;
         streamstring ss;
-        render(ss, data);
-        return ss.str();
+        return render(ss, data).str();
     }
 
     template <typename OStream>

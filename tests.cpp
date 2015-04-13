@@ -266,7 +266,7 @@ TEST_CASE("examples") {
         employees.push_back(Data("name", "Steve"));
         employees.push_back(Data("name", "Bill"));
         data.set("employees", employees);
-        tmpl.render(std::cout, data);
+        tmpl.render(std::cout, data) << std::endl;
         CHECK(tmpl.errorMessage() == "");
         CHECK(tmpl.render(data) == "Steve, Bill, ");
     }
