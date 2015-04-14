@@ -1,6 +1,6 @@
 # Mustache
 
-C++11 header-only [Mustache](http://mustache.github.io) templates with no dependencies.
+C++11 header-only [Mustache](http://mustache.github.io) templates with n external dependencies.
 
 ## Example 1
 
