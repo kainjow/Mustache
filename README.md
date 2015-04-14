@@ -51,7 +51,6 @@ For Visual Studio 2013 (CMake 2.8+ required) open a command prompt, then:
 
 ## TODO
 
-- {{.}} syntax for lists of strings
 - Partials?
 - Lambdas?
 - Test against [spec](https://github.com/mustache/spec)

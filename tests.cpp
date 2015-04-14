@@ -219,6 +219,16 @@ TEST_CASE("section_lists") {
         CHECK(tmpl.render(data) == "surname=Smith, members=Steve,Joe,|surname=Lee, members=Bill,Peter,|");
     }
     
+    SECTION("dot") {
+        Mustache::Mustache<std::string> tmpl("{{#names}}Hello {{.}}, {{/names}}");
+        Data names = Data::List();
+        names.push_back(Data("Steve"));
+        names.push_back(Data("Bill"));
+        names.push_back(Data("Tim"));
+        Data data("names", names);
+        CHECK(tmpl.render(data) == "Hello Steve, Hello Bill, Hello Tim, ");
+    }
+
 }
 
 TEST_CASE("section_object") {

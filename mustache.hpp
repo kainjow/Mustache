@@ -250,6 +250,10 @@ public:
     }
     
     bool get(const StringType& name, DataType& var) const {
+        if (name.size() == 1 && name.at(0) == '.') {
+            var = *items_.front();
+            return true;
+        }
         for (const auto& item : items_) {
             if (item->get(name, var)) {
                 return true;
