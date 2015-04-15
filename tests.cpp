@@ -282,3 +282,22 @@ TEST_CASE("examples") {
     }
 
 }
+
+TEST_CASE("data") {
+    
+    using Data = Mustache::Data<std::string>;
+    Data data("age", "42");
+    data["name"] = "Steve";
+    data["is_human"] = Data::Type::True;
+    Data name, age, is_human;
+    CHECK(data.get("name", name));
+    CHECK(data.get("age", age));
+    CHECK(data.get("is_human", is_human));
+    CHECK_FALSE(data.get("miss", name));
+    REQUIRE(name.isString());
+    CHECK(name.stringValue() == "Steve");
+    REQUIRE(age.isString());
+    CHECK(age.stringValue() == "42");
+    CHECK(is_human.isTrue());
+
+}

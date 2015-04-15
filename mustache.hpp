@@ -138,9 +138,14 @@ public:
             list_.reset(new ListType(*data.list_));
         }
     }
+    
+    // Assignment
     Data& operator= (const Data& data) {
         if (&data != this) {
             type_ = data.type_;
+            obj_.reset();
+            str_.reset();
+            list_.reset();
             if (data.obj_) {
                 obj_.reset(new ObjectType(*data.obj_));
             } else if (data.str_) {
@@ -224,7 +229,11 @@ public:
     const StringType& stringValue() const {
         return *str_;
     }
-
+    
+    Data& operator[] (const StringType& key) {
+        return (*obj_)[key];
+    }
+    
 private:
     Type type_;
     std::unique_ptr<ObjectType> obj_;
