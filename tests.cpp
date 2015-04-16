@@ -385,3 +385,45 @@ TEST_CASE("partials") {
     }
 
 }
+
+TEST_CASE("lambdas") {
+    
+    using Data = Mustache::Data<std::string>;
+    
+    SECTION("basic") {
+        Mustache::Mustache<std::string> tmpl{"{{lambda}}"};
+        Data data("lambda", Data{[](const std::string&){
+            return "Hello {{planet}}";
+        }});
+        data["planet"] = "world";
+        CHECK(tmpl.render(data) == "Hello world");
+    }
+
+    SECTION("delimiters") {
+        Mustache::Mustache<std::string> tmpl{"{{= | | =}}Hello, (|&lambda|)!"};
+        Data data("lambda", Data{[](const std::string&){
+            return "|planet| => {{planet}}";
+        }});
+        data["planet"] = "world";
+        CHECK(tmpl.render(data) == "Hello, (|planet| => world)!");
+    }
+
+    SECTION("nocaching") {
+        Mustache::Mustache<std::string> tmpl{"{{lambda}} == {{{lambda}}} == {{lambda}}"};
+        int calls = 0;
+        Data data("lambda", Data{[&calls](const std::string&){
+            ++calls;
+            return std::to_string(calls);
+        }});
+        CHECK(tmpl.render(data) == "1 == 2 == 3");
+    }
+
+    SECTION("escape") {
+        Mustache::Mustache<std::string> tmpl{"<{{lambda}}{{{lambda}}}"};
+        Data data("lambda", Data{[](const std::string&){
+            return ">";
+        }});
+        CHECK(tmpl.render(data) == "<&gt;>");
+    }
+
+}
