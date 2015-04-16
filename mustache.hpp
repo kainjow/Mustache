@@ -89,10 +89,12 @@ public:
         List,
         True,
         False,
+        Partial,
     };
     
     using ObjectType = std::unordered_map<StringType, Data>;
     using ListType = std::vector<Data>;
+    using PartialType = std::function<StringType()>;
     
     // Construction
     Data() : Data(Type::Object) {
@@ -124,6 +126,9 @@ public:
     Data(const StringType& name, const Data& var) : Data() {
         set(name, var);
     }
+    Data(const PartialType& partial) : type_(Type::Partial) {
+        partial_.reset(new PartialType(partial));
+    }
     static Data List() {
         return Data(Data::Type::List);
     }
@@ -136,6 +141,8 @@ public:
             str_.reset(new StringType(*data.str_));
         } else if (data.list_) {
             list_.reset(new ListType(*data.list_));
+        } else if (data.partial_) {
+            partial_.reset(new PartialType(*data.partial_));
         }
     }
     
@@ -146,12 +153,15 @@ public:
             obj_.reset();
             str_.reset();
             list_.reset();
+            partial_.reset();
             if (data.obj_) {
                 obj_.reset(new ObjectType(*data.obj_));
             } else if (data.str_) {
                 str_.reset(new StringType(*data.str_));
             } else if (data.list_) {
                 list_.reset(new ListType(*data.list_));
+            } else if (data.partial_) {
+                partial_.reset(new PartialType(*data.partial_));
             }
         }
         return *this;
@@ -178,6 +188,9 @@ public:
     }
     bool isFalse() const {
         return type_ == Type::False;
+    }
+    bool isPartial() const {
+        return type_ == Type::Partial;
     }
     
     // Object data
@@ -234,11 +247,16 @@ public:
         return (*obj_)[key];
     }
     
+    const PartialType& partial() {
+        return (*partial_);
+    }
+    
 private:
     Type type_;
     std::unique_ptr<ObjectType> obj_;
     std::unique_ptr<StringType> str_;
     std::unique_ptr<ListType> list_;
+    std::unique_ptr<PartialType> partial_;
 };
 
 template <typename StringType>
@@ -312,10 +330,7 @@ public:
     template <typename OStream>
     OStream& render(OStream& stream, const Data<StringType>& data) const {
         Context<StringType> ctx(data);
-        walk([&stream, &ctx, this](Component& comp, int) -> WalkControl {
-            return renderComponent(stream, ctx, comp);
-        });
-        return stream;
+        return render(stream, ctx);
     }
     
     StringType render(const Data<StringType>& data) const {
@@ -582,6 +597,14 @@ private:
     }
     
     template <typename OStream>
+    OStream& render(OStream& stream, Context<StringType>& ctx) const {
+        walk([&stream, &ctx, this](Component& comp, int) -> WalkControl {
+            return renderComponent(stream, ctx, comp);
+        });
+        return stream;
+    }
+    
+    template <typename OStream>
     WalkControl renderComponent(OStream& stream, Context<StringType>& ctx, Component& comp) const {
         if (comp.isText()) {
             stream << comp.text;
@@ -621,7 +644,11 @@ private:
                 }
                 return WalkControl::Skip;
             case Tag::Type::Partial:
-                std::cout << "RENDER PARTIAL: " << tag.name << std::endl;
+                if (ctx.get(tag.name, var) && var.isPartial()) {
+                    const auto partial = var.partial();
+                    Mustache partialTemplate{partial()};
+                    partialTemplate.render(stream, ctx);
+                }
                 break;
             default:
                 break;

@@ -329,3 +329,52 @@ TEST_CASE("errors") {
     }
 
 }
+
+TEST_CASE("partials") {
+
+    using Data = Mustache::Data<std::string>;
+
+    SECTION("empty") {
+        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Data data;
+        CHECK(tmpl.render(data) == "");
+    }
+
+    SECTION("basic") {
+        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Data partial{[]() {
+            return "Hello World";
+        }};
+        Data data("header", partial);
+        CHECK(tmpl.render(data) == "Hello World");
+    }
+
+    SECTION("context") {
+        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Data partial{[]() {
+            return "Hello {{name}}";
+        }};
+        Data data("header", partial);
+        data["name"] = "Steve";
+        CHECK(tmpl.render(data) == "Hello Steve");
+    }
+    
+    SECTION("nested") {
+        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Data header{[]() {
+            return "Hello {{name}} {{>footer}}";
+        }};
+        Data footer{[]() {
+            return "Goodbye {{#names}}{{.}}|{{/names}}";
+        }};
+        Data names{Data::List()};
+        names.push_back("Jack");
+        names.push_back("Jill");
+        Data data("header", header);
+        data["name"] = "Steve";
+        data["footer"] = footer;
+        data["names"] = names;
+        CHECK(tmpl.render(data) == "Hello Steve Goodbye Jack|Jill|");
+    }
+
+}
