@@ -541,17 +541,20 @@ private:
         if (contents.size() < 5) {
             return false;
         }
-        // Must end with equal sign
         if (contents.back() != '=') {
             return false;
         }
-        // Only 1 space character allowed
-        const auto spacepos = contents.find(' ');
-        if (spacepos == StringType::npos || contents.find(' ', spacepos + 1) != StringType::npos) {
+        const auto contentsSubstr = trim(contents.substr(1, contents.size() - 2));
+        const auto spacepos = contentsSubstr.find(' ');
+        if (spacepos == StringType::npos) {
             return false;
         }
-        startDelimiter = contents.substr(1, spacepos - 1);
-        endDelimiter = contents.substr(spacepos + 1, contents.size() - (spacepos + 2));
+        const auto nonspace = contentsSubstr.find_first_not_of(' ', spacepos + 1);
+        if (nonspace == StringType::npos) {
+            return false;
+        }
+        startDelimiter = contentsSubstr.substr(0, spacepos);
+        endDelimiter = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
         return true;
     }
     

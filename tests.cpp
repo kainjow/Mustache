@@ -98,7 +98,7 @@ TEST_CASE("comments") {
 
 }
 
-TEST_CASE("setdelimiter") {
+TEST_CASE("set_delimiter") {
 
     SECTION("basic") {
         Mustache::Mustache<std::string> tmpl("{{name}}{{=<% %>=}}<% name %><%={{ }}=%>{{ name }}");
@@ -122,6 +122,13 @@ TEST_CASE("setdelimiter") {
         data.set("y", "2");
         data.set("sum", "3");
         CHECK(tmpl.render(data) == "Steve 1 + 2 = 3");
+    }
+    
+    SECTION("whitespace") {
+        Mustache::Mustache<std::string> tmpl("|{{= @   @ =}}|");
+        Mustache::Data<std::string> data;
+        REQUIRE(tmpl.isValid());
+        CHECK(tmpl.render(data) == "||");
     }
 
 }
