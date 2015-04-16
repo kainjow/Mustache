@@ -301,3 +301,31 @@ TEST_CASE("data") {
     CHECK(is_human.isTrue());
 
 }
+
+TEST_CASE("errors") {
+
+    SECTION("unclosed_section") {
+        Mustache::Mustache<std::string> tmpl("test {{#employees}}");
+        CHECK_FALSE(tmpl.isValid());
+        CHECK(tmpl.errorMessage() == "Unclosed section \"employees\" at 5");
+    }
+
+    SECTION("unclosed_tag") {
+        Mustache::Mustache<std::string> tmpl("test {{employees");
+        CHECK_FALSE(tmpl.isValid());
+        CHECK(tmpl.errorMessage() == "Unclosed tag at 5");
+    }
+    
+    SECTION("unopened_section") {
+        Mustache::Mustache<std::string> tmpl("test {{/employees}}");
+        CHECK_FALSE(tmpl.isValid());
+        CHECK(tmpl.errorMessage() == "Unopened section \"employees\" at 5");
+    }
+    
+    SECTION("invalid_set_delimiter") {
+        Mustache::Mustache<std::string> tmpl("test {{=< =}}");
+        CHECK_FALSE(tmpl.isValid());
+        CHECK(tmpl.errorMessage() == "Invalid set delimiter tag at 5");
+    }
+
+}

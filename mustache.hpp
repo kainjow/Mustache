@@ -423,7 +423,7 @@ private:
             StringSizeType tagLocationEnd = input.find(currentTagDelimiterEnd, tagContentsLocation);
             if (tagLocationEnd == StringType::npos) {
                 streamstring ss;
-                ss << "No tag end delimiter found for start delimiter at " << tagLocationStart;
+                ss << "Unclosed tag at " << tagLocationStart;
                 errorMessage_.assign(ss.str());
                 return;
             }
@@ -433,7 +433,7 @@ private:
             if (!tagContents.empty() && tagContents[0] == '=') {
                 if (!parseSetDelimiterTag(tagContents, currentDelimiterBegin, currentDelimiterEnd)) {
                     streamstring ss;
-                    ss << "Invalid set delimiter tag found at " << tagLocationStart;
+                    ss << "Invalid set delimiter tag at " << tagLocationStart;
                     errorMessage_.assign(ss.str());
                     return;
                 }
@@ -450,7 +450,7 @@ private:
             } else if (comp.tag.isSectionEnd()) {
                 if (sections.size() == 1) {
                     streamstring ss;
-                    ss << "Section end tag \"" << comp.tag.name << "\" found without start tag at " << comp.position;
+                    ss << "Unopened section \"" << comp.tag.name << "\" at " << comp.position;
                     errorMessage_.assign(ss.str());
                     return;
                 }
@@ -462,22 +462,20 @@ private:
         }
         
         // Check for sections without an ending tag
-        const Component *invalidStartPosition = nullptr;
-        walk([&invalidStartPosition](Component& comp, int) -> WalkControl {
+        walk([this](Component& comp, int) -> WalkControl {
             if (!comp.tag.isSectionBegin()) {
                 return WalkControl::Continue;
             }
             if (comp.children.empty() || !comp.children.back().tag.isSectionEnd() || comp.children.back().tag.name != comp.tag.name) {
-                invalidStartPosition = &comp;
+                streamstring ss;
+                ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
+                errorMessage_.assign(ss.str());
                 return WalkControl::Stop;
             }
             comp.children.pop_back(); // remove now useless end section component
             return WalkControl::Continue;
         });
-        if (invalidStartPosition) {
-            streamstring ss;
-            ss << "No section end tag found for section \"" << invalidStartPosition->tag.name << "\" at " << invalidStartPosition->position;
-            errorMessage_.assign(ss.str());
+        if (!errorMessage_.empty()) {
             return;
         }
     }
