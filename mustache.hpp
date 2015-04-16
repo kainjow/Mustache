@@ -247,7 +247,7 @@ public:
         return (*obj_)[key];
     }
     
-    const PartialType& partial() {
+    const PartialType& partial() const {
         return (*partial_);
     }
     
@@ -649,7 +649,7 @@ private:
             case Tag::Type::Partial:
                 if (ctx.get(tag.name, var) && var.isPartial()) {
                     const auto partial = var.partial();
-                    Mustache partialTemplate{partial()};
+                    const Mustache partialTemplate{partial()};
                     partialTemplate.render(stream, ctx);
                 }
                 break;
