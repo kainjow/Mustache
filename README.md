@@ -2,6 +2,8 @@
 
 C++11 header-only [Mustache](http://mustache.github.io) templates with no external dependencies.
 
+[![Build Status](https://travis-ci.org/kainjow/Mustache.svg?branch=master)](https://travis-ci.org/kainjow/Mustache)
+
 ## Example 1
 
 ````cpp
