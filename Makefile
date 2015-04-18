@@ -1,10 +1,13 @@
-tests:
+default:
 	g++ -O3 -Wall -Wextra -Werror -std=c++11 -o mustache tests.cpp
 	./mustache
 
-tests_mac:
+mac:
 	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -stdlib=libc++ -o mustache tests.cpp
 	./mustache
+
+clang:
+	clang++ -03 -Wall -Wextra -Werror -std=c++11 -o mustache test.cpp
 
 xcode:
 	mkdir -p build_xcode

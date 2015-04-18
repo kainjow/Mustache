@@ -26,11 +26,9 @@ tmpl.render(std::cout, {"employees", employees});
 
 ## Compilers Tested
 
-- Xcode 6.3 (Clang 3.6)
-- Xcode 4.6 (Clang 3.2)
-- GCC 4.9
-- GCC 4.8
-- Clang 3.4
+- Xcode 4.6, 6.3
+- GCC 4.8, 4.9
+- Clang 3.3, 3.4
 - Visual Studio 2013
 
 ## Run Tests
@@ -41,7 +39,7 @@ For Linux and OS X:
 
 For older versions of OS X (e.g. 10.7):
 
-    make tests_mac
+    make mac
 
 For Visual Studio 2013 (CMake 2.8+ required):
 
