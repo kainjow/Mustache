@@ -50,7 +50,7 @@ For Visual Studio 2013 (CMake 2.8+ required):
 
 ## TODO
 
-- Lambdas?
+- Lambdas sections
 - Test against [spec](https://github.com/mustache/spec)
 
 ## License
