@@ -268,24 +268,24 @@ TEST_CASE("section_object") {
 
 TEST_CASE("examples") {
     
-    using Data = Mustache::Data<std::string>;
-
     SECTION("one") {
-        Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
-        Mustache::Data<std::string> data("what", "World");
+        Mustache::Mustache<std::string> tmpl{"Hello {{what}}!"};
+        Mustache::Data<std::string> data{"what", "World"};
+		CHECK(tmpl.isValid());
+        CHECK(tmpl.errorMessage() == "");
         CHECK(tmpl.render(data) == "Hello World!");
     }
 
     SECTION("two") {
-        Mustache::Mustache<std::string> tmpl("{{#employees}}{{name}}, {{/employees}}");
-        Mustache::Data<std::string> data;
-        Data employees(Data::List());
-        employees.push_back(Data("name", "Steve"));
-        employees.push_back(Data("name", "Bill"));
-        data.set("employees", employees);
-        tmpl.render(std::cout, data) << std::endl;
+        using Data = Mustache::Data<std::string>;
+        Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+        Data employees{Data::List()};
+        employees.push_back(Data{"name", "Steve"});
+        employees.push_back(Data{"name", "Bill"});
+        tmpl.render(std::cout, Data{"employees", employees}) << std::endl;
+		CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
-        CHECK(tmpl.render(data) == "Steve, Bill, ");
+        CHECK(tmpl.render(Data{"employees", employees}) == "Steve, Bill, ");
     }
 
 }

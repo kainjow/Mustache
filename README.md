@@ -8,8 +8,8 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no extern
 ## Example 1
 
 ````cpp
-Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
-Mustache::Data<std::string> data("what", "World");
+Mustache::Mustache<std::string> tmpl{"Hello {{what}}!"};
+Mustache::Data<std::string> data{"what", "World"};
 std::cout << tmpl.render(data) << std::endl;
 // Hello World!
 ````
@@ -17,13 +17,11 @@ std::cout << tmpl.render(data) << std::endl;
 ## Example 2
 
 ````cpp
-Mustache::Mustache<std::string> tmpl("{{#employees}}{{name}}, {{/employees}}");
-Mustache::Data<std::string> data;
-Data employees(Data::List());
-employees.push_back(Data("name", "Steve"));
-employees.push_back(Data("name", "Bill"));
-data.set("employees", employees);
-tmpl.render(std::cout, data);
+using Data = Mustache::Data<std::string>;
+Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+employees.push_back(Data{"name", "Steve"});
+employees.push_back(Data{"name", "Bill"});
+tmpl.render(std::cout, Data{"employees", employees});
 // Steve, Bill, 
 ````
 
