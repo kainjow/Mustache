@@ -27,7 +27,6 @@ tmpl.render(std::cout, {"employees", employees});
 ## Example 3
 
 ````cpp
-using Data = Mustache::Data<std::string>;
 Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
 std::stringstream ss;
 tmpl.render([&ss](const std::string& str) {
