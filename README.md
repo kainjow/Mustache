@@ -9,8 +9,7 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no extern
 
 ````cpp
 Mustache::Mustache<std::string> tmpl{"Hello {{what}}!"};
-Mustache::Data<std::string> data{"what", "World"};
-std::cout << tmpl.render(data) << std::endl;
+std::cout << tmpl.render({"what", "World"}) << std::endl;
 // Hello World!
 ````
 
@@ -19,9 +18,8 @@ std::cout << tmpl.render(data) << std::endl;
 ````cpp
 using Data = Mustache::Data<std::string>;
 Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
-employees.push_back(Data{"name", "Steve"});
-employees.push_back(Data{"name", "Bill"});
-tmpl.render(std::cout, Data{"employees", employees});
+employees << Data{"name", "Steve"} << Data{"name", "Bill"};
+tmpl.render(std::cout, {"employees", employees});
 // Steve, Bill, 
 ````
 

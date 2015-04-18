@@ -270,22 +270,21 @@ TEST_CASE("examples") {
     
     SECTION("one") {
         Mustache::Mustache<std::string> tmpl{"Hello {{what}}!"};
-        Mustache::Data<std::string> data{"what", "World"};
+        std::cout << tmpl.render({"what", "World"}) << std::endl;
 		CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
-        CHECK(tmpl.render(data) == "Hello World!");
+        CHECK(tmpl.render({"what", "World"}) == "Hello World!");
     }
 
     SECTION("two") {
         using Data = Mustache::Data<std::string>;
         Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
         Data employees{Data::List()};
-        employees.push_back(Data{"name", "Steve"});
-        employees.push_back(Data{"name", "Bill"});
-        tmpl.render(std::cout, Data{"employees", employees}) << std::endl;
+        employees << Data{"name", "Steve"} << Data{"name", "Bill"};
+        tmpl.render(std::cout, {"employees", employees}) << std::endl;
 		CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
-        CHECK(tmpl.render(Data{"employees", employees}) == "Steve, Bill, ");
+        CHECK(tmpl.render({"employees", employees}) == "Steve, Bill, ");
     }
 
 }

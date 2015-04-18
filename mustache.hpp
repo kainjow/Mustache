@@ -290,6 +290,10 @@ public:
     bool isNonEmptyList() const {
         return isList() && !list_->empty();
     }
+    Data& operator<< (const Data& data) {
+        push_back(data);
+        return *this;
+    }
     
     // String data
     const StringType& stringValue() const {
