@@ -57,6 +57,10 @@ For Visual Studio 2013 (CMake 2.8+ required):
 
     build.bat
 
+For Visual Studio 2015 (CMake 3.1+ required):
+
+    build.bat 14
+
 ## TODO
 
 - Lambdas sections
