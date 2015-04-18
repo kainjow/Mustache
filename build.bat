@@ -9,7 +9,7 @@ if "%vers%" == "" set vers=12
 if "%vers%" neq "12" (
   if "%vers%" neq "14" (
     echo Invalid version "%vers%" - expected 12 or 14.
-	exit /b 1
+    exit /b 1
   )
 )
 
