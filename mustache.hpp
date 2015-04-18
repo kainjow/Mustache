@@ -336,16 +336,24 @@ public:
         return errorMessage_;
     }
     
-    template <typename OStream>
-    OStream& render(OStream& stream, const Data<StringType>& data) const {
-        Context ctx{data};
-        return render(stream, ctx);
+    template <typename StreamType>
+	StreamType& render(StreamType& stream, const Data<StringType>& data) const {
+		render([&stream](const StringType& str) {
+			stream << str;
+		}, data);
+		return stream;
     }
     
     StringType render(const Data<StringType>& data) const {
         std::basic_ostringstream<typename StringType::value_type> ss;
         return render(ss, data).str();
     }
+
+	using RenderHandler = std::function<void(const StringType&)>;
+	void render(const RenderHandler& handler, const Data<StringType>& data) const {
+		Context ctx{data};
+		render(handler, ctx);
+	}
 
 private:
     using StringSizeType = typename StringType::size_type;
@@ -640,23 +648,23 @@ private:
         }
     }
     
-    template <typename OStream>
-    OStream& render(OStream& stream, Context& ctx) const {
-        walk([&stream, &ctx, this](Component& comp, int) -> WalkControl {
-            return renderComponent(stream, ctx, comp);
+    void render(const RenderHandler& handler, Context& ctx) const {
+        walk([&handler, &ctx, this](Component& comp, int) -> WalkControl {
+            return renderComponent(handler, ctx, comp);
         });
-        return stream;
     }
     
     StringType render(Context& ctx) const {
         std::basic_ostringstream<typename StringType::value_type> ss;
-        return render(ss, ctx).str();
+		render([&ss](const StringType& str) {
+			ss << str;
+		}, ctx);
+		return ss.str();
     }
     
-    template <typename OStream>
-    WalkControl renderComponent(OStream& stream, Context& ctx, Component& comp) const {
+    WalkControl renderComponent(const RenderHandler& handler, Context& ctx, Component& comp) const {
         if (comp.isText()) {
-            stream << comp.text;
+            handler(comp.text);
             return WalkControl::Continue;
         }
         
@@ -666,24 +674,24 @@ private:
             case Tag::Type::Variable:
             case Tag::Type::UnescapedVariable:
                 if (ctx.get(tag.name, var)) {
-                    renderVariable(stream, var, ctx, tag.type == Tag::Type::Variable);
+                    renderVariable(handler, var, ctx, tag.type == Tag::Type::Variable);
                 }
                 break;
             case Tag::Type::SectionBegin:
                 if (ctx.get(tag.name, var) && !var.isFalse() && !var.isEmptyList()) {
-                    renderSection(stream, ctx, comp, var);
+                    renderSection(handler, ctx, comp, var);
                 }
                 return WalkControl::Skip;
             case Tag::Type::SectionBeginInverted:
                 if (!ctx.get(tag.name, var) || var.isFalse() || var.isEmptyList()) {
-                    renderSection(stream, ctx, comp, var);
+                    renderSection(handler, ctx, comp, var);
                 }
                 return WalkControl::Skip;
             case Tag::Type::Partial:
                 if (ctx.get(tag.name, var) && var.isPartial()) {
                     const auto partial = var.partial();
                     const Mustache partialTemplate{partial()};
-                    partialTemplate.render(stream, ctx);
+                    partialTemplate.render(handler, ctx);
                 }
                 break;
             default:
@@ -693,26 +701,24 @@ private:
         return WalkControl::Continue;
     }
     
-    template <typename OStream>
-    void renderVariable(OStream& stream, const Data<StringType>& var, Context& ctx, bool escaped) const {
+    void renderVariable(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped) const {
         if (var.isString()) {
             const auto varstr = var.stringValue();
-            stream << (escaped ? escape(varstr) : varstr);
+			handler(escaped ? escape(varstr) : varstr);
         } else if (var.isLambda()) {
             const auto lambda = var.lambda();
             const auto lambdaResult = lambda(StringType{});
             if (lambdaResult.isString()) {
                 const Mustache lambdaTemplate{lambdaResult.stringValue()};
                 const auto str = lambdaTemplate.render(ctx);
-                stream << (escaped ? escape(str) : str);
+				handler(escaped ? escape(str) : str);
             }
         }
     }
 
-    template <typename OStream>
-    void renderSection(OStream& stream, Context& ctx, Component& incomp, const Data<StringType>& var) const {
-        const auto callback = [&stream, &ctx, this](Component& comp, int) -> WalkControl {
-            return renderComponent(stream, ctx, comp);
+    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const Data<StringType>& var) const {
+        const auto callback = [&handler, &ctx, this](Component& comp, int) -> WalkControl {
+            return renderComponent(handler, ctx, comp);
         };
         if (var.isNonEmptyList()) {
             for (const auto& item : var.list()) {

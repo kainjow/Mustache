@@ -287,6 +287,18 @@ TEST_CASE("examples") {
         CHECK(tmpl.render({"employees", employees}) == "Steve, Bill, ");
     }
 
+	SECTION("three") {
+		using Data = Mustache::Data<std::string>;
+		Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
+		std::stringstream ss;
+		tmpl.render([&ss](const std::string& str) {
+			ss << str;
+		}, {"what", "World"});
+		CHECK(tmpl.isValid());
+		CHECK(tmpl.errorMessage() == "");
+		CHECK(ss.str() == "Hello World!");
+	}
+
 }
 
 TEST_CASE("data") {

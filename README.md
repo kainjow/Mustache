@@ -24,6 +24,18 @@ tmpl.render(std::cout, {"employees", employees});
 // Steve, Bill, 
 ````
 
+## Example 3
+
+````cpp
+using Data = Mustache::Data<std::string>;
+Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
+std::stringstream ss;
+tmpl.render([&ss](const std::string& str) {
+    ss << str;
+}, {"what", "World"});
+// ss.str() == "Hello World!"
+````
+
 ## Compilers Tested
 
 - Xcode 4.6, 6.3
