@@ -39,7 +39,7 @@
 namespace Mustache {
 
 template <typename StringType>
-StringType trim(const StringType &s) {
+StringType trim(const StringType& s) {
     auto it = s.begin();
     while (it != s.end() && isspace(static_cast<int>(*it))) {
         it++;
@@ -278,59 +278,6 @@ private:
 };
 
 template <typename StringType>
-class Context {
-public:
-    using DataType = Data<StringType>;
-    
-    Context(const DataType& data) {
-        push(data);
-    }
-    
-    void push(const DataType& data) {
-        items_.insert(items_.begin(), &data);
-    }
-    
-    void pop() {
-        items_.erase(items_.begin());
-    }
-    
-    bool get(const StringType& name, DataType& var) const {
-        if (name.size() == 1 && name.at(0) == '.') {
-            var = *items_.front();
-            return true;
-        }
-        for (const auto& item : items_) {
-            if (item->get(name, var)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    Context(const Context&) = delete;
-    Context& operator= (const Context&) = delete;
-
-private:
-    std::vector<const DataType*> items_;
-};
-
-// RAII wrapper for Context push/pop
-template <typename StringType>
-class ContextPusher {
-public:
-    ContextPusher(Context<StringType>& ctx, const Data<StringType> &data) : ctx_(ctx) {
-        ctx.push(data);
-    }
-    ~ContextPusher() {
-        ctx_.pop();
-    }
-    ContextPusher(const ContextPusher&) = delete;
-    ContextPusher& operator= (const ContextPusher&) = delete;
-private:
-    Context<StringType>& ctx_;
-};
-
-template <typename StringType>
 class Mustache {
 public:
     Mustache(const StringType& input) {
@@ -347,7 +294,7 @@ public:
     
     template <typename OStream>
     OStream& render(OStream& stream, const Data<StringType>& data) const {
-        Context<StringType> ctx(data);
+        Context ctx(data);
         return render(stream, ctx);
     }
     
@@ -410,6 +357,56 @@ private:
         }
     };
     
+    class Context {
+    public:
+        using DataType = Data<StringType>;
+
+        Context(const DataType& data) {
+            push(data);
+        }
+
+        void push(const DataType& data) {
+            items_.insert(items_.begin(), &data);
+        }
+
+        void pop() {
+            items_.erase(items_.begin());
+        }
+
+        bool get(const StringType& name, DataType& var) const {
+            if (name.size() == 1 && name.at(0) == '.') {
+                var = *items_.front();
+                return true;
+            }
+            for (const auto& item : items_) {
+                if (item->get(name, var)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        Context(const Context&) = delete;
+        Context& operator= (const Context&) = delete;
+
+    private:
+        std::vector<const DataType*> items_;
+    };
+
+    class ContextPusher {
+    public:
+        ContextPusher(Context& ctx, const Data<StringType>& data) : ctx_(ctx) {
+            ctx.push(data);
+        }
+        ~ContextPusher() {
+            ctx_.pop();
+        }
+        ContextPusher(const ContextPusher&) = delete;
+        ContextPusher& operator= (const ContextPusher&) = delete;
+    private:
+        Context& ctx_;
+    };
+
     void parse(const StringType& input) {
         using streamstring = std::basic_ostringstream<typename StringType::value_type>;
         
@@ -618,22 +615,21 @@ private:
     }
     
     template <typename OStream>
-    OStream& render(OStream& stream, Context<StringType>& ctx) const {
+    OStream& render(OStream& stream, Context& ctx) const {
         walk([&stream, &ctx, this](Component& comp, int) -> WalkControl {
             return renderComponent(stream, ctx, comp);
         });
         return stream;
     }
     
-    StringType render(Context<StringType>& ctx) const {
+    StringType render(Context& ctx) const {
         using streamstring = std::basic_ostringstream<typename StringType::value_type>;
         streamstring ss;
         return render(ss, ctx).str();
     }
-
     
     template <typename OStream>
-    WalkControl renderComponent(OStream& stream, Context<StringType>& ctx, Component& comp) const {
+    WalkControl renderComponent(OStream& stream, Context& ctx, Component& comp) const {
         if (comp.isText()) {
             stream << comp.text;
             return WalkControl::Continue;
@@ -673,7 +669,7 @@ private:
     }
     
     template <typename OStream>
-    void renderVariable(OStream& stream, const Data<StringType>& var, Context<StringType>& ctx, bool escaped) const {
+    void renderVariable(OStream& stream, const Data<StringType>& var, Context& ctx, bool escaped) const {
         if (var.isString()) {
             const auto varstr = var.stringValue();
             stream << (escaped ? escape(varstr) : varstr);
@@ -689,17 +685,17 @@ private:
     }
 
     template <typename OStream>
-    void renderSection(OStream& stream, Context<StringType>& ctx, Component& incomp, const Data<StringType>& var) const {
+    void renderSection(OStream& stream, Context& ctx, Component& incomp, const Data<StringType>& var) const {
         const auto callback = [&stream, &ctx, this](Component& comp, int) -> WalkControl {
             return renderComponent(stream, ctx, comp);
         };
         if (var.isNonEmptyList()) {
             for (const auto& item : var.list()) {
-                ContextPusher<StringType> ctxpusher(ctx, item);
+                ContextPusher ctxpusher(ctx, item);
                 walkChildren(callback, incomp);
             }
         } else if (var.isObject()) {
-            ContextPusher<StringType> ctxpusher(ctx, var);
+            ContextPusher ctxpusher(ctx, var);
             walkChildren(callback, incomp);
         } else {
             walkChildren(callback, incomp);
