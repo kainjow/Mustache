@@ -38,15 +38,15 @@ tmpl.render(std::cout, data);
 
 ## Run Tests
 
-For Linux and OS X, run
+For Linux and OS X:
 
     make
 
-For older versions of OS X (e.g. 10.7), run
+For older versions of OS X (e.g. 10.7):
 
     make tests_mac
 
-For Visual Studio 2013 (CMake 2.8+ required) open a command prompt, then:
+For Visual Studio 2013 (CMake 2.8+ required):
 
     build.bat
 
