@@ -6,7 +6,7 @@ if not exist build mkdir build
 pushd build
 
 :: run CMake
-cmake ..
+cmake -G "Visual Studio 12" ..
 if %errorlevel% neq 0 popd & exit /b %errorlevel%
 
 :: build with CMake
