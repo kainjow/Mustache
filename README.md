@@ -33,11 +33,11 @@ tmpl.render(std::cout, {"employees", employees});
 
 ## Run Tests
 
-For Linux and OS X:
+For *nix:
 
     make
 
-For older versions of OS X (e.g. 10.7):
+For OS X:
 
     make mac
 
