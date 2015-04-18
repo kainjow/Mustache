@@ -427,7 +427,7 @@ private:
 
     class ContextPusher {
     public:
-        ContextPusher(Context& ctx, const Data<StringType>& data) : ctx_{ctx} {
+        ContextPusher(Context& ctx, const Data<StringType>& data) : ctx_(ctx) {
             ctx.push(data);
         }
         ~ContextPusher() {
