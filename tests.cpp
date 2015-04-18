@@ -288,7 +288,6 @@ TEST_CASE("examples") {
     }
 
 	SECTION("three") {
-		using Data = Mustache::Data<std::string>;
 		Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
 		std::stringstream ss;
 		tmpl.render([&ss](const std::string& str) {
