@@ -293,19 +293,40 @@ TEST_CASE("examples") {
 TEST_CASE("data") {
     
     using Data = Mustache::Data<std::string>;
-    Data data("age", "42");
-    data["name"] = "Steve";
-    data["is_human"] = Data::Type::True;
-    Data name, age, is_human;
-    CHECK(data.get("name", name));
-    CHECK(data.get("age", age));
-    CHECK(data.get("is_human", is_human));
-    CHECK_FALSE(data.get("miss", name));
-    REQUIRE(name.isString());
-    CHECK(name.stringValue() == "Steve");
-    REQUIRE(age.isString());
-    CHECK(age.stringValue() == "42");
-    CHECK(is_human.isTrue());
+
+    SECTION("types") {
+        Data data("age", "42");
+        data["name"] = "Steve";
+        data["is_human"] = Data::Type::True;
+        Data name, age, is_human;
+        CHECK(data.get("name", name));
+        CHECK(data.get("age", age));
+        CHECK(data.get("is_human", is_human));
+        CHECK_FALSE(data.get("miss", name));
+        REQUIRE(name.isString());
+        CHECK(name.stringValue() == "Steve");
+        REQUIRE(age.isString());
+        CHECK(age.stringValue() == "42");
+        CHECK(is_human.isTrue());
+    }
+
+    SECTION("move_ctor") {
+        Data obj1{Data::List()};
+        CHECK(obj1.isList());
+        Data obj2{std::move(obj1)};
+        CHECK(obj2.isList());
+        CHECK(obj1.type() == Data::Type::Invalid);
+        obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
+    }
+
+    SECTION("move_assign") {
+        Data obj1{Data::List()};
+        CHECK(obj1.isList());
+        Data obj2 = std::move(obj1);
+        CHECK(obj2.isList());
+        CHECK(obj1.type() == Data::Type::Invalid);
+        obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
+    }
 
 }
 

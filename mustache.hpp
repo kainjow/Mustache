@@ -91,6 +91,7 @@ public:
         False,
         Partial,
         Lambda,
+        Invalid,
     };
     
     using ObjectType = std::unordered_map<StringType, Data>;
@@ -173,6 +174,45 @@ public:
             } else if (data.lambda_) {
                 lambda_.reset(new LambdaType(*data.lambda_));
             }
+        }
+        return *this;
+    }
+
+    // Move
+    Data(Data&& data) : type_{data.type_} {
+        if (data.obj_) {
+            obj_ = std::move(data.obj_);
+        } else if (data.str_) {
+            str_ = std::move(data.str_);
+        } else if (data.list_) {
+            list_ = std::move(data.list_);
+        } else if (data.partial_) {
+            partial_ = std::move(data.partial_);
+        } else if (data.lambda_) {
+            lambda_ = std::move(data.lambda_);
+        }
+        data.type_ = Data::Type::Invalid;
+    }
+    Data& operator= (Data&& data) {
+        if (this != &data) {
+            obj_.reset();
+            str_.reset();
+            list_.reset();
+            partial_.reset();
+            lambda_.reset();
+            if (data.obj_) {
+                obj_ = std::move(data.obj_);
+            } else if (data.str_) {
+                str_ = std::move(data.str_);
+            } else if (data.list_) {
+                list_ = std::move(data.list_);
+            } else if (data.partial_) {
+                partial_ = std::move(data.partial_);
+            } else if (data.lambda_) {
+                lambda_ = std::move(data.lambda_);
+            }
+            type_ = data.type_;
+            data.type_ = Data::Type::Invalid;
         }
         return *this;
     }
