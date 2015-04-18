@@ -349,29 +349,29 @@ TEST_CASE("partials") {
 
     SECTION("basic") {
         Mustache::Mustache<std::string> tmpl{"{{>header}}"};
-        Data partial{[]() {
+        Data::PartialType partial = []() {
             return "Hello World";
-        }};
-        Data data("header", partial);
+        };
+        Data data("header", Data{partial});
         CHECK(tmpl.render(data) == "Hello World");
     }
 
     SECTION("context") {
         Mustache::Mustache<std::string> tmpl{"{{>header}}"};
-        Data partial{[]() {
+        Data::PartialType partial{[]() {
             return "Hello {{name}}";
         }};
-        Data data("header", partial);
+        Data data("header", Data{partial});
         data["name"] = "Steve";
         CHECK(tmpl.render(data) == "Hello Steve");
     }
     
     SECTION("nested") {
         Mustache::Mustache<std::string> tmpl{"{{>header}}"};
-        Data header{[]() {
+        Data::PartialType header{[]() {
             return "Hello {{name}} {{>footer}}";
         }};
-        Data footer{[]() {
+        Data::PartialType footer{[]() {
             return "Goodbye {{#names}}{{.}}|{{/names}}";
         }};
         Data names{Data::List()};
@@ -379,8 +379,8 @@ TEST_CASE("partials") {
         names.push_back("Jill");
         Data data("header", header);
         data["name"] = "Steve";
-        data["footer"] = footer;
-        data["names"] = names;
+        data["footer"] = Data{footer};
+        data["names"] = Data{names};
         CHECK(tmpl.render(data) == "Hello Steve Goodbye Jack|Jill|");
     }
 
@@ -392,18 +392,18 @@ TEST_CASE("lambdas") {
     
     SECTION("basic") {
         Mustache::Mustache<std::string> tmpl{"{{lambda}}"};
-        Data data("lambda", Data{[](const std::string&){
+        Data data("lambda", Data{Data::LambdaType{[](const std::string&){
             return "Hello {{planet}}";
-        }});
+        }}});
         data["planet"] = "world";
         CHECK(tmpl.render(data) == "Hello world");
     }
 
     SECTION("delimiters") {
         Mustache::Mustache<std::string> tmpl{"{{= | | =}}Hello, (|&lambda|)!"};
-        Data data("lambda", Data{[](const std::string&){
+        Data data("lambda", Data{Data::LambdaType{[](const std::string&){
             return "|planet| => {{planet}}";
-        }});
+        }}});
         data["planet"] = "world";
         CHECK(tmpl.render(data) == "Hello, (|planet| => world)!");
     }
@@ -411,18 +411,18 @@ TEST_CASE("lambdas") {
     SECTION("nocaching") {
         Mustache::Mustache<std::string> tmpl{"{{lambda}} == {{{lambda}}} == {{lambda}}"};
         int calls = 0;
-        Data data("lambda", Data{[&calls](const std::string&){
+        Data data("lambda", Data{Data::LambdaType{[&calls](const std::string&){
             ++calls;
             return std::to_string(calls);
-        }});
+        }}});
         CHECK(tmpl.render(data) == "1 == 2 == 3");
     }
 
     SECTION("escape") {
         Mustache::Mustache<std::string> tmpl{"<{{lambda}}{{{lambda}}}"};
-        Data data("lambda", Data{[](const std::string&){
+        Data data("lambda", Data{Data::LambdaType{[](const std::string&){
             return ">";
-        }});
+        }}});
         CHECK(tmpl.render(data) == "<&gt;>");
     }
 
