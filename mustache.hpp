@@ -304,19 +304,6 @@ public:
         return render(ss, data).str();
     }
 
-    template <typename OStream>
-    void print(OStream& stream) {
-        walk([&stream](Component& comp, int depth) -> WalkControl {
-            const StringType indent = depth >= 1 ? StringType(depth, ' ') : StringType();
-            if (comp.isTag()) {
-                stream << indent << "TAG: {{" << comp.tag.name << "}}" << std::endl;
-            } else {
-                stream << indent << "TXT: " << comp.text << std::endl;
-            }
-            return WalkControl::Continue;
-        });
-    }
-    
 private:
     using StringSizeType = typename StringType::size_type;
 
