@@ -18,6 +18,7 @@ std::cout << tmpl.render({"what", "World"}) << std::endl;
 ````cpp
 using Data = Mustache::Data<std::string>;
 Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+Data employees{Data::List()};
 employees << Data{"name", "Steve"} << Data{"name", "Bill"};
 tmpl.render(std::cout, {"employees", employees});
 // Steve, Bill, 
