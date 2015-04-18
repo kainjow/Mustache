@@ -29,7 +29,7 @@ tmpl.render(std::cout, {"employees", employees});
 - Xcode 4.6, 6.3
 - GCC 4.8, 4.9
 - Clang 3.3, 3.4
-- Visual Studio 2013
+- Visual Studio 2013, 2015 CTP
 
 ## Run Tests
 
