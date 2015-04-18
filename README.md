@@ -47,9 +47,7 @@ For older versions of OS X (e.g. 10.7), run
 
 For Visual Studio 2013 (CMake 2.8+ required) open a command prompt, then:
 
-    cmake .
-    cmake --build .
-    Debug\mustache.exe
+    build.bat
 
 ## TODO
 
