@@ -48,7 +48,7 @@ StringType trim(const StringType& s) {
     while (rit.base() != it && isspace(*rit)) {
         rit++;
     }
-    return StringType(it, rit.base());
+    return {it, rit.base()};
 }
 
 template <typename StringType>
@@ -101,41 +101,41 @@ public:
     // Construction
     Data() : Data(Type::Object) {
     }
-    Data(const StringType& string) : type_(Type::String) {
+    Data(const StringType& string) : type_{Type::String} {
         str_.reset(new StringType(string));
     }
-    Data(const typename StringType::value_type* string) : type_(Type::String) {
+    Data(const typename StringType::value_type* string) : type_{Type::String} {
         str_.reset(new StringType(string));
     }
-    Data(const ListType& list) : type_(Type::List) {
+    Data(const ListType& list) : type_{Type::List} {
         list_.reset(new ListType(list));
     }
-    Data(Type type) : type_(type) {
+    Data(Type type) : type_{type} {
         switch (type_) {
             case Type::Object:
-                obj_.reset(new ObjectType());
+                obj_.reset(new ObjectType);
                 break;
             case Type::String:
-                str_.reset(new StringType());
+                str_.reset(new StringType);
                 break;
             case Type::List:
-                list_.reset(new ListType());
+                list_.reset(new ListType);
                 break;
             default:
                 break;
         }
     }
-    Data(const StringType& name, const Data& var) : Data() {
+    Data(const StringType& name, const Data& var) : Data{} {
         set(name, var);
     }
-    Data(const PartialType& partial) : type_(Type::Partial) {
+    Data(const PartialType& partial) : type_{Type::Partial} {
         partial_.reset(new PartialType(partial));
     }
-    Data(const LambdaType& lambda) : type_(Type::Lambda) {
+    Data(const LambdaType& lambda) : type_{Type::Lambda} {
         lambda_.reset(new LambdaType(lambda));
     }
     static Data List() {
-        return Data(Data::Type::List);
+        return {Data::Type::List};
     }
     
     // Copying
@@ -209,7 +209,7 @@ public:
     // Object data
     void set(const StringType& name, const Data& var) {
         if (isObject()) {
-            obj_->insert(std::pair<StringType,Data>(name, var));
+            obj_->insert(std::pair<StringType,Data>{name, var});
         }
     }
     bool exists(const StringType& name) {
@@ -294,13 +294,12 @@ public:
     
     template <typename OStream>
     OStream& render(OStream& stream, const Data<StringType>& data) const {
-        Context ctx(data);
+        Context ctx{data};
         return render(stream, ctx);
     }
     
     StringType render(const Data<StringType>& data) const {
-        using streamstring = std::basic_ostringstream<typename StringType::value_type>;
-        streamstring ss;
+        std::basic_ostringstream<typename StringType::value_type> ss;
         return render(ss, data).str();
     }
 
@@ -342,6 +341,8 @@ private:
         bool isTag() const {
             return text.empty();
         }
+        Component() {}
+        Component(const StringType& t, StringSizeType p) : text(t), position(p) {}
     };
     
     class Context {
@@ -382,7 +383,7 @@ private:
 
     class ContextPusher {
     public:
-        ContextPusher(Context& ctx, const Data<StringType>& data) : ctx_(ctx) {
+        ContextPusher(Context& ctx, const Data<StringType>& data) : ctx_{ctx} {
             ctx.push(data);
         }
         ~ContextPusher() {
@@ -400,44 +401,39 @@ private:
         const StringType braceDelimiterBegin(2, '{');
         const StringType braceDelimiterEnd(2, '}');
         const StringType braceDelimiterEndUnescaped(3, '}');
-        const StringSizeType inputSize = input.size();
+        const StringSizeType inputSize{input.size()};
         
-        StringType currentDelimiterBegin(braceDelimiterBegin);
-        StringType currentDelimiterEnd(braceDelimiterEnd);
-        bool currentDelimiterIsBrace = true;
+        StringType currentDelimiterBegin{braceDelimiterBegin};
+        StringType currentDelimiterEnd{braceDelimiterEnd};
+        bool currentDelimiterIsBrace{true};
         
-        std::vector<Component*> sections;
-        sections.push_back(&rootComponent_);
+        std::vector<Component*> sections{&rootComponent_};
         
-        StringSizeType inputPosition = 0;
+        StringSizeType inputPosition{0};
         while (inputPosition != inputSize) {
             
             // Find the next tag start delimiter
-            const StringSizeType tagLocationStart = input.find(currentDelimiterBegin, inputPosition);
+            const StringSizeType tagLocationStart{input.find(currentDelimiterBegin, inputPosition)};
             if (tagLocationStart == StringType::npos) {
                 // No tag found. Add the remaining text.
-                Component comp;
-                comp.text = StringType(input, inputPosition, inputSize - inputPosition);
-                comp.position = inputPosition;
+                const Component comp{{input, inputPosition, inputSize - inputPosition}, inputPosition};
                 sections.back()->children.push_back(comp);
                 break;
             } else if (tagLocationStart != inputPosition) {
                 // Tag found, add text up to this tag.
-                Component comp;
-                comp.text = StringType(input, inputPosition, tagLocationStart - inputPosition);
-                comp.position = inputPosition;
+                const Component comp{{input, inputPosition, tagLocationStart - inputPosition}, inputPosition};
                 sections.back()->children.push_back(comp);
             }
             
             // Find the next tag end delimiter
-            StringSizeType tagContentsLocation = tagLocationStart + currentDelimiterBegin.size();
-            const bool tagIsUnescapedVar = currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == braceDelimiterBegin.at(0);
-            const StringType& currentTagDelimiterEnd(tagIsUnescapedVar ? braceDelimiterEndUnescaped : currentDelimiterEnd);
+            StringSizeType tagContentsLocation{tagLocationStart + currentDelimiterBegin.size()};
+            const bool tagIsUnescapedVar{currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == braceDelimiterBegin.at(0)};
+            const StringType& currentTagDelimiterEnd{tagIsUnescapedVar ? braceDelimiterEndUnescaped : currentDelimiterEnd};
             const auto currentTagDelimiterEndSize = currentTagDelimiterEnd.size();
             if (tagIsUnescapedVar) {
                 ++tagContentsLocation;
             }
-            StringSizeType tagLocationEnd = input.find(currentTagDelimiterEnd, tagContentsLocation);
+            StringSizeType tagLocationEnd{input.find(currentTagDelimiterEnd, tagContentsLocation)};
             if (tagLocationEnd == StringType::npos) {
                 streamstring ss;
                 ss << "Unclosed tag at " << tagLocationStart;
@@ -446,7 +442,7 @@ private:
             }
             
             // Parse tag
-            StringType tagContents(trim(StringType(input, tagContentsLocation, tagLocationEnd - tagContentsLocation)));
+            const StringType tagContents{trim(StringType{input, tagContentsLocation, tagLocationEnd - tagContentsLocation})};
             if (!tagContents.empty() && tagContents[0] == '=') {
                 if (!parseSetDelimiterTag(tagContents, currentDelimiterBegin, currentDelimiterEnd)) {
                     streamstring ss;
@@ -510,15 +506,14 @@ private:
 
     void walkChildren(const WalkCallback& callback, const Component& comp) const {
         for (auto childComp : comp.children) {
-            const WalkControl control = walkComponent(callback, childComp);
-            if (control != WalkControl::Continue) {
+            if (walkComponent(callback, childComp) != WalkControl::Continue) {
                 break;
             }
         }
     }
     
     WalkControl walkComponent(const WalkCallback& callback, Component& comp, int depth = 0) const {
-        WalkControl control = callback(comp, depth);
+        WalkControl control{callback(comp, depth)};
         if (control == WalkControl::Stop) {
             return control;
         } else if (control == WalkControl::Skip) {
@@ -594,7 +589,7 @@ private:
             if (tag.type == Tag::Type::Variable) {
                 tag.name = contents;
             } else {
-                StringType name(contents);
+                StringType name{contents};
                 name.erase(name.begin());
                 tag.name = trim(name);
             }
@@ -610,8 +605,7 @@ private:
     }
     
     StringType render(Context& ctx) const {
-        using streamstring = std::basic_ostringstream<typename StringType::value_type>;
-        streamstring ss;
+        std::basic_ostringstream<typename StringType::value_type> ss;
         return render(ss, ctx).str();
     }
     
@@ -622,7 +616,7 @@ private:
             return WalkControl::Continue;
         }
         
-        const Tag& tag(comp.tag);
+        const Tag& tag{comp.tag};
         Data<StringType> var;
         switch (tag.type) {
             case Tag::Type::Variable:
@@ -678,11 +672,11 @@ private:
         };
         if (var.isNonEmptyList()) {
             for (const auto& item : var.list()) {
-                ContextPusher ctxpusher(ctx, item);
+                const ContextPusher ctxpusher{ctx, item};
                 walkChildren(callback, incomp);
             }
         } else if (var.isObject()) {
-            ContextPusher ctxpusher(ctx, var);
+            const ContextPusher ctxpusher{ctx, var};
             walkChildren(callback, incomp);
         } else {
             walkChildren(callback, incomp);
