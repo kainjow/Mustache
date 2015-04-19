@@ -252,24 +252,21 @@ public:
             obj_->insert(std::pair<StringType,Data>{name, var});
         }
     }
-    bool exists(const StringType& name) {
-        if (isObject()) {
-            if (obj_->find(name) == obj_->end()) {
-                return true;
-            }
+    bool exists(const StringType& name) const {
+        if (isObject() && obj_->find(name) == obj_->end()) {
+            return true;
         }
         return false;
     }
-    bool get(const StringType& name, Data& var) const {
+    const Data* get(const StringType& name) const {
         if (!isObject()) {
-            return false;
+            return nullptr;
         }
         const auto& it = obj_->find(name);
         if (it == obj_->end()) {
-            return false;
+            return nullptr;
         }
-        var = it->second;
-        return true;
+        return &it->second;
     }
     
     // List data
@@ -277,9 +274,6 @@ public:
         if (isList()) {
             list_->push_back(var);
         }
-    }
-    const Data& operator[] (size_t i) const {
-        return list_->at(i);
     }
     const ListType& list() const {
         return *list_;
@@ -356,7 +350,7 @@ public:
 
 	using RenderHandler = std::function<void(const StringType&)>;
 	void render(const Data<StringType>& data, const RenderHandler& handler) {
-        Context ctx{data};
+        Context ctx{&data};
 		render(handler, ctx);
 	}
 
@@ -429,32 +423,55 @@ private:
     public:
         using DataType = Data<StringType>;
 
-        Context(const DataType& data) {
+        Context(const DataType* data) {
             push(data);
         }
 
         Context() {
         }
 
-        void push(const DataType& data) {
-            items_.insert(items_.begin(), &data);
+        void push(const DataType* data) {
+            items_.insert(items_.begin(), data);
         }
 
         void pop() {
             items_.erase(items_.begin());
         }
-
-        bool get(const StringType& name, DataType& var) const {
-            if (name.size() == 1 && name.at(0) == '.') {
-                var = *items_.front();
-                return true;
+        
+        static std::vector<StringType> split(const StringType& s, char delim) {
+            std::vector<StringType> elems;
+            std::stringstream ss(s);
+            std::string item;
+            while (std::getline(ss, item, delim)) {
+                elems.push_back(item);
             }
+            return elems;
+        }
+
+        const DataType* get(const StringType& name) const {
+            // process {{.}} name
+            if (name.size() == 1 && name.at(0) == '.') {
+                return items_.front();
+            }
+            // process {{a.b.c}} name
+            if (name.find('.', 1) != StringType::npos) {
+                const DataType* var{items_.front()};
+                for (const auto& n : split(name, '.')) {
+                    var = var->get(n);
+                    if (!var) {
+                        return nullptr;
+                    }
+                }
+                return var;
+            }
+            // process normal name
             for (const auto& item : items_) {
-                if (item->get(name, var)) {
-                    return true;
+                const auto var = item->get(name);
+                if (var) {
+                    return var;
                 }
             }
-            return false;
+            return nullptr;
         }
 
         Context(const Context&) = delete;
@@ -468,7 +485,7 @@ private:
 
     class ContextPusher {
     public:
-        ContextPusher(Context& ctx, const Data<StringType>& data) : ctx_(ctx) {
+        ContextPusher(Context& ctx, const Data<StringType>* data) : ctx_(ctx) {
             ctx.push(data);
         }
         ~ContextPusher() {
@@ -710,35 +727,35 @@ private:
         }
         
         const Tag& tag{comp.tag};
-        Data<StringType> var;
+        const Data<StringType>* var = nullptr;
         switch (tag.type) {
             case Tag::Type::Variable:
             case Tag::Type::UnescapedVariable:
-                if (ctx.get(tag.name, var)) {
+                if ((var = ctx.get(tag.name)) != nullptr) {
                     if (!renderVariable(handler, var, ctx, tag.type == Tag::Type::Variable)) {
                         return WalkControl::Stop;
                     }
                 }
                 break;
             case Tag::Type::SectionBegin:
-                if (ctx.get(tag.name, var)) {
-                    if (var.isLambda()) {
+                if ((var = ctx.get(tag.name)) != nullptr) {
+                    if (var->isLambda()) {
                         if (!renderLambda(handler, var, ctx, false, *comp.tag.sectionText, true)) {
                             return WalkControl::Stop;
                         }
-                    } else if (!var.isFalse() && !var.isEmptyList()) {
+                    } else if (!var->isFalse() && !var->isEmptyList()) {
                         renderSection(handler, ctx, comp, var);
                     }
                 }
                 return WalkControl::Skip;
             case Tag::Type::SectionBeginInverted:
-                if (!ctx.get(tag.name, var) || var.isFalse() || var.isEmptyList()) {
+                if ((var = ctx.get(tag.name)) == nullptr || var->isFalse() || var->isEmptyList()) {
                     renderSection(handler, ctx, comp, var);
                 }
                 return WalkControl::Skip;
             case Tag::Type::Partial:
-                if (ctx.get(tag.name, var) && var.isPartial()) {
-                    const auto partial = var.partial();
+                if ((var = ctx.get(tag.name)) != nullptr && var->isPartial()) {
+                    const auto partial = var->partial();
                     Mustache tmpl{partial()};
                     if (!tmpl.isValid()) {
                         errorMessage_ = tmpl.errorMessage();
@@ -763,8 +780,8 @@ private:
         return WalkControl::Continue;
     }
     
-    bool renderLambda(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
-        const auto lambdaResult = var.callLambda(text);
+    bool renderLambda(const RenderHandler& handler, const Data<StringType>* var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
+        const auto lambdaResult = var->callLambda(text);
         if (!lambdaResult.isString()) {
             return true;
         }
@@ -782,26 +799,26 @@ private:
         return tmpl.isValid();
     }
     
-    bool renderVariable(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped) {
-        if (var.isString()) {
-            const auto varstr = var.stringValue();
+    bool renderVariable(const RenderHandler& handler, const Data<StringType>* var, Context& ctx, bool escaped) {
+        if (var->isString()) {
+            const auto varstr = var->stringValue();
 			handler(escaped ? escape(varstr) : varstr);
-        } else if (var.isLambda()) {
+        } else if (var->isLambda()) {
             return renderLambda(handler, var, ctx, escaped, {}, false);
         }
         return true;
     }
 
-    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const Data<StringType>& var) {
+    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const Data<StringType>* var) {
         const auto callback = [&handler, &ctx, this](Component& comp, int) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };
-        if (var.isNonEmptyList()) {
-            for (const auto& item : var.list()) {
-                const ContextPusher ctxpusher{ctx, item};
+        if (var && var->isNonEmptyList()) {
+            for (const auto& item : var->list()) {
+                const ContextPusher ctxpusher{ctx, &item};
                 walkChildren(callback, incomp);
             }
-        } else if (var.isObject()) {
+        } else if (var && var->isObject()) {
             const ContextPusher ctxpusher{ctx, var};
             walkChildren(callback, incomp);
         } else {

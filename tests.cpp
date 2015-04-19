@@ -308,16 +308,21 @@ TEST_CASE("data") {
         Data data("age", "42");
         data["name"] = "Steve";
         data["is_human"] = Data::Type::True;
-        Data name, age, is_human;
-        CHECK(data.get("name", name));
-        CHECK(data.get("age", age));
-        CHECK(data.get("is_human", is_human));
-        CHECK_FALSE(data.get("miss", name));
-        REQUIRE(name.isString());
-        CHECK(name.stringValue() == "Steve");
-        REQUIRE(age.isString());
-        CHECK(age.stringValue() == "42");
-        CHECK(is_human.isTrue());
+        const Data* name;
+        const Data* age;
+        const Data* is_human;
+        name = data.get("name");
+        age = data.get("age");
+        is_human = data.get("is_human");
+        CHECK(name != 0);
+        CHECK(age != 0);
+        CHECK(is_human != 0);
+        CHECK(data.get("miss") == 0);
+        REQUIRE(name->isString());
+        CHECK(name->stringValue() == "Steve");
+        REQUIRE(age->isString());
+        CHECK(age->stringValue() == "42");
+        CHECK(is_human->isTrue());
     }
 
     SECTION("move_ctor") {
@@ -525,6 +530,58 @@ TEST_CASE("lambdas") {
         }}});
         data["static"] = "static";
         CHECK(tmpl.render(data) == "<>");
+    }
+
+}
+
+TEST_CASE("dotted_names") {
+    
+    using Data = Mustache::Data<std::string>;
+    
+    SECTION("basic") {
+        Mustache::Mustache<std::string> tmpl{"\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\""};
+        Data person{"name", "Joe"};
+        CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
+    }
+
+    SECTION("triple_mustache") {
+        Mustache::Mustache<std::string> tmpl{"\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{{/person}}}\""};
+        Data person{"name", "Joe"};
+        CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
+    }
+
+    SECTION("ampersand") {
+        Mustache::Mustache<std::string> tmpl{"\"{{&person.name}}\" == \"{{#person}}{{&name}}{{{/person}}}\""};
+        Data person{"name", "Joe"};
+        CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
+    }
+
+    SECTION("depth") {
+        Mustache::Mustache<std::string> tmpl{"\"{{a.b.c.d.e.name}}\" == \"Phil\""};
+        Data data{"a", {"b", {"c", {"d", {"e", {"name", "Phil"}}}}}};
+        CHECK(tmpl.render(data) == "\"Phil\" == \"Phil\"");
+    }
+
+    SECTION("broken_chains1") {
+        Mustache::Mustache<std::string> tmpl{"\"{{a.b.c}}\" == \"\""};
+        Data data{"a", Data::List()};
+        CHECK(tmpl.render(data) == "\"\" == \"\"");
+    }
+
+    SECTION("broken_chains2") {
+        Mustache::Mustache<std::string> tmpl{"\"{{a.b.c.name}}\" == \"\""};
+        Data data;
+        data["a"] = {"b", Data::List()};
+        data["c"] = {"name", "Jim"};
+        CHECK(tmpl.render(data) == "\"\" == \"\"");
+    }
+
+    SECTION("depth2") {
+        Mustache::Mustache<std::string> tmpl{"\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\""};
+        Data data;
+        data["a"] = {"b", {"c", {"d", {"e", {"name", "Phil"}}}}};
+        data["b"] = {"c", {"d", {"e", {"name", "Wrong"}}}};
+        CHECK(tmpl.render(data) == "\"Phil\" == \"Phil\"");
     }
 
 }
