@@ -62,7 +62,6 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## TODO
 
-- Lambdas sections
 - Test against [spec](https://github.com/mustache/spec)
 
 ## License

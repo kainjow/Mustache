@@ -456,5 +456,49 @@ TEST_CASE("lambdas") {
         }}});
         CHECK(tmpl.render(data) == "<&gt;>");
     }
+    
+    SECTION("section") {
+        Mustache::Mustache<std::string> tmpl{"<{{#lambda}}{{x}}{{/lambda}}>"};
+        Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
+            return text == "{{x}}" ? "yes" : "no";
+        }}});
+        CHECK(tmpl.render(data) == "<yes>");
+    }
+
+    SECTION("section_expansion") {
+        Mustache::Mustache<std::string> tmpl{"<{{#lambda}}-{{/lambda}}>"};
+        Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
+            return text + "{{planet}}" + text;
+        }}});
+        data["planet"] = "Earth";
+        CHECK(tmpl.render(data) == "<-Earth->");
+    }
+
+    SECTION("section_alternate_delimiters") {
+        Mustache::Mustache<std::string> tmpl{"{{= | | =}}<|#lambda|-|/lambda|>"};
+        Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
+            return text + "{{planet}} => |planet|" + text;
+        }}});
+        data["planet"] = "Earth";
+        CHECK(tmpl.render(data) == "<-{{planet}} => Earth->");
+    }
+
+    SECTION("section_multiple_calls") {
+        Mustache::Mustache<std::string> tmpl{"{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}"};
+        Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
+            return "__" + text + "__";
+        }}});
+        CHECK(tmpl.render(data) == "__FILE__ != __LINE__");
+    }
+
+    SECTION("section_inverted") {
+        Mustache::Mustache<std::string> tmpl{"<{{^lambda}}{{static}}{{/lambda}}>"};
+        Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
+            CHECK(text == "{{static}}");
+            return Data::Type::False;
+        }}});
+        data["static"] = "static";
+        CHECK(tmpl.render(data) == "<>");
+    }
 
 }

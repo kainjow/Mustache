@@ -312,6 +312,10 @@ public:
         return (*lambda_);
     }
     
+    Data<StringType> callLambda(const StringType& text) const {
+        return (*lambda_)(text);
+    }
+
 private:
     Type type_;
     std::unique_ptr<ObjectType> obj_;
@@ -325,7 +329,8 @@ template <typename StringType>
 class Mustache {
 public:
     Mustache(const StringType& input) {
-        parse(input);
+        Context ctx;
+        parse(input, ctx);
     }
     
     bool isValid() const {
@@ -351,13 +356,34 @@ public:
 
 	using RenderHandler = std::function<void(const StringType&)>;
 	void render(const RenderHandler& handler, const Data<StringType>& data) const {
-		Context ctx{data};
+        Context ctx{data};
 		render(handler, ctx);
 	}
 
 private:
     using StringSizeType = typename StringType::size_type;
-
+    
+    class DelimiterSet {
+    public:
+        StringType begin;
+        StringType end;
+        DelimiterSet() {
+            reset();
+        }
+        DelimiterSet(const StringType& b, const StringType& e) : begin(b), end(e) {}
+        bool isDefault() const { return begin == defaultBegin() && end == defaultEnd(); }
+        void reset() {
+            begin = defaultBegin();
+            end = defaultEnd();
+        }
+        static StringType defaultBegin() {
+            return StringType(2, '{');
+        }
+        static StringType defaultEnd() {
+            return StringType(2, '}');
+        }
+    };
+    
     class Tag {
     public:
         enum class Type {
@@ -373,6 +399,8 @@ private:
         };
         StringType name;
         Type type = Type::Invalid;
+        std::shared_ptr<StringType> sectionText;
+        std::shared_ptr<DelimiterSet> delimiterSet;
         bool isSectionBegin() const {
             return type == Type::SectionBegin || type == Type::SectionBeginInverted;
         }
@@ -388,10 +416,10 @@ private:
         std::vector<Component> children;
         StringSizeType position = StringType::npos;
         bool isText() const {
-            return !text.empty();
+            return tag.type == Tag::Type::Invalid;
         }
         bool isTag() const {
-            return text.empty();
+            return tag.type != Tag::Type::Invalid;
         }
         Component() {}
         Component(const StringType& t, StringSizeType p) : text(t), position(p) {}
@@ -403,6 +431,9 @@ private:
 
         Context(const DataType& data) {
             push(data);
+        }
+
+        Context() {
         }
 
         void push(const DataType& data) {
@@ -428,6 +459,8 @@ private:
 
         Context(const Context&) = delete;
         Context& operator= (const Context&) = delete;
+        
+        DelimiterSet delimiterSet;
 
     private:
         std::vector<const DataType*> items_;
@@ -446,26 +479,27 @@ private:
     private:
         Context& ctx_;
     };
+    
+    Mustache(const StringType& input, Context& ctx) {
+        parse(input, ctx);
+    }
 
-    void parse(const StringType& input) {
+    void parse(const StringType& input, Context& ctx) {
         using streamstring = std::basic_ostringstream<typename StringType::value_type>;
         
-        const StringType braceDelimiterBegin(2, '{');
-        const StringType braceDelimiterEnd(2, '}');
         const StringType braceDelimiterEndUnescaped(3, '}');
         const StringSizeType inputSize{input.size()};
         
-        StringType currentDelimiterBegin{braceDelimiterBegin};
-        StringType currentDelimiterEnd{braceDelimiterEnd};
-        bool currentDelimiterIsBrace{true};
+        bool currentDelimiterIsBrace{ctx.delimiterSet.isDefault()};
         
         std::vector<Component*> sections{&rootComponent_};
+        std::vector<StringSizeType> sectionStarts;
         
         StringSizeType inputPosition{0};
         while (inputPosition != inputSize) {
             
             // Find the next tag start delimiter
-            const StringSizeType tagLocationStart{input.find(currentDelimiterBegin, inputPosition)};
+            const StringSizeType tagLocationStart{input.find(ctx.delimiterSet.begin, inputPosition)};
             if (tagLocationStart == StringType::npos) {
                 // No tag found. Add the remaining text.
                 const Component comp{{input, inputPosition, inputSize - inputPosition}, inputPosition};
@@ -478,9 +512,9 @@ private:
             }
             
             // Find the next tag end delimiter
-            StringSizeType tagContentsLocation{tagLocationStart + currentDelimiterBegin.size()};
-            const bool tagIsUnescapedVar{currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == braceDelimiterBegin.at(0)};
-            const StringType& currentTagDelimiterEnd{tagIsUnescapedVar ? braceDelimiterEndUnescaped : currentDelimiterEnd};
+            StringSizeType tagContentsLocation{tagLocationStart + ctx.delimiterSet.begin.size()};
+            const bool tagIsUnescapedVar{currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == ctx.delimiterSet.begin.at(0)};
+            const StringType& currentTagDelimiterEnd{tagIsUnescapedVar ? braceDelimiterEndUnescaped : ctx.delimiterSet.end};
             const auto currentTagDelimiterEndSize = currentTagDelimiterEnd.size();
             if (tagIsUnescapedVar) {
                 ++tagContentsLocation;
@@ -495,23 +529,31 @@ private:
             
             // Parse tag
             const StringType tagContents{trim(StringType{input, tagContentsLocation, tagLocationEnd - tagContentsLocation})};
+            Component comp;
             if (!tagContents.empty() && tagContents[0] == '=') {
-                if (!parseSetDelimiterTag(tagContents, currentDelimiterBegin, currentDelimiterEnd)) {
+                if (!parseSetDelimiterTag(tagContents, ctx.delimiterSet)) {
                     streamstring ss;
                     ss << "Invalid set delimiter tag at " << tagLocationStart;
                     errorMessage_.assign(ss.str());
                     return;
                 }
-                currentDelimiterIsBrace = currentDelimiterBegin == braceDelimiterBegin && currentDelimiterEnd == braceDelimiterEnd;
+                currentDelimiterIsBrace = ctx.delimiterSet.isDefault();
+                comp.tag.type = Tag::Type::SetDelimiter;
+                comp.tag.delimiterSet.reset(new DelimiterSet(ctx.delimiterSet));
             }
-            Component comp;
-            parseTagContents(tagIsUnescapedVar, tagContents, comp.tag);
+            if (comp.tag.type != Tag::Type::SetDelimiter) {
+                parseTagContents(tagIsUnescapedVar, tagContents, comp.tag);
+            }
             comp.position = tagLocationStart;
             sections.back()->children.push_back(comp);
             
+            // Start next search after this tag
+            inputPosition = tagLocationEnd + currentTagDelimiterEndSize;
+
             // Push or pop sections
             if (comp.tag.isSectionBegin()) {
                 sections.push_back(&sections.back()->children.back());
+                sectionStarts.push_back(inputPosition);
             } else if (comp.tag.isSectionEnd()) {
                 if (sections.size() == 1) {
                     streamstring ss;
@@ -519,11 +561,10 @@ private:
                     errorMessage_.assign(ss.str());
                     return;
                 }
+                sections.back()->tag.sectionText.reset(new StringType(input.substr(sectionStarts.back(), tagLocationStart - sectionStarts.back())));
                 sections.pop_back();
+                sectionStarts.pop_back();
             }
-            
-            // Start next search after this tag
-            inputPosition = tagLocationEnd + currentTagDelimiterEndSize;
         }
         
         // Check for sections without an ending tag
@@ -585,7 +626,7 @@ private:
         return control;
     }
     
-    bool parseSetDelimiterTag(const StringType& contents, StringType& startDelimiter, StringType& endDelimiter) {
+    bool parseSetDelimiterTag(const StringType& contents, DelimiterSet& delimiterSet) {
         // Smallest legal tag is "=X X="
         if (contents.size() < 5) {
             return false;
@@ -602,8 +643,8 @@ private:
         if (nonspace == StringType::npos) {
             return false;
         }
-        startDelimiter = contentsSubstr.substr(0, spacepos);
-        endDelimiter = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
+        delimiterSet.begin = contentsSubstr.substr(0, spacepos);
+        delimiterSet.end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
         return true;
     }
     
@@ -678,8 +719,12 @@ private:
                 }
                 break;
             case Tag::Type::SectionBegin:
-                if (ctx.get(tag.name, var) && !var.isFalse() && !var.isEmptyList()) {
-                    renderSection(handler, ctx, comp, var);
+                if (ctx.get(tag.name, var)) {
+                    if (var.isLambda()) {
+                        renderLambda(handler, var, ctx, false, *comp.tag.sectionText, true);
+                    } else if (!var.isFalse() && !var.isEmptyList()) {
+                        renderSection(handler, ctx, comp, var);
+                    }
                 }
                 return WalkControl::Skip;
             case Tag::Type::SectionBeginInverted:
@@ -694,6 +739,9 @@ private:
                     partialTemplate.render(handler, ctx);
                 }
                 break;
+            case Tag::Type::SetDelimiter:
+                ctx.delimiterSet = *comp.tag.delimiterSet;
+                break;
             default:
                 break;
         }
@@ -701,18 +749,25 @@ private:
         return WalkControl::Continue;
     }
     
+    void renderLambda(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) const {
+        const auto lambdaResult = var.callLambda(text);
+        if (lambdaResult.isString()) {
+            StringType str;
+            if (parseWithSameContext) {
+                str = Mustache{lambdaResult.stringValue(), ctx}.render(ctx);
+            } else {
+                str = Mustache{lambdaResult.stringValue()}.render(ctx);
+            }
+            handler(escaped ? escape(str) : str);
+        }
+    }
+    
     void renderVariable(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped) const {
         if (var.isString()) {
             const auto varstr = var.stringValue();
 			handler(escaped ? escape(varstr) : varstr);
         } else if (var.isLambda()) {
-            const auto lambda = var.lambda();
-            const auto lambdaResult = lambda(StringType{});
-            if (lambdaResult.isString()) {
-                const Mustache lambdaTemplate{lambdaResult.stringValue()};
-                const auto str = lambdaTemplate.render(ctx);
-				handler(escaped ? escape(str) : str);
-            }
+            renderLambda(handler, var, ctx, escaped, {}, false);
         }
     }
 
