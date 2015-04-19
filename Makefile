@@ -7,7 +7,7 @@ mac:
 	./mustache
 
 clang:
-	clang++ -03 -Wall -Wextra -Werror -std=c++11 -o mustache test.cpp
+	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -o mustache tests.cpp
 
 xcode:
 	mkdir -p build_xcode
