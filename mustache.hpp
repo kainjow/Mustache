@@ -342,20 +342,20 @@ public:
     }
     
     template <typename StreamType>
-	StreamType& render(const Data<StringType>& data, StreamType& stream) const {
+	StreamType& render(const Data<StringType>& data, StreamType& stream) {
 		render(data, [&stream](const StringType& str) {
 			stream << str;
 		});
 		return stream;
     }
     
-    StringType render(const Data<StringType>& data) const {
+    StringType render(const Data<StringType>& data) {
         std::basic_ostringstream<typename StringType::value_type> ss;
         return render(data, ss).str();
     }
 
 	using RenderHandler = std::function<void(const StringType&)>;
-	void render(const Data<StringType>& data, const RenderHandler& handler) const {
+	void render(const Data<StringType>& data, const RenderHandler& handler) {
         Context ctx{data};
 		render(handler, ctx);
 	}
@@ -689,13 +689,13 @@ private:
         }
     }
     
-    void render(const RenderHandler& handler, Context& ctx) const {
+    void render(const RenderHandler& handler, Context& ctx) {
         walk([&handler, &ctx, this](Component& comp, int) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         });
     }
     
-    StringType render(Context& ctx) const {
+    StringType render(Context& ctx) {
         std::basic_ostringstream<typename StringType::value_type> ss;
 		render([&ss](const StringType& str) {
 			ss << str;
@@ -703,7 +703,7 @@ private:
 		return ss.str();
     }
     
-    WalkControl renderComponent(const RenderHandler& handler, Context& ctx, Component& comp) const {
+    WalkControl renderComponent(const RenderHandler& handler, Context& ctx, Component& comp) {
         if (comp.isText()) {
             handler(comp.text);
             return WalkControl::Continue;
@@ -715,13 +715,17 @@ private:
             case Tag::Type::Variable:
             case Tag::Type::UnescapedVariable:
                 if (ctx.get(tag.name, var)) {
-                    renderVariable(handler, var, ctx, tag.type == Tag::Type::Variable);
+                    if (!renderVariable(handler, var, ctx, tag.type == Tag::Type::Variable)) {
+                        return WalkControl::Stop;
+                    }
                 }
                 break;
             case Tag::Type::SectionBegin:
                 if (ctx.get(tag.name, var)) {
                     if (var.isLambda()) {
-                        renderLambda(handler, var, ctx, false, *comp.tag.sectionText, true);
+                        if (!renderLambda(handler, var, ctx, false, *comp.tag.sectionText, true)) {
+                            return WalkControl::Stop;
+                        }
                     } else if (!var.isFalse() && !var.isEmptyList()) {
                         renderSection(handler, ctx, comp, var);
                     }
@@ -735,8 +739,18 @@ private:
             case Tag::Type::Partial:
                 if (ctx.get(tag.name, var) && var.isPartial()) {
                     const auto partial = var.partial();
-                    const Mustache partialTemplate{partial()};
-                    partialTemplate.render(handler, ctx);
+                    Mustache tmpl{partial()};
+                    if (!tmpl.isValid()) {
+                        errorMessage_ = tmpl.errorMessage();
+                    } else {
+                        tmpl.render(handler, ctx);
+                        if (!tmpl.isValid()) {
+                            errorMessage_ = tmpl.errorMessage();
+                        }
+                    }
+                    if (!tmpl.isValid()) {
+                        return WalkControl::Stop;
+                    }
                 }
                 break;
             case Tag::Type::SetDelimiter:
@@ -749,29 +763,36 @@ private:
         return WalkControl::Continue;
     }
     
-    void renderLambda(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) const {
+    bool renderLambda(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
         const auto lambdaResult = var.callLambda(text);
-        if (lambdaResult.isString()) {
-            StringType str;
-            if (parseWithSameContext) {
-                str = Mustache{lambdaResult.stringValue(), ctx}.render(ctx);
-            } else {
-                str = Mustache{lambdaResult.stringValue()}.render(ctx);
-            }
-            handler(escaped ? escape(str) : str);
+        if (!lambdaResult.isString()) {
+            return true;
         }
+        Mustache tmpl = parseWithSameContext ? Mustache{lambdaResult.stringValue(), ctx} : Mustache{lambdaResult.stringValue()};
+        if (!tmpl.isValid()) {
+            errorMessage_ = tmpl.errorMessage();
+        } else {
+            const StringType str{tmpl.render(ctx)};
+            if (!tmpl.isValid()) {
+                errorMessage_ = tmpl.errorMessage();
+            } else {
+                handler(escaped ? escape(str) : str);
+            }
+        }
+        return tmpl.isValid();
     }
     
-    void renderVariable(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped) const {
+    bool renderVariable(const RenderHandler& handler, const Data<StringType>& var, Context& ctx, bool escaped) {
         if (var.isString()) {
             const auto varstr = var.stringValue();
 			handler(escaped ? escape(varstr) : varstr);
         } else if (var.isLambda()) {
-            renderLambda(handler, var, ctx, escaped, {}, false);
+            return renderLambda(handler, var, ctx, escaped, {}, false);
         }
+        return true;
     }
 
-    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const Data<StringType>& var) const {
+    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const Data<StringType>& var) {
         const auto callback = [&handler, &ctx, this](Component& comp, int) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };

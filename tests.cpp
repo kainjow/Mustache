@@ -365,6 +365,32 @@ TEST_CASE("errors") {
         CHECK_FALSE(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "Invalid set delimiter tag at 5");
     }
+    
+    SECTION("lambda") {
+        using Data = Mustache::Data<std::string>;
+        Mustache::Mustache<std::string> tmpl{"Hello {{lambda}}!"};
+        Data data("lambda", Data{Data::LambdaType{[](const std::string&){
+            return "{{#what}}";
+        }}});
+        CHECK(tmpl.isValid() == true);
+        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.render(data) == "Hello ");
+        CHECK(tmpl.isValid() == false);
+        CHECK(tmpl.errorMessage() == "Unclosed section \"what\" at 0");
+    }
+
+    SECTION("partial") {
+        using Data = Mustache::Data<std::string>;
+        Mustache::Mustache<std::string> tmpl{"Hello {{>partial}}!"};
+        Data data("partial", Data{Data::PartialType{[](){
+            return "{{#what}}";
+        }}});
+        CHECK(tmpl.isValid() == true);
+        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.render(data) == "Hello ");
+        CHECK(tmpl.isValid() == false);
+        CHECK(tmpl.errorMessage() == "Unclosed section \"what\" at 0");
+    }
 
 }
 
