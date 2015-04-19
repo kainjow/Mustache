@@ -20,7 +20,7 @@ using Data = Mustache::Data<std::string>;
 Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
 Data employees{Data::List()};
 employees << Data{"name", "Steve"} << Data{"name", "Bill"};
-tmpl.render(std::cout, {"employees", employees});
+tmpl.render({"employees", employees}, std::cout);
 // Steve, Bill, 
 ````
 
@@ -29,9 +29,9 @@ tmpl.render(std::cout, {"employees", employees});
 ````cpp
 Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
 std::stringstream ss;
-tmpl.render([&ss](const std::string& str) {
+tmpl.render({"what", "World"}, [&ss](const std::string& str) {
     ss << str;
-}, {"what", "World"});
+});
 // ss.str() == "Hello World!"
 ````
 

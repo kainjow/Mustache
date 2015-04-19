@@ -342,20 +342,20 @@ public:
     }
     
     template <typename StreamType>
-	StreamType& render(StreamType& stream, const Data<StringType>& data) const {
-		render([&stream](const StringType& str) {
+	StreamType& render(const Data<StringType>& data, StreamType& stream) const {
+		render(data, [&stream](const StringType& str) {
 			stream << str;
-		}, data);
+		});
 		return stream;
     }
     
     StringType render(const Data<StringType>& data) const {
         std::basic_ostringstream<typename StringType::value_type> ss;
-        return render(ss, data).str();
+        return render(data, ss).str();
     }
 
 	using RenderHandler = std::function<void(const StringType&)>;
-	void render(const RenderHandler& handler, const Data<StringType>& data) const {
+	void render(const Data<StringType>& data, const RenderHandler& handler) const {
         Context ctx{data};
 		render(handler, ctx);
 	}
