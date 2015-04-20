@@ -75,10 +75,6 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
     build.bat 14
 
-## TODO
-
-- Test against [spec](https://github.com/mustache/spec)
-
 ## License
 
     Copyright 2015 Kevin Wojniak
