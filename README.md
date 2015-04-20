@@ -35,6 +35,21 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 // ss.str() == "Hello World!"
 ````
 
+## Supported Features
+
+This library supports all current Mustache features.
+
+- Variables
+- HTML escaping
+- Sections
+- Inverted Sections
+- True/False
+- Lists
+- Lambdas
+- Partials
+- Comments
+- Set Delimiter
+
 ## Compilers Tested
 
 - Xcode 4.6, 6.3
