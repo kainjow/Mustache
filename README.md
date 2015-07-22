@@ -55,7 +55,7 @@ This library supports all current Mustache features.
 - Xcode 4.6, 6.3
 - GCC 4.8, 4.9
 - Clang 3.3, 3.4
-- Visual Studio 2013, 2015 CTP
+- Visual Studio 2013, 2015
 
 ## Run Tests
 
