@@ -52,7 +52,7 @@ This library supports all current Mustache features.
 
 ## Compilers Tested
 
-- Xcode 4.6, 6.3
+- Xcode 4.6 - 7.0
 - GCC 4.8, 4.9
 - Clang 3.3, 3.4
 - Visual Studio 2013, 2015
@@ -78,8 +78,6 @@ For Visual Studio 2015 (CMake 3.1+ required):
 ## License
 
     Copyright 2015 Kevin Wojniak
-    
-    Boost Software License - Version 1.0
     
     Permission is hereby granted, free of charge, to any person or organization
     obtaining a copy of the software and accompanying documentation covered by
