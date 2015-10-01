@@ -53,7 +53,7 @@ This library supports all current Mustache features.
 ## Compilers Tested
 
 - Xcode 4.6 - 7.0
-- GCC 4.8, 4.9
+- GCC 4.8 - 5.2
 - Clang 3.3, 3.4
 - Visual Studio 2013, 2015
 
