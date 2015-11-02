@@ -451,20 +451,19 @@ private:
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
             }
-            // process {{a.b.c}} name
-            if (name.find('.', 1) != StringType::npos) {
-                const DataType* var{items_.front()};
-                for (const auto& n : split(name, '.')) {
+            // process normal name
+            auto names = split(name, '.');
+            if (names.size() == 0) {
+                names.resize(1);
+            }
+            for (const auto& item : items_) {
+                const DataType* var{item};
+                for (const auto& n : names) {
                     var = var->get(n);
                     if (!var) {
-                        return nullptr;
+                        break;
                     }
                 }
-                return var;
-            }
-            // process normal name
-            for (const auto& item : items_) {
-                const auto var = item->get(name);
                 if (var) {
                     return var;
                 }

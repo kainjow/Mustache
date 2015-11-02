@@ -584,4 +584,11 @@ TEST_CASE("dotted_names") {
         CHECK(tmpl.render(data) == "\"Phil\" == \"Phil\"");
     }
 
+    SECTION("scope") {
+        Mustache::Mustache<std::string> tmpl{"\"{{#a}}{{b.name}}{{/a}}\" == \"Phil\""};
+        Data data;
+        data["a"] = {"x", "y"};
+        data["b"] = {"name", "Phil"};
+        CHECK(tmpl.render(data) == "\"Phil\" == \"Phil\"");
+    }
 }
