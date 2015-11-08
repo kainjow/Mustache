@@ -471,6 +471,17 @@ private:
             return nullptr;
         }
 
+        const DataType* get_partial(const StringType& name) const {
+            for (const auto& item : items_) {
+                const DataType* var{item};
+                var = var->get(name);
+                if (var) {
+                    return var;
+                }
+            }
+            return nullptr;
+        }
+
         Context(const Context&) = delete;
         Context& operator= (const Context&) = delete;
         
@@ -751,7 +762,7 @@ private:
                 }
                 return WalkControl::Skip;
             case Tag::Type::Partial:
-                if ((var = ctx.get(tag.name)) != nullptr && var->isPartial()) {
+                if ((var = ctx.get_partial(tag.name)) != nullptr && var->isPartial()) {
                     const auto partial = var->partial();
                     Mustache tmpl{partial()};
                     if (!tmpl.isValid()) {

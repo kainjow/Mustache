@@ -446,6 +446,14 @@ TEST_CASE("partials") {
         CHECK(tmpl.render(data) == "Hello Steve Goodbye Jack|Jill|");
     }
 
+    SECTION("dotted") {
+        Mustache::Mustache<std::string> tmpl{"{{>a.b}}"};
+        Data::PartialType a_b{[]() {
+            return "test";
+        }};
+        Data data("a.b", a_b);
+        CHECK(tmpl.render(data) == "test");
+    }
 }
 
 TEST_CASE("lambdas") {
