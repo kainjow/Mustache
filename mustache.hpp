@@ -826,7 +826,7 @@ private:
                 const ContextPusher ctxpusher{ctx, &item};
                 walkChildren(callback, incomp);
             }
-        } else if (var && var->isObject()) {
+        } else if (var) {
             const ContextPusher ctxpusher{ctx, var};
             walkChildren(callback, incomp);
         } else {
