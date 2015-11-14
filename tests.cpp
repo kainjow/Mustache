@@ -236,6 +236,18 @@ TEST_CASE("section_lists") {
         CHECK(tmpl.render(data) == "Hello Steve, Hello Bill, Hello Tim, ");
     }
 
+    SECTION("dot2") {
+        Mustache::Mustache<std::string> tmpl("{{#names}}Hello {{.}}{{/names}}{{#friends}} and {{.}}{{/friends}}");
+        Data friends = Data::List();
+        friends.push_back("Bill");
+        friends.push_back("Tim");
+        Data data;
+        data.set("friends", friends);
+        CHECK(tmpl.render(data) == " and Bill and Tim");
+        data.set("names", "Steve");
+        CHECK(tmpl.render(data) == "Hello Steve and Bill and Tim");
+    }
+
 }
 
 TEST_CASE("section_object") {
