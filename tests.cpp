@@ -38,6 +38,13 @@ TEST_CASE("variables") {
         CHECK(tmpl.render(data) == "Hello Steve");
     }
 
+    SECTION("single_exist_wide") {
+        Mustache::Mustache<std::wstring> tmpl(L"Hello {{name}}");
+        Mustache::Data<std::wstring> data;
+        data.set(L"name", L"Steve");
+        CHECK(tmpl.render(data) == L"Hello Steve");
+    }
+
     SECTION("escape") {
         Mustache::Mustache<std::string> tmpl("Hello {{name}}");
         Mustache::Data<std::string> data;

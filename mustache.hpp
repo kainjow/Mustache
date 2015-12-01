@@ -54,21 +54,21 @@ StringType escape(const StringType& s) {
     StringType ret;
     ret.reserve(s.size()*2);
     for (const auto ch : s) {
-        switch (static_cast<char>(ch)) {
+        switch (ch) {
             case '&':
-                ret.append("&amp;");
+                ret.append({'&','a','m','p',';'});
                 break;
             case '<':
-                ret.append("&lt;");
+                ret.append({'&','l','t',';'});
                 break;
             case '>':
-                ret.append("&gt;");
+                ret.append({'&','g','t',';'});
                 break;
             case '\"':
-                ret.append("&quot;");
+                ret.append({'&','q','u','o','t',';'});
                 break;
             case '\'':
-                ret.append("&apos;");
+                ret.append({'&','a','p','o','s',';'});
                 break;
             default:
                 ret.append(1, ch);
@@ -681,7 +681,7 @@ private:
             tag.type = Tag::Type::Variable;
             tag.name.clear();
         } else {
-            switch (static_cast<char>(contents.at(0))) {
+            switch (contents.at(0)) {
                 case '#':
                     tag.type = Tag::Type::SectionBegin;
                     break;
