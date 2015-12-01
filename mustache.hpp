@@ -436,10 +436,10 @@ private:
             items_.erase(items_.begin());
         }
         
-        static std::vector<StringType> split(const StringType& s, char delim) {
+        static std::vector<StringType> split(const StringType& s, typename StringType::value_type delim) {
             std::vector<StringType> elems;
-            std::stringstream ss(s);
-            std::string item;
+            std::basic_stringstream<typename StringType::value_type> ss(s);
+            StringType item;
             while (std::getline(ss, item, delim)) {
                 elems.push_back(item);
             }
