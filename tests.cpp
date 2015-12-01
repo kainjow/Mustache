@@ -326,10 +326,10 @@ TEST_CASE("data") {
         name = data.get("name");
         age = data.get("age");
         is_human = data.get("is_human");
-        CHECK(name != 0);
-        CHECK(age != 0);
-        CHECK(is_human != 0);
-        CHECK(data.get("miss") == 0);
+        CHECK(name != (const Data*)0);
+        CHECK(age != (const Data*)0);
+        CHECK(is_human != (const Data*)0);
+        CHECK(data.get("miss") == (const Data*)0);
         REQUIRE(name->isString());
         CHECK(name->stringValue() == "Steve");
         REQUIRE(age->isString());
