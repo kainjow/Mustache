@@ -30,3 +30,21 @@ Release\mustache.exe
 if %errorlevel% neq 0 popd & exit /b %errorlevel%
 
 popd
+
+:: make build64 directory
+if not exist build64 mkdir build64
+pushd build64
+
+:: run CMake
+cmake -G "Visual Studio %vers% Win64" ..
+if %errorlevel% neq 0 popd & exit /b %errorlevel%
+
+:: build with CMake
+cmake --build . --config Release
+if %errorlevel% neq 0 popd & exit /b %errorlevel%
+
+:: run tests
+Release\mustache.exe
+if %errorlevel% neq 0 popd & exit /b %errorlevel%
+
+popd
