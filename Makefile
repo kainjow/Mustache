@@ -6,6 +6,10 @@ mac:
 	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -stdlib=libc++ -o mustache tests.cpp
 	./mustache
 
+mac14:
+	clang++ -O3 -Wall -Wextra -Werror -std=c++14 -stdlib=libc++ -o mustache14 tests.cpp
+	./mustache14
+
 clang:
 	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -o mustache tests.cpp
 
