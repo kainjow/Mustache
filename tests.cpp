@@ -11,78 +11,81 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
+using Mustache = Kainjow::BasicMustache<std::string>;
+using MustacheW = Kainjow::BasicMustache<std::wstring>;
+
 TEST_CASE("variables") {
 
     SECTION("empty") {
-        Mustache::Mustache<std::string> tmpl("");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("");
+        Mustache::Data data;
         CHECK(tmpl.render(data).empty());
     }
 
     SECTION("none") {
-        Mustache::Mustache<std::string> tmpl("Hello");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello");
+        Mustache::Data data;
         CHECK(tmpl.render(data) == "Hello");
     }
 
     SECTION("single_miss") {
-        Mustache::Mustache<std::string> tmpl("Hello {{name}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello {{name}}");
+        Mustache::Data data;
         CHECK(tmpl.render(data) == "Hello ");
     }
 
     SECTION("single_exist") {
-        Mustache::Mustache<std::string> tmpl("Hello {{name}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello {{name}}");
+        Mustache::Data data;
         data.set("name", "Steve");
         CHECK(tmpl.render(data) == "Hello Steve");
     }
 
     SECTION("single_exist_wide") {
-        Mustache::Mustache<std::wstring> tmpl(L"Hello {{name}}");
-        Mustache::Data<std::wstring> data;
+        MustacheW tmpl(L"Hello {{name}}");
+        MustacheW::Data data;
         data.set(L"name", L"Steve");
         CHECK(tmpl.render(data) == L"Hello Steve");
     }
 
     SECTION("escape") {
-        Mustache::Mustache<std::string> tmpl("Hello {{name}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello {{name}}");
+        Mustache::Data data;
         data.set("name", "\"S\"<br>te&v\'e");
         CHECK(tmpl.render(data) == "Hello &quot;S&quot;&lt;br&gt;te&amp;v&apos;e");
     }
     
     SECTION("unescaped1") {
-        Mustache::Mustache<std::string> tmpl("Hello {{{name}}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello {{{name}}}");
+        Mustache::Data data;
         data.set("name", "\"S\"<br>te&v\'e");
         CHECK(tmpl.render(data) == "Hello \"S\"<br>te&v\'e");
     }
 
     SECTION("unescaped2") {
-        Mustache::Mustache<std::string> tmpl("Hello {{&name}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello {{&name}}");
+        Mustache::Data data;
         data.set("name", "\"S\"<br>te&v\'e");
         CHECK(tmpl.render(data) == "Hello \"S\"<br>te&v\'e");
     }
 
     SECTION("unescaped2_spaces") {
-        Mustache::Mustache<std::string> tmpl("Hello {{   &      name  }}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello {{   &      name  }}");
+        Mustache::Data data;
         data.set("name", "\"S\"<br>te&v\'e");
         CHECK(tmpl.render(data) == "Hello \"S\"<br>te&v\'e");
     }
     
     SECTION("empty_name") {
-        Mustache::Mustache<std::string> tmpl("Hello {{}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello {{}}");
+        Mustache::Data data;
         data.set("", "Steve");
         CHECK(tmpl.render(data) == "Hello Steve");
     }
 
     SECTION("braces") {
-        Mustache::Mustache<std::string> tmpl("my {{var}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("my {{var}}");
+        Mustache::Data data;
         data.set("var", "{{te}}st");
         CHECK(tmpl.render(data) == "my {{te}}st");
     }
@@ -92,14 +95,14 @@ TEST_CASE("variables") {
 TEST_CASE("comments") {
     
     SECTION("simple") {
-        Mustache::Mustache<std::string> tmpl("<h1>Today{{! ignore me }}.</h1>");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("<h1>Today{{! ignore me }}.</h1>");
+        Mustache::Data data;
         CHECK(tmpl.render(data) == "<h1>Today.</h1>");
     }
 
     SECTION("newlines") {
-        Mustache::Mustache<std::string> tmpl("Hello\n{{! ignore me }}\nWorld\n");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("Hello\n{{! ignore me }}\nWorld\n");
+        Mustache::Data data;
         CHECK(tmpl.render(data) == "Hello\n\nWorld\n");
     }
 
@@ -108,22 +111,22 @@ TEST_CASE("comments") {
 TEST_CASE("set_delimiter") {
 
     SECTION("basic") {
-        Mustache::Mustache<std::string> tmpl("{{name}}{{=<% %>=}}<% name %><%={{ }}=%>{{ name }}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("{{name}}{{=<% %>=}}<% name %><%={{ }}=%>{{ name }}");
+        Mustache::Data data;
         data.set("name", "Steve");
         CHECK(tmpl.render(data) == "SteveSteveSteve");
     }
 
     SECTION("small") {
-        Mustache::Mustache<std::string> tmpl("{{n}}{{=a b=}}anba={{ }}=b{{n}}");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("{{n}}{{=a b=}}anba={{ }}=b{{n}}");
+        Mustache::Data data;
         data.set("n", "s");
         CHECK(tmpl.render(data) == "sss");
     }
     
     SECTION("noreset") {
-        Mustache::Mustache<std::string> tmpl("{{=[ ]=}}[name] [x] + [y] = [sum]");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("{{=[ ]=}}[name] [x] + [y] = [sum]");
+        Mustache::Data data;
         data.set("name", "Steve");
         data.set("x", "1");
         data.set("y", "2");
@@ -132,8 +135,8 @@ TEST_CASE("set_delimiter") {
     }
     
     SECTION("whitespace") {
-        Mustache::Mustache<std::string> tmpl("|{{= @   @ =}}|");
-        Mustache::Data<std::string> data;
+        Mustache tmpl("|{{= @   @ =}}|");
+        Mustache::Data data;
         REQUIRE(tmpl.isValid());
         CHECK(tmpl.render(data) == "||");
     }
@@ -142,30 +145,30 @@ TEST_CASE("set_delimiter") {
 
 TEST_CASE("sections") {
     
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
 
     SECTION("nonexistant") {
-        Mustache::Mustache<std::string> tmpl("{{#var}}not shown{{/var}}");
+        Mustache tmpl("{{#var}}not shown{{/var}}");
         Data data;
         CHECK(tmpl.render(data) == "");
     }
 
     SECTION("false") {
-        Mustache::Mustache<std::string> tmpl("{{#var}}not shown{{/var}}");
+        Mustache tmpl("{{#var}}not shown{{/var}}");
         Data data;
         data.set("var", Data(Data::Type::False));
         CHECK(tmpl.render(data) == "");
     }
 
     SECTION("emptylist") {
-        Mustache::Mustache<std::string> tmpl("{{#var}}not shown{{/var}}");
+        Mustache tmpl("{{#var}}not shown{{/var}}");
         Data data;
         data.set("var", Data(Data::Type::List));
         CHECK(tmpl.render(data) == "");
     }
     
     SECTION("nested") {
-        Mustache::Mustache<std::string> tmpl("{{#var1}}hello{{#var2}}world{{/var2}}{{/var1}}");
+        Mustache tmpl("{{#var1}}hello{{#var2}}world{{/var2}}{{/var1}}");
         Data data;
         data.set("var1", Data::Type::True);
         data.set("var2", Data::Type::True);
@@ -176,21 +179,21 @@ TEST_CASE("sections") {
 
 TEST_CASE("sections_inverted") {
     
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
     
     SECTION("nonexistant") {
-        Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
+        Mustache tmpl("{{^var}}shown{{/var}}");
         CHECK(tmpl.render(Data()) == "shown");
     }
     
     SECTION("false") {
-        Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
+        Mustache tmpl("{{^var}}shown{{/var}}");
         Data data("var", Data(Data::Type::False));
         CHECK(tmpl.render(data) == "shown");
     }
     
     SECTION("emptylist") {
-        Mustache::Mustache<std::string> tmpl("{{^var}}shown{{/var}}");
+        Mustache tmpl("{{^var}}shown{{/var}}");
         Data data("var", Data(Data::Type::List));
         CHECK(tmpl.render(data) == "shown");
     }
@@ -199,10 +202,10 @@ TEST_CASE("sections_inverted") {
 
 TEST_CASE("section_lists") {
     
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
     
     SECTION("list") {
-        Mustache::Mustache<std::string> tmpl("{{#people}}Hello {{name}}, {{/people}}");
+        Mustache tmpl("{{#people}}Hello {{name}}, {{/people}}");
         Data people = Data::List();
         for (auto& name : {"Steve", "Bill", "Tim"}) {
             people.push_back(Data("name", name));
@@ -212,7 +215,7 @@ TEST_CASE("section_lists") {
     }
     
     SECTION("nested") {
-        Mustache::Mustache<std::string> tmpl("{{#families}}surname={{surname}}, members={{#members}}{{given}},{{/members}}|{{/families}}");
+        Mustache tmpl("{{#families}}surname={{surname}}, members={{#members}}{{given}},{{/members}}|{{/families}}");
         Data families = Data::List();
         Data family1;
         family1.set("surname", "Smith");
@@ -234,7 +237,7 @@ TEST_CASE("section_lists") {
     }
     
     SECTION("dot") {
-        Mustache::Mustache<std::string> tmpl("{{#names}}Hello {{.}}, {{/names}}");
+        Mustache tmpl("{{#names}}Hello {{.}}, {{/names}}");
         Data names = Data::List();
         names.push_back(Data("Steve"));
         names.push_back(Data("Bill"));
@@ -244,7 +247,7 @@ TEST_CASE("section_lists") {
     }
 
     SECTION("dot2") {
-        Mustache::Mustache<std::string> tmpl("{{#names}}Hello {{.}}{{/names}}{{#friends}} and {{.}}{{/friends}}");
+        Mustache tmpl("{{#names}}Hello {{.}}{{/names}}{{#friends}} and {{.}}{{/friends}}");
         Data friends = Data::List();
         friends.push_back("Bill");
         friends.push_back("Tim");
@@ -259,10 +262,10 @@ TEST_CASE("section_lists") {
 
 TEST_CASE("section_object") {
     
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
     
     SECTION("basic") {
-        Mustache::Mustache<std::string> tmpl("{{#employee}}name={{name}}, age={{age}}{{/employee}}");
+        Mustache tmpl("{{#employee}}name={{name}}, age={{age}}{{/employee}}");
         Data person;
         person.set("name", "Steve");
         person.set("age", "42");
@@ -272,7 +275,7 @@ TEST_CASE("section_object") {
     }
 
     SECTION("basic_parent") {
-        Mustache::Mustache<std::string> tmpl("({{subject}}) {{#employee}}name={{name}}, age={{age}} - {{subject}}{{/employee}}");
+        Mustache tmpl("({{subject}}) {{#employee}}name={{name}}, age={{age}} - {{subject}}{{/employee}}");
         Data person;
         person.set("name", "Steve");
         person.set("age", "42");
@@ -288,7 +291,7 @@ TEST_CASE("section_object") {
 TEST_CASE("examples") {
     
     SECTION("one") {
-        Mustache::Mustache<std::string> tmpl{"Hello {{what}}!"};
+        Mustache tmpl{"Hello {{what}}!"};
         std::cout << tmpl.render({"what", "World"}) << std::endl;
 		CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
@@ -296,8 +299,8 @@ TEST_CASE("examples") {
     }
 
     SECTION("two") {
-        using Data = Mustache::Data<std::string>;
-        Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+        using Data = Mustache::Data;
+        Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
         Data employees{Data::List()};
         employees << Data{"name", "Steve"} << Data{"name", "Bill"};
         tmpl.render({"employees", employees}, std::cout) << std::endl;
@@ -307,7 +310,7 @@ TEST_CASE("examples") {
     }
 
 	SECTION("three") {
-		Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
+		Mustache tmpl("Hello {{what}}!");
 		std::stringstream ss;
 		tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 			ss << str;
@@ -321,7 +324,7 @@ TEST_CASE("examples") {
 
 TEST_CASE("data") {
     
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
 
     SECTION("types") {
         Data data("age", "42");
@@ -367,32 +370,32 @@ TEST_CASE("data") {
 TEST_CASE("errors") {
 
     SECTION("unclosed_section") {
-        Mustache::Mustache<std::string> tmpl("test {{#employees}}");
+        Mustache tmpl("test {{#employees}}");
         CHECK_FALSE(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "Unclosed section \"employees\" at 5");
     }
 
     SECTION("unclosed_tag") {
-        Mustache::Mustache<std::string> tmpl("test {{employees");
+        Mustache tmpl("test {{employees");
         CHECK_FALSE(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "Unclosed tag at 5");
     }
     
     SECTION("unopened_section") {
-        Mustache::Mustache<std::string> tmpl("test {{/employees}}");
+        Mustache tmpl("test {{/employees}}");
         CHECK_FALSE(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "Unopened section \"employees\" at 5");
     }
     
     SECTION("invalid_set_delimiter") {
-        Mustache::Mustache<std::string> tmpl("test {{=< =}}");
+        Mustache tmpl("test {{=< =}}");
         CHECK_FALSE(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "Invalid set delimiter tag at 5");
     }
     
     SECTION("lambda") {
-        using Data = Mustache::Data<std::string>;
-        Mustache::Mustache<std::string> tmpl{"Hello {{lambda}}!"};
+        using Data = Mustache::Data;
+        Mustache tmpl{"Hello {{lambda}}!"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string&){
             return "{{#what}}";
         }}});
@@ -404,8 +407,8 @@ TEST_CASE("errors") {
     }
 
     SECTION("partial") {
-        using Data = Mustache::Data<std::string>;
-        Mustache::Mustache<std::string> tmpl{"Hello {{>partial}}!"};
+        using Data = Mustache::Data;
+        Mustache tmpl{"Hello {{>partial}}!"};
         Data data("partial", Data{Data::PartialType{[](){
             return "{{#what}}";
         }}});
@@ -420,16 +423,16 @@ TEST_CASE("errors") {
 
 TEST_CASE("partials") {
 
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
 
     SECTION("empty") {
-        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Mustache tmpl{"{{>header}}"};
         Data data;
         CHECK(tmpl.render(data) == "");
     }
 
     SECTION("basic") {
-        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Mustache tmpl{"{{>header}}"};
         Data::PartialType partial = []() {
             return "Hello World";
         };
@@ -438,7 +441,7 @@ TEST_CASE("partials") {
     }
 
     SECTION("context") {
-        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Mustache tmpl{"{{>header}}"};
         Data::PartialType partial{[]() {
             return "Hello {{name}}";
         }};
@@ -448,7 +451,7 @@ TEST_CASE("partials") {
     }
     
     SECTION("nested") {
-        Mustache::Mustache<std::string> tmpl{"{{>header}}"};
+        Mustache tmpl{"{{>header}}"};
         Data::PartialType header{[]() {
             return "Hello {{name}} {{>footer}}";
         }};
@@ -466,7 +469,7 @@ TEST_CASE("partials") {
     }
 
     SECTION("dotted") {
-        Mustache::Mustache<std::string> tmpl{"{{>a.b}}"};
+        Mustache tmpl{"{{>a.b}}"};
         Data::PartialType a_b{[]() {
             return "test";
         }};
@@ -477,10 +480,10 @@ TEST_CASE("partials") {
 
 TEST_CASE("lambdas") {
     
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
     
     SECTION("basic") {
-        Mustache::Mustache<std::string> tmpl{"{{lambda}}"};
+        Mustache tmpl{"{{lambda}}"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string&){
             return "Hello {{planet}}";
         }}});
@@ -489,7 +492,7 @@ TEST_CASE("lambdas") {
     }
 
     SECTION("delimiters") {
-        Mustache::Mustache<std::string> tmpl{"{{= | | =}}Hello, (|&lambda|)!"};
+        Mustache tmpl{"{{= | | =}}Hello, (|&lambda|)!"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string&){
             return "|planet| => {{planet}}";
         }}});
@@ -498,7 +501,7 @@ TEST_CASE("lambdas") {
     }
 
     SECTION("nocaching") {
-        Mustache::Mustache<std::string> tmpl{"{{lambda}} == {{{lambda}}} == {{lambda}}"};
+        Mustache tmpl{"{{lambda}} == {{{lambda}}} == {{lambda}}"};
         int calls = 0;
         Data data("lambda", Data{Data::LambdaType{[&calls](const std::string&){
             ++calls;
@@ -508,7 +511,7 @@ TEST_CASE("lambdas") {
     }
 
     SECTION("escape") {
-        Mustache::Mustache<std::string> tmpl{"<{{lambda}}{{{lambda}}}"};
+        Mustache tmpl{"<{{lambda}}{{{lambda}}}"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string&){
             return ">";
         }}});
@@ -516,7 +519,7 @@ TEST_CASE("lambdas") {
     }
     
     SECTION("section") {
-        Mustache::Mustache<std::string> tmpl{"<{{#lambda}}{{x}}{{/lambda}}>"};
+        Mustache tmpl{"<{{#lambda}}{{x}}{{/lambda}}>"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
             return text == "{{x}}" ? "yes" : "no";
         }}});
@@ -524,7 +527,7 @@ TEST_CASE("lambdas") {
     }
 
     SECTION("section_expansion") {
-        Mustache::Mustache<std::string> tmpl{"<{{#lambda}}-{{/lambda}}>"};
+        Mustache tmpl{"<{{#lambda}}-{{/lambda}}>"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
             return text + "{{planet}}" + text;
         }}});
@@ -533,7 +536,7 @@ TEST_CASE("lambdas") {
     }
 
     SECTION("section_alternate_delimiters") {
-        Mustache::Mustache<std::string> tmpl{"{{= | | =}}<|#lambda|-|/lambda|>"};
+        Mustache tmpl{"{{= | | =}}<|#lambda|-|/lambda|>"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
             return text + "{{planet}} => |planet|" + text;
         }}});
@@ -542,7 +545,7 @@ TEST_CASE("lambdas") {
     }
 
     SECTION("section_multiple_calls") {
-        Mustache::Mustache<std::string> tmpl{"{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}"};
+        Mustache tmpl{"{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
             return "__" + text + "__";
         }}});
@@ -550,7 +553,7 @@ TEST_CASE("lambdas") {
     }
 
     SECTION("section_inverted") {
-        Mustache::Mustache<std::string> tmpl{"<{{^lambda}}{{static}}{{/lambda}}>"};
+        Mustache tmpl{"<{{^lambda}}{{static}}{{/lambda}}>"};
         Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
             CHECK(text == "{{static}}");
             return Data::Type::False;
@@ -563,40 +566,40 @@ TEST_CASE("lambdas") {
 
 TEST_CASE("dotted_names") {
     
-    using Data = Mustache::Data<std::string>;
+    using Data = Mustache::Data;
     
     SECTION("basic") {
-        Mustache::Mustache<std::string> tmpl{"\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\""};
+        Mustache tmpl{"\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\""};
         Data person{"name", "Joe"};
         CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
     }
 
     SECTION("triple_mustache") {
-        Mustache::Mustache<std::string> tmpl{"\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{{/person}}}\""};
+        Mustache tmpl{"\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{{/person}}}\""};
         Data person{"name", "Joe"};
         CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
     }
 
     SECTION("ampersand") {
-        Mustache::Mustache<std::string> tmpl{"\"{{&person.name}}\" == \"{{#person}}{{&name}}{{{/person}}}\""};
+        Mustache tmpl{"\"{{&person.name}}\" == \"{{#person}}{{&name}}{{{/person}}}\""};
         Data person{"name", "Joe"};
         CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
     }
 
     SECTION("depth") {
-        Mustache::Mustache<std::string> tmpl{"\"{{a.b.c.d.e.name}}\" == \"Phil\""};
+        Mustache tmpl{"\"{{a.b.c.d.e.name}}\" == \"Phil\""};
         Data data{"a", {"b", {"c", {"d", {"e", {"name", "Phil"}}}}}};
         CHECK(tmpl.render(data) == "\"Phil\" == \"Phil\"");
     }
 
     SECTION("broken_chains1") {
-        Mustache::Mustache<std::string> tmpl{"\"{{a.b.c}}\" == \"\""};
+        Mustache tmpl{"\"{{a.b.c}}\" == \"\""};
         Data data{"a", Data::List()};
         CHECK(tmpl.render(data) == "\"\" == \"\"");
     }
 
     SECTION("broken_chains2") {
-        Mustache::Mustache<std::string> tmpl{"\"{{a.b.c.name}}\" == \"\""};
+        Mustache tmpl{"\"{{a.b.c.name}}\" == \"\""};
         Data data;
         data["a"] = {"b", Data::List()};
         data["c"] = {"name", "Jim"};
@@ -604,7 +607,7 @@ TEST_CASE("dotted_names") {
     }
 
     SECTION("depth2") {
-        Mustache::Mustache<std::string> tmpl{"\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\""};
+        Mustache tmpl{"\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\""};
         Data data;
         data["a"] = {"b", {"c", {"d", {"e", {"name", "Phil"}}}}};
         data["b"] = {"c", {"d", {"e", {"name", "Wrong"}}}};
@@ -612,7 +615,7 @@ TEST_CASE("dotted_names") {
     }
 
     SECTION("scope") {
-        Mustache::Mustache<std::string> tmpl{"\"{{#a}}{{b.name}}{{/a}}\" == \"Phil\""};
+        Mustache tmpl{"\"{{#a}}{{b.name}}{{/a}}\" == \"Phil\""};
         Data data;
         data["a"] = {"x", "y"};
         data["b"] = {"name", "Phil"};
