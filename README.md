@@ -8,7 +8,8 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no extern
 ## Example 1
 
 ````cpp
-Mustache::Mustache<std::string> tmpl{"Hello {{what}}!"};
+using Mustache = Kainjow::BasicMustache<std::string>;
+Mustache tmpl{"Hello {{what}}!"};
 std::cout << tmpl.render({"what", "World"}) << std::endl;
 // Hello World!
 ````
@@ -16,8 +17,9 @@ std::cout << tmpl.render({"what", "World"}) << std::endl;
 ## Example 2
 
 ````cpp
-using Data = Mustache::Data<std::string>;
-Mustache::Mustache<std::string> tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+using Mustache = Kainjow::BasicMustache<std::string>;
+using Data = Mustache::Data;
+Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
 Data employees{Data::List()};
 employees << Data{"name", "Steve"} << Data{"name", "Bill"};
 tmpl.render({"employees", employees}, std::cout);
@@ -27,7 +29,8 @@ tmpl.render({"employees", employees}, std::cout);
 ## Example 3
 
 ````cpp
-Mustache::Mustache<std::string> tmpl("Hello {{what}}!");
+using Mustache = Kainjow::BasicMustache<std::string>;
+Mustache tmpl("Hello {{what}}!");
 std::stringstream ss;
 tmpl.render({"what", "World"}, [&ss](const std::string& str) {
     ss << str;
