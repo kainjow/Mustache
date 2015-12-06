@@ -27,12 +27,12 @@
 #ifndef KAINJOW_MUSTACHE_HPP
 #define KAINJOW_MUSTACHE_HPP
 
-#include <iostream>
-#include <sstream>
-#include <vector>
 #include <functional>
-#include <unordered_map>
+#include <iostream>
 #include <memory>
+#include <sstream>
+#include <unordered_map>
+#include <vector>
 
 namespace Kainjow {
 
