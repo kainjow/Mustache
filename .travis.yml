@@ -1,28 +1,24 @@
 language: cpp
 
-compiler:
-  - gcc
-  - clang
-
-os:
-  - linux
-  - osx
+sudo: required
+dist: trusty
 
 matrix:
-  exclude:
-    - os: osx
+  include:
+    - os: linux
       compiler: gcc
 
-before_install:
-  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
-      sudo apt-get update -qq;
-    fi
+    - os: linux
+      compiler: clang
 
-install:
-  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      sudo apt-get install -qq gcc-4.8 g++-4.8;
-      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90;
-    fi
+    - os: osx
+      compiler: clang
 
-script: make
+script:
+  - make coverage
+
+after_success:
+  # Use "-X gcov" to disable Codecov from running gcov. We already run this
+  # command in "make coverage" and then delete unwanted coverage files that
+  # contribute falsely to the coverage report, such as catch.hpp
+  - bash <(curl -s https://codecov.io/bash) -X gcov
