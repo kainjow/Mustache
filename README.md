@@ -2,9 +2,7 @@
 
 C++11 header-only [Mustache](http://mustache.github.io) templates with no external dependencies.
 
-[![travis](https://travis-ci.org/kainjow/Mustache.svg?branch=master)](https://travis-ci.org/kainjow/Mustache)  
-[![appveyor](https://ci.appveyor.com/api/projects/status/github/kainjow/Mustache)](https://ci.appveyor.com/project/kainjow/mustache)  
-[![codecov](https://codecov.io/gh/kainjow/Mustache/branch/master/graph/badge.svg)](https://codecov.io/gh/kainjow/Mustache)
+[![travis](https://travis-ci.org/kainjow/Mustache.svg?branch=master)](https://travis-ci.org/kainjow/Mustache) [![appveyor](https://ci.appveyor.com/api/projects/status/github/kainjow/Mustache)](https://ci.appveyor.com/project/kainjow/mustache) [![codecov](https://codecov.io/gh/kainjow/Mustache/branch/master/graph/badge.svg)](https://codecov.io/gh/kainjow/Mustache)
 
 ## Example 1
 
