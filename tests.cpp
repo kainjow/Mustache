@@ -544,20 +544,19 @@ TEST_CASE("lambdas") {
         CHECK(tmpl.render(data) == "<-{{planet}} => Earth->");
     }
 
+    const Data::LambdaType sectionLambda{[](const std::string& text){
+        return "__" + text + "__";
+    }};
+
     SECTION("section_multiple_calls") {
         Mustache tmpl{"{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}"};
-        Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
-            return "__" + text + "__";
-        }}});
+        Data data("lambda", sectionLambda);
         CHECK(tmpl.render(data) == "__FILE__ != __LINE__");
     }
 
     SECTION("section_inverted") {
         Mustache tmpl{"<{{^lambda}}{{static}}{{/lambda}}>"};
-        Data data("lambda", Data{Data::LambdaType{[](const std::string& text){
-            CHECK(text == "{{static}}");
-            return Data::Type::False;
-        }}});
+        Data data("lambda", sectionLambda);
         data["static"] = "static";
         CHECK(tmpl.render(data) == "<>");
     }
