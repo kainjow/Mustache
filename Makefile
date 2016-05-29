@@ -19,4 +19,4 @@ xcode:
 	open build_xcode/*.xcodeproj
 
 clean:
-	rm -rf mustache build build_xcode
+	rm -rf mustache mustache14 build build_xcode
