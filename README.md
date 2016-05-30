@@ -79,7 +79,7 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## License
 
-    Copyright 2015 Kevin Wojniak
+    Copyright 2015-2016 Kevin Wojniak
     
     Permission is hereby granted, free of charge, to any person or organization
     obtaining a copy of the software and accompanying documentation covered by

@@ -1,9 +1,6 @@
 //
-//  main.cpp
-//  Mustache
-//
 //  Created by Kevin Wojniak on 4/11/15.
-//  Copyright (c) 2015 Kevin Wojniak. All rights reserved.
+//  Copyright 2015-2016 Kevin Wojniak. All rights reserved.
 //
 
 #include "mustache.hpp"
