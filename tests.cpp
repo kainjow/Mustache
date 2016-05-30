@@ -385,9 +385,20 @@ TEST_CASE("errors") {
     }
     
     SECTION("invalid_set_delimiter") {
-        Mustache tmpl("test {{=< =}}");
-        CHECK_FALSE(tmpl.isValid());
-        CHECK(tmpl.errorMessage() == "Invalid set delimiter tag at 5");
+        std::vector<std::string> invalids;
+        invalids.push_back("test {{=< =}}");  // not 5 characters
+        invalids.push_back("test {{=....}}"); // not ending with =
+        invalids.push_back("test {{=...=}}"); // does not contain space
+        invalids.push_back("test {{=...= }}"); // contains extra space
+        std::vector<std::string>::size_type total = 0;
+        for (const auto& str: invalids) {
+            Mustache tmpl(str);
+            CHECK_FALSE(tmpl.isValid());
+            CHECK(tmpl.errorMessage() == "Invalid set delimiter tag at 5");
+            ++total;
+        }
+        CHECK(total == invalids.size());
+        CHECK(total == 4);
     }
     
     SECTION("lambda") {
