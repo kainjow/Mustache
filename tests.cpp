@@ -364,6 +364,11 @@ TEST_CASE("data") {
         CHECK(obj2.isList());
         CHECK(obj1.type() == Data::Type::Invalid);
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
+
+        Data lambda1{Data::LambdaType{[](const std::string&){ return "{{#what}}"; }}};
+        Data lambda2 = std::move(lambda1);
+        CHECK(lambda2.isLambda());
+        CHECK(lambda1.type() == Data::Type::Invalid);
     }
 
 }
