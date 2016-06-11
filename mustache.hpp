@@ -229,12 +229,6 @@ public:
                 obj_->insert(std::pair<StringType,Data>{name, var});
             }
         }
-        bool exists(const StringType& name) const {
-            if (isObject() && obj_->find(name) == obj_->end()) {
-                return true;
-            }
-            return false;
-        }
         const Data* get(const StringType& name) const {
             if (!isObject()) {
                 return nullptr;
