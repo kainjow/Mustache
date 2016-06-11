@@ -456,7 +456,7 @@ TEST_CASE("errors") {
         CHECK(tmpl.errorMessage() == "Unclosed section \"what\" at 0");
     }
 
-    SECTION("partia2") {
+    SECTION("partial2") {
         using Data = Mustache::Data;
         Mustache tmpl{"Hello {{>partial}}!"};
         Data data("partial", {Data::PartialType{[](){
