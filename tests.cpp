@@ -290,7 +290,7 @@ TEST_CASE("examples") {
     SECTION("one") {
         Mustache tmpl{"Hello {{what}}!"};
         std::cout << tmpl.render({"what", "World"}) << std::endl;
-		CHECK(tmpl.isValid());
+        CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
         CHECK(tmpl.render({"what", "World"}) == "Hello World!");
     }
@@ -301,21 +301,21 @@ TEST_CASE("examples") {
         Data employees{Data::List()};
         employees << Data{"name", "Steve"} << Data{"name", "Bill"};
         tmpl.render({"employees", employees}, std::cout) << std::endl;
-		CHECK(tmpl.isValid());
+        CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
         CHECK(tmpl.render({"employees", employees}) == "Steve, Bill, ");
     }
 
-	SECTION("three") {
-		Mustache tmpl("Hello {{what}}!");
-		std::stringstream ss;
-		tmpl.render({"what", "World"}, [&ss](const std::string& str) {
-			ss << str;
-		});
-		CHECK(tmpl.isValid());
-		CHECK(tmpl.errorMessage() == "");
-		CHECK(ss.str() == "Hello World!");
-	}
+    SECTION("three") {
+        Mustache tmpl("Hello {{what}}!");
+        std::stringstream ss;
+        tmpl.render({"what", "World"}, [&ss](const std::string& str) {
+            ss << str;
+        });
+        CHECK(tmpl.isValid());
+        CHECK(tmpl.errorMessage() == "");
+        CHECK(ss.str() == "Hello World!");
+    }
 
 }
 

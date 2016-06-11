@@ -310,11 +310,11 @@ public:
     }
 
     template <typename StreamType>
-	StreamType& render(const Data& data, StreamType& stream) {
-		render(data, [&stream](const StringType& str) {
-			stream << str;
-		});
-		return stream;
+    StreamType& render(const Data& data, StreamType& stream) {
+        render(data, [&stream](const StringType& str) {
+            stream << str;
+        });
+        return stream;
     }
     
     StringType render(const Data& data) {
@@ -322,11 +322,11 @@ public:
         return render(data, ss).str();
     }
 
-	using RenderHandler = std::function<void(const StringType&)>;
-	void render(const Data& data, const RenderHandler& handler) {
+    using RenderHandler = std::function<void(const StringType&)>;
+    void render(const Data& data, const RenderHandler& handler) {
         Context ctx{&data};
-		render(handler, ctx);
-	}
+        render(handler, ctx);
+    }
 
 private:
     using StringSizeType = typename StringType::size_type;
@@ -696,10 +696,10 @@ private:
     
     StringType render(Context& ctx) {
         std::basic_ostringstream<typename StringType::value_type> ss;
-		render([&ss](const StringType& str) {
-			ss << str;
-		}, ctx);
-		return ss.str();
+        render([&ss](const StringType& str) {
+            ss << str;
+        }, ctx);
+        return ss.str();
     }
     
     WalkControl renderComponent(const RenderHandler& handler, Context& ctx, Component& comp) {
@@ -784,7 +784,7 @@ private:
     bool renderVariable(const RenderHandler& handler, const Data* var, Context& ctx, bool escaped) {
         if (var->isString()) {
             const auto varstr = var->stringValue();
-			handler(escaped ? escape(varstr) : varstr);
+            handler(escaped ? escape(varstr) : varstr);
         } else if (var->isLambda()) {
             return renderLambda(handler, var, ctx, escaped, {}, false);
         }
