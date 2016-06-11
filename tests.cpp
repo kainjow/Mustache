@@ -343,6 +343,7 @@ TEST_CASE("data") {
         REQUIRE(age->isString());
         CHECK(age->stringValue() == "42");
         CHECK(is_human->isTrue());
+        CHECK(is_human->isBool());
         CHECK(emptyStr.isString());
         CHECK(emptyStr.stringValue() == "");
     }
