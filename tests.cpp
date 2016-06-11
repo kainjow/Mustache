@@ -392,7 +392,10 @@ TEST_CASE("errors") {
         invalids.push_back("test {{=< =}}");  // not 5 characters
         invalids.push_back("test {{=....}}"); // not ending with =
         invalids.push_back("test {{=...=}}"); // does not contain space
-        invalids.push_back("test {{=...= }}"); // contains extra space
+        invalids.push_back("test {{=.  ==}}"); // can't contain equal sign
+        invalids.push_back("test {{==  .=}}"); // can't contain equal sign
+        invalids.push_back("test {{=[ ] ] ]=}}"); // can't contain space
+        invalids.push_back("test {{=[ [ ]=}}"); // can't contain space
         std::vector<std::string>::size_type total = 0;
         for (const auto& str: invalids) {
             Mustache tmpl(str);
@@ -401,7 +404,7 @@ TEST_CASE("errors") {
             ++total;
         }
         CHECK(total == invalids.size());
-        CHECK(total == 4);
+        CHECK(total == 7);
     }
     
     SECTION("lambda") {

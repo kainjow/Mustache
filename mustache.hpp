@@ -625,6 +625,16 @@ private:
         return control;
     }
     
+    bool isSetDelimiterValid(const StringType& delimiter) {
+        // "Custom delimiters may not contain whitespace or the equals sign."
+        for (const auto ch : delimiter) {
+            if (ch == '=' || isspace(ch)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     bool parseSetDelimiterTag(const StringType& contents, DelimiterSet& delimiterSet) {
         // Smallest legal tag is "=X X="
         if (contents.size() < 5) {
@@ -642,8 +652,13 @@ private:
         if (nonspace == StringType::npos) {
             return false;
         }
-        delimiterSet.begin = contentsSubstr.substr(0, spacepos);
-        delimiterSet.end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
+        const StringType begin = contentsSubstr.substr(0, spacepos);
+        const StringType end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
+        if (!isSetDelimiterValid(begin) || !isSetDelimiterValid(end)) {
+            return false;
+        }
+        delimiterSet.begin = begin;
+        delimiterSet.end = end;
         return true;
     }
     
