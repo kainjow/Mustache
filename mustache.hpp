@@ -640,6 +640,7 @@ private:
             return false;
         }
         const auto nonspace = contentsSubstr.find_first_not_of(' ', spacepos + 1);
+        assert(nonspace != StringType::npos);
         const StringType begin = contentsSubstr.substr(0, spacepos);
         const StringType end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
         if (!isSetDelimiterValid(begin) || !isSetDelimiterValid(end)) {
