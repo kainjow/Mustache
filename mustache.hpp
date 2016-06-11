@@ -155,30 +155,6 @@ public:
             }
         }
         
-        // Assignment
-        Data& operator= (const Data& data) {
-            if (&data != this) {
-                type_ = data.type_;
-                obj_.reset();
-                str_.reset();
-                list_.reset();
-                partial_.reset();
-                lambda_.reset();
-                if (data.obj_) {
-                    obj_.reset(new ObjectType(*data.obj_));
-                } else if (data.str_) {
-                    str_.reset(new StringType(*data.str_));
-                } else if (data.list_) {
-                    list_.reset(new ListType(*data.list_));
-                } else if (data.partial_) {
-                    partial_.reset(new PartialType(*data.partial_));
-                } else if (data.lambda_) {
-                    lambda_.reset(new LambdaType(*data.lambda_));
-                }
-            }
-            return *this;
-        }
-        
         // Move
         Data(Data&& data) : type_{data.type_} {
             if (data.obj_) {
