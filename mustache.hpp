@@ -27,6 +27,7 @@
 #ifndef KAINJOW_MUSTACHE_HPP
 #define KAINJOW_MUSTACHE_HPP
 
+#include <cassert>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -98,7 +99,7 @@ public:
         using ObjectType = std::unordered_map<StringType, Data>;
         using ListType = std::vector<Data>;
         using PartialType = std::function<StringType()>;
-        using LambdaType = std::function<Data(const StringType&)>;
+        using LambdaType = std::function<StringType(const StringType&)>;
         
         // Construction
         Data() : Data(Type::Object) {
@@ -766,9 +767,7 @@ private:
     
     bool renderLambda(const RenderHandler& handler, const Data* var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
         const auto lambdaResult = var->callLambda(text);
-        if (!lambdaResult.isString()) {
-            return true;
-        }
+        assert(lambdaResult.isString());
         BasicMustache tmpl = parseWithSameContext ? BasicMustache{lambdaResult.stringValue(), ctx} : BasicMustache{lambdaResult.stringValue()};
         if (!tmpl.isValid()) {
             errorMessage_ = tmpl.errorMessage();
