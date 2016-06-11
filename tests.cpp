@@ -300,10 +300,11 @@ TEST_CASE("examples") {
         Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
         Data employees{Data::List()};
         employees << Data{"name", "Steve"} << Data{"name", "Bill"};
-        tmpl.render({"employees", employees}, std::cout) << std::endl;
+        std::ostream& stream = tmpl.render({"employees", employees}, std::cout) << std::endl;
         CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
         CHECK(tmpl.render({"employees", employees}) == "Steve, Bill, ");
+        CHECK(&stream == &std::cout);
     }
 
     SECTION("three") {
