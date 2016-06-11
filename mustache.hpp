@@ -39,7 +39,7 @@ namespace Kainjow {
 template <typename StringType>
 StringType trim(const StringType& s) {
     auto it = s.begin();
-    while (it != s.end() && isspace(static_cast<int>(*it))) {
+    while (it != s.end() && isspace(*it)) {
         it++;
     }
     auto rit = s.rbegin();
