@@ -456,6 +456,22 @@ TEST_CASE("errors") {
         CHECK(tmpl.errorMessage() == "Unclosed section \"what\" at 0");
     }
 
+    SECTION("partia2") {
+        using Data = Mustache::Data;
+        Mustache tmpl{"Hello {{>partial}}!"};
+        Data data("partial", {Data::PartialType{[](){
+            return "{{what}}";
+        }}});
+        data["what"] = Data::LambdaType{[](const std::string&){
+            return "{{#blah}}";
+        }};
+        CHECK(tmpl.isValid() == true);
+        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.render(data) == "Hello ");
+        CHECK(tmpl.isValid() == false);
+        CHECK(tmpl.errorMessage() == "Unclosed section \"blah\" at 0");
+    }
+
 }
 
 TEST_CASE("partials") {
