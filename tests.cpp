@@ -325,6 +325,7 @@ TEST_CASE("data") {
 
     SECTION("types") {
         Data data("age", "42");
+        Data emptyStr = Data::Type::String;
         data["name"] = "Steve";
         data["is_human"] = Data::Type::True;
         const Data* name;
@@ -342,6 +343,8 @@ TEST_CASE("data") {
         REQUIRE(age->isString());
         CHECK(age->stringValue() == "42");
         CHECK(is_human->isTrue());
+        CHECK(emptyStr.isString());
+        CHECK(emptyStr.stringValue() == "");
     }
 
     SECTION("move_ctor") {
