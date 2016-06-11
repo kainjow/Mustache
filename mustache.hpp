@@ -332,7 +332,6 @@ private:
         DelimiterSet() {
             reset();
         }
-        DelimiterSet(const StringType& b, const StringType& e) : begin(b), end(e) {}
         bool isDefault() const { return begin == defaultBegin() && end == defaultEnd(); }
         void reset() {
             begin = defaultBegin();
@@ -379,9 +378,6 @@ private:
         StringSizeType position = StringType::npos;
         bool isText() const {
             return tag.type == Tag::Type::Invalid;
-        }
-        bool isTag() const {
-            return tag.type != Tag::Type::Invalid;
         }
         Component() {}
         Component(const StringType& t, StringSizeType p) : text(t), position(p) {}
