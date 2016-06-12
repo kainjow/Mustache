@@ -471,6 +471,19 @@ TEST_CASE("errors") {
         CHECK(tmpl.isValid() == false);
         CHECK(tmpl.errorMessage() == "Unclosed section \"blah\" at 0");
     }
+    
+    SECTION("section_lambda") {
+        using Data = Mustache::Data;
+        Mustache tmpl{"{{#what}}asdf{{/what}}"};
+        Data data("what", Data::LambdaType{[](const std::string&){
+            return "{{blah";
+        }});
+        CHECK(tmpl.isValid() == true);
+        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.render(data) == "");
+        CHECK(tmpl.isValid() == false);
+        CHECK(tmpl.errorMessage() == "Unclosed tag at 0");
+    }
 
 }
 
