@@ -319,6 +319,9 @@ public:
 
     using RenderHandler = std::function<void(const StringType&)>;
     void render(const Data& data, const RenderHandler& handler) {
+        if (!isValid()) {
+            return;
+        }
         Context ctx{&data};
         render(handler, ctx);
     }

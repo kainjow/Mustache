@@ -381,6 +381,26 @@ TEST_CASE("errors") {
         CHECK_FALSE(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "Unclosed section \"employees\" at 5");
     }
+    
+    SECTION("unclosed_section_nested") {
+        Mustache tmpl("{{#var1}}hello{{#var2}}world");
+        Mustache::Data data;
+        data.set("var1", Mustache::Data::Type::True);
+        data.set("var2", Mustache::Data::Type::True);
+        CHECK(tmpl.render(data) == "");
+        CHECK(tmpl.isValid() == false);
+        CHECK(tmpl.errorMessage() == "Unclosed section \"var1\" at 0");
+    }
+
+    SECTION("unclosed_section_nested2") {
+        Mustache tmpl("{{#var1}}hello{{#var2}}world{{/var1}}");
+        Mustache::Data data;
+        data.set("var1", Mustache::Data::Type::True);
+        data.set("var2", Mustache::Data::Type::True);
+        CHECK(tmpl.render(data) == "");
+        CHECK(tmpl.isValid() == false);
+        CHECK(tmpl.errorMessage() == "Unclosed section \"var1\" at 0");
+    }
 
     SECTION("unclosed_tag") {
         Mustache tmpl("test {{employees");
