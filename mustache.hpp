@@ -82,7 +82,6 @@ StringType escape(const StringType& s) {
 template <typename StringType>
 class BasicMustache {
 public:
-    
     class Data {
     public:
         enum class Type {
@@ -816,6 +815,9 @@ private:
     Component rootComponent_;
 };
 
-} // kainjow
+using Mustache = Kainjow::BasicMustache<std::string>;
+using MustacheW = Kainjow::BasicMustache<std::wstring>;
+
+} // Kainjow
 
 #endif // KAINJOW_MUSTACHE_HPP

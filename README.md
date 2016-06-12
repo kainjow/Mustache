@@ -7,8 +7,7 @@ C++11 header-only [Mustache](http://mustache.github.io) templates with no extern
 ## Example 1
 
 ````cpp
-using Mustache = Kainjow::BasicMustache<std::string>;
-Mustache tmpl{"Hello {{what}}!"};
+Kainjow::Mustache tmpl{"Hello {{what}}!"};
 std::cout << tmpl.render({"what", "World"}) << std::endl;
 // Hello World!
 ````
@@ -16,9 +15,8 @@ std::cout << tmpl.render({"what", "World"}) << std::endl;
 ## Example 2
 
 ````cpp
-using Mustache = Kainjow::BasicMustache<std::string>;
-using Data = Mustache::Data;
-Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+using Data = Kainjow::Mustache::Data;
+Kainjow::Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
 Data employees{Data::List()};
 employees << Data{"name", "Steve"} << Data{"name", "Bill"};
 tmpl.render({"employees", employees}, std::cout);
@@ -28,8 +26,7 @@ tmpl.render({"employees", employees}, std::cout);
 ## Example 3
 
 ````cpp
-using Mustache = Kainjow::BasicMustache<std::string>;
-Mustache tmpl("Hello {{what}}!");
+Kainjow::Mustache tmpl("Hello {{what}}!");
 std::stringstream ss;
 tmpl.render({"what", "World"}, [&ss](const std::string& str) {
     ss << str;

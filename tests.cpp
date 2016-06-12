@@ -8,10 +8,9 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-using Mustache = Kainjow::BasicMustache<std::string>;
-using MustacheW = Kainjow::BasicMustache<std::wstring>;
-
 TEST_CASE("variables") {
+
+    using Kainjow::Mustache;
 
     SECTION("empty") {
         Mustache tmpl("");
@@ -39,8 +38,8 @@ TEST_CASE("variables") {
     }
 
     SECTION("single_exist_wide") {
-        MustacheW tmpl(L"Hello {{name}}");
-        MustacheW::Data data;
+        Kainjow::MustacheW tmpl(L"Hello {{name}}");
+        Kainjow::MustacheW::Data data;
         data.set(L"name", L"Steve");
         CHECK(tmpl.render(data) == L"Hello Steve");
     }
@@ -91,6 +90,8 @@ TEST_CASE("variables") {
 
 TEST_CASE("comments") {
     
+    using Kainjow::Mustache;
+
     SECTION("simple") {
         Mustache tmpl("<h1>Today{{! ignore me }}.</h1>");
         Mustache::Data data;
@@ -106,6 +107,8 @@ TEST_CASE("comments") {
 }
 
 TEST_CASE("set_delimiter") {
+
+    using Kainjow::Mustache;
 
     SECTION("basic") {
         Mustache tmpl("{{name}}{{=<% %>=}}<% name %><%={{ }}=%>{{ name }}");
@@ -142,6 +145,7 @@ TEST_CASE("set_delimiter") {
 
 TEST_CASE("sections") {
     
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
 
     SECTION("nonexistant") {
@@ -176,6 +180,7 @@ TEST_CASE("sections") {
 
 TEST_CASE("sections_inverted") {
     
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
     
     SECTION("nonexistant") {
@@ -199,6 +204,7 @@ TEST_CASE("sections_inverted") {
 
 TEST_CASE("section_lists") {
     
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
     
     SECTION("list") {
@@ -259,6 +265,7 @@ TEST_CASE("section_lists") {
 
 TEST_CASE("section_object") {
     
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
     
     SECTION("basic") {
@@ -288,7 +295,7 @@ TEST_CASE("section_object") {
 TEST_CASE("examples") {
     
     SECTION("one") {
-        Mustache tmpl{"Hello {{what}}!"};
+        Kainjow::Mustache tmpl{"Hello {{what}}!"};
         std::cout << tmpl.render({"what", "World"}) << std::endl;
         CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
@@ -296,8 +303,8 @@ TEST_CASE("examples") {
     }
 
     SECTION("two") {
-        using Data = Mustache::Data;
-        Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+        using Data = Kainjow::Mustache::Data;
+        Kainjow::Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
         Data employees{Data::List()};
         employees << Data{"name", "Steve"} << Data{"name", "Bill"};
         std::ostream& stream = tmpl.render({"employees", employees}, std::cout) << std::endl;
@@ -308,7 +315,7 @@ TEST_CASE("examples") {
     }
 
     SECTION("three") {
-        Mustache tmpl("Hello {{what}}!");
+        Kainjow::Mustache tmpl("Hello {{what}}!");
         std::stringstream ss;
         tmpl.render({"what", "World"}, [&ss](const std::string& str) {
             ss << str;
@@ -322,6 +329,7 @@ TEST_CASE("examples") {
 
 TEST_CASE("data") {
     
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
 
     SECTION("types") {
@@ -375,6 +383,8 @@ TEST_CASE("data") {
 }
 
 TEST_CASE("errors") {
+
+    using Kainjow::Mustache;
 
     SECTION("unclosed_section") {
         Mustache tmpl("test {{#employees}}");
@@ -509,6 +519,7 @@ TEST_CASE("errors") {
 
 TEST_CASE("partials") {
 
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
 
     SECTION("empty") {
@@ -566,6 +577,7 @@ TEST_CASE("partials") {
 
 TEST_CASE("lambdas") {
     
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
     
     SECTION("basic") {
@@ -651,6 +663,7 @@ TEST_CASE("lambdas") {
 
 TEST_CASE("dotted_names") {
     
+    using Kainjow::Mustache;
     using Data = Mustache::Data;
     
     SECTION("basic") {
