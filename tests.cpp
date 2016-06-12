@@ -640,13 +640,13 @@ TEST_CASE("dotted_names") {
     }
 
     SECTION("triple_mustache") {
-        Mustache tmpl{"\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{{/person}}}\""};
+        Mustache tmpl{"\"{{{person.name}}}\" == \"{{#person}}{{name}}{{/person}}\""};
         Data person{"name", "Joe"};
         CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
     }
 
     SECTION("ampersand") {
-        Mustache tmpl{"\"{{&person.name}}\" == \"{{#person}}{{&name}}{{{/person}}}\""};
+        Mustache tmpl{"\"{{&person.name}}\" == \"{{#person}}{{&name}}{{/person}}\""};
         Data person{"name", "Joe"};
         CHECK(tmpl.render({"person", person}) == "\"Joe\" == \"Joe\"");
     }
