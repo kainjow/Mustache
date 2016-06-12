@@ -558,7 +558,7 @@ private:
         }
         
         // Check for sections without an ending tag
-        walk([this](Component& comp, int) -> WalkControl {
+        walk([this](Component& comp) -> WalkControl {
             if (!comp.tag.isSectionBegin()) {
                 return WalkControl::Continue;
             }
@@ -581,7 +581,7 @@ private:
         Stop,
         Skip,
     };
-    using WalkCallback = std::function<WalkControl(Component&, int)>;
+    using WalkCallback = std::function<WalkControl(Component&)>;
     
     void walk(const WalkCallback& callback) const {
         walkChildren(callback, rootComponent_);
@@ -595,16 +595,15 @@ private:
         }
     }
     
-    WalkControl walkComponent(const WalkCallback& callback, Component& comp, int depth = 0) const {
-        WalkControl control{callback(comp, depth)};
+    WalkControl walkComponent(const WalkCallback& callback, Component& comp) const {
+        WalkControl control{callback(comp)};
         if (control == WalkControl::Stop) {
             return control;
         } else if (control == WalkControl::Skip) {
             return WalkControl::Continue;
         }
-        ++depth;
         for (auto childComp : comp.children) {
-            control = walkComponent(callback, childComp, depth);
+            control = walkComponent(callback, childComp);
             if (control == WalkControl::Stop) {
                 return control;
             } else if (control == WalkControl::Skip) {
@@ -612,7 +611,6 @@ private:
                 break;
             }
         }
-        --depth;
         return control;
     }
     
@@ -693,7 +691,7 @@ private:
     }
     
     void render(const RenderHandler& handler, Context& ctx) {
-        walk([&handler, &ctx, this](Component& comp, int) -> WalkControl {
+        walk([&handler, &ctx, this](Component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         });
     }
@@ -794,7 +792,7 @@ private:
     }
 
     void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const Data* var) {
-        const auto callback = [&handler, &ctx, this](Component& comp, int) -> WalkControl {
+        const auto callback = [&handler, &ctx, this](Component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };
         if (var && var->isNonEmptyList()) {
