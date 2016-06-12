@@ -606,12 +606,7 @@ private:
         }
         for (auto childComp : comp.children) {
             control = walkComponent(callback, childComp);
-            if (control == WalkControl::Stop) {
-                return control;
-            } else if (control == WalkControl::Skip) {
-                control = WalkControl::Continue;
-                break;
-            }
+            assert(control == WalkControl::Continue);
         }
         return control;
     }
