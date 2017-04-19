@@ -1,5 +1,5 @@
 //
-// Copyright 2015-2016 Kevin Wojniak
+// Copyright 2015-2017 Kevin Wojniak
 //
 // Permission is hereby granted, free of charge, to any person or organization
 // obtaining a copy of the software and accompanying documentation covered by
@@ -35,7 +35,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Kainjow {
+namespace kainjow {
 
 template <typename StringType>
 StringType trim(const StringType& s) {
@@ -810,9 +810,9 @@ private:
     Component rootComponent_;
 };
 
-using Mustache = Kainjow::BasicMustache<std::string>;
-using MustacheW = Kainjow::BasicMustache<std::wstring>;
+using Mustache = kainjow::BasicMustache<std::string>;
+using MustacheW = kainjow::BasicMustache<std::wstring>;
 
-} // Kainjow
+} // kainjow
 
 #endif // KAINJOW_MUSTACHE_HPP
