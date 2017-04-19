@@ -1,6 +1,9 @@
-# Mustache
+# About
 
-C++11 header-only [Mustache](http://mustache.github.io) templates with no external dependencies.
+* [Mustache](http://mustache.github.io) implementation for modern C++ (requires C++11)
+* Header only
+* Zero dependencies
+* Boost license
 
 [![travis](https://travis-ci.org/kainjow/Mustache.svg?branch=master)](https://travis-ci.org/kainjow/Mustache) [![appveyor](https://ci.appveyor.com/api/projects/status/6uh5d5weajrffkyw?svg=true)](https://ci.appveyor.com/project/kainjow/mustache) [![codecov](https://codecov.io/gh/kainjow/Mustache/branch/master/graph/badge.svg)](https://codecov.io/gh/kainjow/Mustache)
 
@@ -55,7 +58,7 @@ For *nix:
 
     make
 
-For OS X:
+For macOS:
 
     make mac
 
@@ -69,7 +72,7 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## License
 
-    Copyright 2015-2016 Kevin Wojniak
+    Copyright 2015-2017 Kevin Wojniak
     
     Permission is hereby granted, free of charge, to any person or organization
     obtaining a copy of the software and accompanying documentation covered by
