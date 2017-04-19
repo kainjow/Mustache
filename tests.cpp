@@ -8,9 +8,11 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-TEST_CASE("variables") {
+using kainjow::mustache;
+using kainjow::mustachew;
+using Data = mustache::Data;
 
-    using kainjow::mustache;
+TEST_CASE("variables") {
 
     SECTION("empty") {
         mustache tmpl("");
@@ -38,8 +40,8 @@ TEST_CASE("variables") {
     }
 
     SECTION("single_exist_wide") {
-        kainjow::mustachew tmpl(L"Hello {{name}}");
-        kainjow::mustachew::Data data;
+        mustachew tmpl(L"Hello {{name}}");
+        mustachew::Data data;
         data.set(L"name", L"Steve");
         CHECK(tmpl.render(data) == L"Hello Steve");
     }
@@ -90,8 +92,6 @@ TEST_CASE("variables") {
 
 TEST_CASE("comments") {
     
-    using kainjow::mustache;
-
     SECTION("simple") {
         mustache tmpl("<h1>Today{{! ignore me }}.</h1>");
         mustache::Data data;
@@ -107,8 +107,6 @@ TEST_CASE("comments") {
 }
 
 TEST_CASE("set_delimiter") {
-
-    using kainjow::mustache;
 
     SECTION("basic") {
         mustache tmpl("{{name}}{{=<% %>=}}<% name %><%={{ }}=%>{{ name }}");
@@ -145,9 +143,6 @@ TEST_CASE("set_delimiter") {
 
 TEST_CASE("sections") {
     
-    using kainjow::mustache;
-    using Data = mustache::Data;
-
     SECTION("nonexistant") {
         mustache tmpl("{{#var}}not shown{{/var}}");
         Data data;
@@ -180,9 +175,6 @@ TEST_CASE("sections") {
 
 TEST_CASE("sections_inverted") {
     
-    using kainjow::mustache;
-    using Data = mustache::Data;
-    
     SECTION("nonexistant") {
         mustache tmpl("{{^var}}shown{{/var}}");
         CHECK(tmpl.render(Data()) == "shown");
@@ -203,9 +195,6 @@ TEST_CASE("sections_inverted") {
 }
 
 TEST_CASE("section_lists") {
-    
-    using kainjow::mustache;
-    using Data = mustache::Data;
     
     SECTION("list") {
         mustache tmpl("{{#people}}Hello {{name}}, {{/people}}");
@@ -265,9 +254,6 @@ TEST_CASE("section_lists") {
 
 TEST_CASE("section_object") {
     
-    using kainjow::mustache;
-    using Data = mustache::Data;
-    
     SECTION("basic") {
         mustache tmpl("{{#employee}}name={{name}}, age={{age}}{{/employee}}");
         Data person;
@@ -295,7 +281,7 @@ TEST_CASE("section_object") {
 TEST_CASE("examples") {
     
     SECTION("one") {
-        kainjow::mustache tmpl{"Hello {{what}}!"};
+        mustache tmpl{"Hello {{what}}!"};
         std::cout << tmpl.render({"what", "World"}) << std::endl;
         CHECK(tmpl.isValid());
         CHECK(tmpl.errorMessage() == "");
@@ -303,8 +289,7 @@ TEST_CASE("examples") {
     }
 
     SECTION("two") {
-        using Data = kainjow::mustache::Data;
-        kainjow::mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+        mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
         Data employees{Data::List()};
         employees << Data{"name", "Steve"} << Data{"name", "Bill"};
         std::ostream& stream = tmpl.render({"employees", employees}, std::cout) << std::endl;
@@ -315,7 +300,7 @@ TEST_CASE("examples") {
     }
 
     SECTION("three") {
-        kainjow::mustache tmpl("Hello {{what}}!");
+        mustache tmpl("Hello {{what}}!");
         std::stringstream ss;
         tmpl.render({"what", "World"}, [&ss](const std::string& str) {
             ss << str;
@@ -328,9 +313,6 @@ TEST_CASE("examples") {
 }
 
 TEST_CASE("data") {
-    
-    using kainjow::mustache;
-    using Data = mustache::Data;
 
     SECTION("types") {
         Data data("age", "42");
@@ -383,8 +365,6 @@ TEST_CASE("data") {
 }
 
 TEST_CASE("errors") {
-
-    using kainjow::mustache;
 
     SECTION("unclosed_section") {
         mustache tmpl("test {{#employees}}");
@@ -519,9 +499,6 @@ TEST_CASE("errors") {
 
 TEST_CASE("partials") {
 
-    using kainjow::mustache;
-    using Data = mustache::Data;
-
     SECTION("empty") {
         mustache tmpl{"{{>header}}"};
         Data data;
@@ -576,9 +553,6 @@ TEST_CASE("partials") {
 }
 
 TEST_CASE("lambdas") {
-    
-    using kainjow::mustache;
-    using Data = mustache::Data;
     
     SECTION("basic") {
         mustache tmpl{"{{lambda}}"};
@@ -662,9 +636,6 @@ TEST_CASE("lambdas") {
 }
 
 TEST_CASE("dotted_names") {
-    
-    using kainjow::mustache;
-    using Data = mustache::Data;
     
     SECTION("basic") {
         mustache tmpl{"\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\""};

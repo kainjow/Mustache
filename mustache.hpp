@@ -810,8 +810,8 @@ private:
     Component rootComponent_;
 };
 
-using mustache = kainjow::basic_mustache<std::string>;
-using mustachew = kainjow::basic_mustache<std::wstring>;
+using mustache = basic_mustache<std::string>;
+using mustachew = basic_mustache<std::wstring>;
 
 } // kainjow
 
