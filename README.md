@@ -10,7 +10,7 @@
 ## Example 1
 
 ````cpp
-kainjow::Mustache tmpl{"Hello {{what}}!"};
+kainjow::mustache tmpl{"Hello {{what}}!"};
 std::cout << tmpl.render({"what", "World"}) << std::endl;
 // Hello World!
 ````
@@ -18,8 +18,8 @@ std::cout << tmpl.render({"what", "World"}) << std::endl;
 ## Example 2
 
 ````cpp
-using Data = kainjow::Mustache::Data;
-kainjow::Mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+using Data = kainjow::mustache::Data;
+kainjow::mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
 Data employees{Data::List()};
 employees << Data{"name", "Steve"} << Data{"name", "Bill"};
 tmpl.render({"employees", employees}, std::cout);
@@ -29,7 +29,7 @@ tmpl.render({"employees", employees}, std::cout);
 ## Example 3
 
 ````cpp
-kainjow::Mustache tmpl("Hello {{what}}!");
+kainjow::mustache tmpl("Hello {{what}}!");
 std::stringstream ss;
 tmpl.render({"what", "World"}, [&ss](const std::string& str) {
     ss << str;

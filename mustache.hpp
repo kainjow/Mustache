@@ -80,7 +80,7 @@ StringType escape(const StringType& s) {
 }
 
 template <typename StringType>
-class BasicMustache {
+class basic_mustache {
 public:
     class Data {
     public:
@@ -290,7 +290,7 @@ public:
         std::unique_ptr<LambdaType> lambda_;
     };
     
-    BasicMustache(const StringType& input) {
+    basic_mustache(const StringType& input) {
         Context ctx;
         parse(input, ctx);
     }
@@ -472,7 +472,7 @@ private:
         Context& ctx_;
     };
     
-    BasicMustache(const StringType& input, Context& ctx) {
+    basic_mustache(const StringType& input, Context& ctx) {
         parse(input, ctx);
     }
 
@@ -737,7 +737,7 @@ private:
             case Tag::Type::Partial:
                 if ((var = ctx.get_partial(tag.name)) != nullptr && var->isPartial()) {
                     const auto partial = var->partial();
-                    BasicMustache tmpl{partial()};
+                    basic_mustache tmpl{partial()};
                     if (!tmpl.isValid()) {
                         errorMessage_ = tmpl.errorMessage();
                     } else {
@@ -764,7 +764,7 @@ private:
     bool renderLambda(const RenderHandler& handler, const Data* var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
         const auto lambdaResult = var->callLambda(text);
         assert(lambdaResult.isString());
-        BasicMustache tmpl = parseWithSameContext ? BasicMustache{lambdaResult.stringValue(), ctx} : BasicMustache{lambdaResult.stringValue()};
+        basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult.stringValue(), ctx} : basic_mustache{lambdaResult.stringValue()};
         if (!tmpl.isValid()) {
             errorMessage_ = tmpl.errorMessage();
         } else {
@@ -810,8 +810,8 @@ private:
     Component rootComponent_;
 };
 
-using Mustache = kainjow::BasicMustache<std::string>;
-using MustacheW = kainjow::BasicMustache<std::wstring>;
+using mustache = kainjow::basic_mustache<std::string>;
+using mustachew = kainjow::basic_mustache<std::wstring>;
 
 } // kainjow
 
