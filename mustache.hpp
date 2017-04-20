@@ -437,8 +437,7 @@ private:
 
         const data* get_partial(const string_type& name) const {
             for (const auto& item : items_) {
-                const data* var{item};
-                var = var->get(name);
+                const auto var = item->get(name);
                 if (var) {
                     return var;
                 }
