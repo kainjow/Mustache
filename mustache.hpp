@@ -112,7 +112,7 @@ public:
         data(const list_type& list) : type_{type::List} {
             list_.reset(new list_type(list));
         }
-        data(type type) : type_{type} {
+        data(type t) : type_{t} {
             switch (type_) {
                 case type::object:
                     obj_.reset(new object_type);
