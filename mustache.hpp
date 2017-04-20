@@ -37,8 +37,8 @@
 
 namespace kainjow {
 
-template <typename StringType>
-StringType trim(const StringType& s) {
+template <typename string_type>
+string_type trim(const string_type& s) {
     auto it = s.begin();
     while (it != s.end() && isspace(*it)) {
         it++;
@@ -50,9 +50,9 @@ StringType trim(const StringType& s) {
     return {it, rit.base()};
 }
 
-template <typename StringType>
-StringType escape(const StringType& s) {
-    StringType ret;
+template <typename string_type>
+string_type escape(const string_type& s) {
+    string_type ret;
     ret.reserve(s.size()*2);
     for (const auto ch : s) {
         switch (ch) {
@@ -79,7 +79,7 @@ StringType escape(const StringType& s) {
     return ret;
 }
 
-template <typename StringType>
+template <typename string_type>
 class basic_mustache {
 public:
     class data {
@@ -95,46 +95,46 @@ public:
             invalid,
         };
         
-        using ObjectType = std::unordered_map<StringType, data>;
-        using ListType = std::vector<data>;
-        using PartialType = std::function<StringType()>;
-        using LambdaType = std::function<StringType(const StringType&)>;
+        using object_type = std::unordered_map<string_type, data>;
+        using list_type = std::vector<data>;
+        using partial_type = std::function<string_type()>;
+        using lambda_type = std::function<string_type(const string_type&)>;
         
         // Construction
         data() : data(type::object) {
         }
-        data(const StringType& string) : type_{type::string} {
-            str_.reset(new StringType(string));
+        data(const string_type& string) : type_{type::string} {
+            str_.reset(new string_type(string));
         }
-        data(const typename StringType::value_type* string) : type_{type::string} {
-            str_.reset(new StringType(string));
+        data(const typename string_type::value_type* string) : type_{type::string} {
+            str_.reset(new string_type(string));
         }
-        data(const ListType& list) : type_{type::List} {
-            list_.reset(new ListType(list));
+        data(const list_type& list) : type_{type::List} {
+            list_.reset(new list_type(list));
         }
         data(type type) : type_{type} {
             switch (type_) {
                 case type::object:
-                    obj_.reset(new ObjectType);
+                    obj_.reset(new object_type);
                     break;
                 case type::string:
-                    str_.reset(new StringType);
+                    str_.reset(new string_type);
                     break;
                 case type::list:
-                    list_.reset(new ListType);
+                    list_.reset(new list_type);
                     break;
                 default:
                     break;
             }
         }
-        data(const StringType& name, const data& var) : data{} {
+        data(const string_type& name, const data& var) : data{} {
             set(name, var);
         }
-        data(const PartialType& partial) : type_{type::partial} {
-            partial_.reset(new PartialType(partial));
+        data(const partial_type& partial) : type_{type::partial} {
+            partial_.reset(new partial_type(partial));
         }
-        data(const LambdaType& lambda) : type_{type::lambda} {
-            lambda_.reset(new LambdaType(lambda));
+        data(const lambda_type& lambda) : type_{type::lambda} {
+            lambda_.reset(new lambda_type(lambda));
         }
         static data List() {
             return {data::type::list};
@@ -143,15 +143,15 @@ public:
         // Copying
         data(const data& data) : type_(data.type_) {
             if (data.obj_) {
-                obj_.reset(new ObjectType(*data.obj_));
+                obj_.reset(new object_type(*data.obj_));
             } else if (data.str_) {
-                str_.reset(new StringType(*data.str_));
+                str_.reset(new string_type(*data.str_));
             } else if (data.list_) {
-                list_.reset(new ListType(*data.list_));
+                list_.reset(new list_type(*data.list_));
             } else if (data.partial_) {
-                partial_.reset(new PartialType(*data.partial_));
+                partial_.reset(new partial_type(*data.partial_));
             } else if (data.lambda_) {
-                lambda_.reset(new LambdaType(*data.lambda_));
+                lambda_.reset(new lambda_type(*data.lambda_));
             }
         }
         
@@ -224,12 +224,12 @@ public:
         }
         
         // Object data
-        void set(const StringType& name, const data& var) {
+        void set(const string_type& name, const data& var) {
             if (is_object()) {
-                obj_->insert(std::pair<StringType,data>{name, var});
+                obj_->insert(std::pair<string_type,data>{name, var});
             }
         }
-        const data* get(const StringType& name) const {
+        const data* get(const string_type& name) const {
             if (!is_object()) {
                 return nullptr;
             }
@@ -246,7 +246,7 @@ public:
                 list_->push_back(var);
             }
         }
-        const ListType& list() const {
+        const list_type& list() const {
             return *list_;
         }
         bool is_empty_list() const {
@@ -261,36 +261,36 @@ public:
         }
         
         // String data
-        const StringType& string_value() const {
+        const string_type& string_value() const {
             return *str_;
         }
         
-        data& operator[] (const StringType& key) {
+        data& operator[] (const string_type& key) {
             return (*obj_)[key];
         }
         
-        const PartialType& partial() const {
+        const partial_type& partial() const {
             return (*partial_);
         }
         
-        const LambdaType& lambda() const {
+        const lambda_type& lambda() const {
             return (*lambda_);
         }
         
-        data callLambda(const StringType& text) const {
+        data callLambda(const string_type& text) const {
             return (*lambda_)(text);
         }
         
     private:
         enum type type_;
-        std::unique_ptr<ObjectType> obj_;
-        std::unique_ptr<StringType> str_;
-        std::unique_ptr<ListType> list_;
-        std::unique_ptr<PartialType> partial_;
-        std::unique_ptr<LambdaType> lambda_;
+        std::unique_ptr<object_type> obj_;
+        std::unique_ptr<string_type> str_;
+        std::unique_ptr<list_type> list_;
+        std::unique_ptr<partial_type> partial_;
+        std::unique_ptr<lambda_type> lambda_;
     };
     
-    basic_mustache(const StringType& input) {
+    basic_mustache(const string_type& input) {
         Context ctx;
         parse(input, ctx);
     }
@@ -299,24 +299,24 @@ public:
         return errorMessage_.empty();
     }
     
-    const StringType& error_message() const {
+    const string_type& error_message() const {
         return errorMessage_;
     }
 
     template <typename StreamType>
     StreamType& render(const data& data, StreamType& stream) {
-        render(data, [&stream](const StringType& str) {
+        render(data, [&stream](const string_type& str) {
             stream << str;
         });
         return stream;
     }
     
-    StringType render(const data& data) {
-        std::basic_ostringstream<typename StringType::value_type> ss;
+    string_type render(const data& data) {
+        std::basic_ostringstream<typename string_type::value_type> ss;
         return render(data, ss).str();
     }
 
-    using RenderHandler = std::function<void(const StringType&)>;
+    using RenderHandler = std::function<void(const string_type&)>;
     void render(const data& data, const RenderHandler& handler) {
         if (!is_valid()) {
             return;
@@ -326,12 +326,12 @@ public:
     }
 
 private:
-    using StringSizeType = typename StringType::size_type;
+    using StringSizeType = typename string_type::size_type;
     
     class DelimiterSet {
     public:
-        StringType begin;
-        StringType end;
+        string_type begin;
+        string_type end;
         DelimiterSet() {
             reset();
         }
@@ -340,11 +340,11 @@ private:
             begin = defaultBegin();
             end = defaultEnd();
         }
-        static StringType defaultBegin() {
-            return StringType(2, '{');
+        static string_type defaultBegin() {
+            return string_type(2, '{');
         }
-        static StringType defaultEnd() {
-            return StringType(2, '}');
+        static string_type defaultEnd() {
+            return string_type(2, '}');
         }
     };
     
@@ -361,9 +361,9 @@ private:
             Partial,
             SetDelimiter,
         };
-        StringType name;
+        string_type name;
         Type type = Type::Invalid;
-        std::shared_ptr<StringType> sectionText;
+        std::shared_ptr<string_type> sectionText;
         std::shared_ptr<DelimiterSet> delimiterSet;
         bool isSectionBegin() const {
             return type == Type::SectionBegin || type == Type::SectionBeginInverted;
@@ -375,15 +375,15 @@ private:
     
     class Component {
     public:
-        StringType text;
+        string_type text;
         Tag tag;
         std::vector<Component> children;
-        StringSizeType position = StringType::npos;
+        StringSizeType position = string_type::npos;
         bool isText() const {
             return tag.type == Tag::Type::Invalid;
         }
         Component() {}
-        Component(const StringType& t, StringSizeType p) : text(t), position(p) {}
+        Component(const string_type& t, StringSizeType p) : text(t), position(p) {}
     };
     
     class Context {
@@ -403,17 +403,17 @@ private:
             items_.erase(items_.begin());
         }
         
-        static std::vector<StringType> split(const StringType& s, typename StringType::value_type delim) {
-            std::vector<StringType> elems;
-            std::basic_stringstream<typename StringType::value_type> ss(s);
-            StringType item;
+        static std::vector<string_type> split(const string_type& s, typename string_type::value_type delim) {
+            std::vector<string_type> elems;
+            std::basic_stringstream<typename string_type::value_type> ss(s);
+            string_type item;
             while (std::getline(ss, item, delim)) {
                 elems.push_back(item);
             }
             return elems;
         }
 
-        const data* get(const StringType& name) const {
+        const data* get(const string_type& name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
@@ -438,7 +438,7 @@ private:
             return nullptr;
         }
 
-        const data* get_partial(const StringType& name) const {
+        const data* get_partial(const string_type& name) const {
             for (const auto& item : items_) {
                 const data* var{item};
                 var = var->get(name);
@@ -472,14 +472,14 @@ private:
         Context& ctx_;
     };
     
-    basic_mustache(const StringType& input, Context& ctx) {
+    basic_mustache(const string_type& input, Context& ctx) {
         parse(input, ctx);
     }
 
-    void parse(const StringType& input, Context& ctx) {
-        using streamstring = std::basic_ostringstream<typename StringType::value_type>;
+    void parse(const string_type& input, Context& ctx) {
+        using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
-        const StringType braceDelimiterEndUnescaped(3, '}');
+        const string_type braceDelimiterEndUnescaped(3, '}');
         const StringSizeType inputSize{input.size()};
         
         bool currentDelimiterIsBrace{ctx.delimiterSet.isDefault()};
@@ -492,7 +492,7 @@ private:
             
             // Find the next tag start delimiter
             const StringSizeType tagLocationStart{input.find(ctx.delimiterSet.begin, inputPosition)};
-            if (tagLocationStart == StringType::npos) {
+            if (tagLocationStart == string_type::npos) {
                 // No tag found. Add the remaining text.
                 const Component comp{{input, inputPosition, inputSize - inputPosition}, inputPosition};
                 sections.back()->children.push_back(comp);
@@ -506,13 +506,13 @@ private:
             // Find the next tag end delimiter
             StringSizeType tagContentsLocation{tagLocationStart + ctx.delimiterSet.begin.size()};
             const bool tagIsUnescapedVar{currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == ctx.delimiterSet.begin.at(0)};
-            const StringType& currentTagDelimiterEnd{tagIsUnescapedVar ? braceDelimiterEndUnescaped : ctx.delimiterSet.end};
+            const string_type& currentTagDelimiterEnd{tagIsUnescapedVar ? braceDelimiterEndUnescaped : ctx.delimiterSet.end};
             const auto currentTagDelimiterEndSize = currentTagDelimiterEnd.size();
             if (tagIsUnescapedVar) {
                 ++tagContentsLocation;
             }
             StringSizeType tagLocationEnd{input.find(currentTagDelimiterEnd, tagContentsLocation)};
-            if (tagLocationEnd == StringType::npos) {
+            if (tagLocationEnd == string_type::npos) {
                 streamstring ss;
                 ss << "Unclosed tag at " << tagLocationStart;
                 errorMessage_.assign(ss.str());
@@ -520,7 +520,7 @@ private:
             }
             
             // Parse tag
-            const StringType tagContents{trim(StringType{input, tagContentsLocation, tagLocationEnd - tagContentsLocation})};
+            const string_type tagContents{trim(string_type{input, tagContentsLocation, tagLocationEnd - tagContentsLocation})};
             Component comp;
             if (!tagContents.empty() && tagContents[0] == '=') {
                 if (!parseSetDelimiterTag(tagContents, ctx.delimiterSet)) {
@@ -553,7 +553,7 @@ private:
                     errorMessage_.assign(ss.str());
                     return;
                 }
-                sections.back()->tag.sectionText.reset(new StringType(input.substr(sectionStarts.back(), tagLocationStart - sectionStarts.back())));
+                sections.back()->tag.sectionText.reset(new string_type(input.substr(sectionStarts.back(), tagLocationStart - sectionStarts.back())));
                 sections.pop_back();
                 sectionStarts.pop_back();
             }
@@ -611,7 +611,7 @@ private:
         return control;
     }
     
-    bool isSetDelimiterValid(const StringType& delimiter) {
+    bool isSetDelimiterValid(const string_type& delimiter) {
         // "Custom delimiters may not contain whitespace or the equals sign."
         for (const auto ch : delimiter) {
             if (ch == '=' || isspace(ch)) {
@@ -621,7 +621,7 @@ private:
         return true;
     }
     
-    bool parseSetDelimiterTag(const StringType& contents, DelimiterSet& delimiterSet) {
+    bool parseSetDelimiterTag(const string_type& contents, DelimiterSet& delimiterSet) {
         // Smallest legal tag is "=X X="
         if (contents.size() < 5) {
             return false;
@@ -631,13 +631,13 @@ private:
         }
         const auto contentsSubstr = trim(contents.substr(1, contents.size() - 2));
         const auto spacepos = contentsSubstr.find(' ');
-        if (spacepos == StringType::npos) {
+        if (spacepos == string_type::npos) {
             return false;
         }
         const auto nonspace = contentsSubstr.find_first_not_of(' ', spacepos + 1);
-        assert(nonspace != StringType::npos);
-        const StringType begin = contentsSubstr.substr(0, spacepos);
-        const StringType end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
+        assert(nonspace != string_type::npos);
+        const string_type begin = contentsSubstr.substr(0, spacepos);
+        const string_type end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
         if (!isSetDelimiterValid(begin) || !isSetDelimiterValid(end)) {
             return false;
         }
@@ -646,7 +646,7 @@ private:
         return true;
     }
     
-    void parseTagContents(bool isUnescapedVar, const StringType& contents, Tag& tag) {
+    void parseTagContents(bool isUnescapedVar, const string_type& contents, Tag& tag) {
         if (isUnescapedVar) {
             tag.type = Tag::Type::UnescapedVariable;
             tag.name = contents;
@@ -680,7 +680,7 @@ private:
             if (tag.type == Tag::Type::Variable) {
                 tag.name = contents;
             } else {
-                StringType name{contents};
+                string_type name{contents};
                 name.erase(name.begin());
                 tag.name = trim(name);
             }
@@ -693,9 +693,9 @@ private:
         });
     }
     
-    StringType render(Context& ctx) {
-        std::basic_ostringstream<typename StringType::value_type> ss;
-        render([&ss](const StringType& str) {
+    string_type render(Context& ctx) {
+        std::basic_ostringstream<typename string_type::value_type> ss;
+        render([&ss](const string_type& str) {
             ss << str;
         }, ctx);
         return ss.str();
@@ -761,14 +761,14 @@ private:
         return WalkControl::Continue;
     }
     
-    bool renderLambda(const RenderHandler& handler, const data* var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
+    bool renderLambda(const RenderHandler& handler, const data* var, Context& ctx, bool escaped, const string_type& text, bool parseWithSameContext) {
         const auto lambdaResult = var->callLambda(text);
         assert(lambdaResult.is_string());
         basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult.string_value(), ctx} : basic_mustache{lambdaResult.string_value()};
         if (!tmpl.is_valid()) {
             errorMessage_ = tmpl.error_message();
         } else {
-            const StringType str{tmpl.render(ctx)};
+            const string_type str{tmpl.render(ctx)};
             if (!tmpl.is_valid()) {
                 errorMessage_ = tmpl.error_message();
             } else {
@@ -806,7 +806,7 @@ private:
     }
 
 private:
-    StringType errorMessage_;
+    string_type errorMessage_;
     Component rootComponent_;
 };
 

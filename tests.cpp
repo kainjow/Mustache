@@ -355,7 +355,7 @@ TEST_CASE("data") {
         CHECK(obj1.type() == data::type::invalid);
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
 
-        data lambda1{data::LambdaType{[](const std::string&){ return "{{#what}}"; }}};
+        data lambda1{data::lambda_type{[](const std::string&){ return "{{#what}}"; }}};
         data lambda2 = std::move(lambda1);
         CHECK(lambda2.is_lambda());
         CHECK(lambda1.type() == data::type::invalid);
@@ -425,7 +425,7 @@ TEST_CASE("errors") {
     
     SECTION("lambda") {
         mustache tmpl{"Hello {{lambda}}!"};
-        data dat("lambda", data{data::LambdaType{[](const std::string&){
+        data dat("lambda", data{data::lambda_type{[](const std::string&){
             return "{{#what}}";
         }}});
         CHECK(tmpl.is_valid() == true);
@@ -437,10 +437,10 @@ TEST_CASE("errors") {
 
     SECTION("lambda2") {
         mustache tmpl{"Hello {{lambda}}!"};
-        data dat("lambda", data{data::LambdaType{[](const std::string&){
+        data dat("lambda", data{data::lambda_type{[](const std::string&){
             return "{{what}}";
         }}});
-        dat["what"] = data{data::LambdaType{[](const std::string&){
+        dat["what"] = data{data::lambda_type{[](const std::string&){
             return "{{#blah}}";
         }}};
         CHECK(tmpl.is_valid() == true);
@@ -452,7 +452,7 @@ TEST_CASE("errors") {
 
     SECTION("partial") {
         mustache tmpl{"Hello {{>partial}}!"};
-        data dat("partial", data{data::PartialType{[](){
+        data dat("partial", data{data::partial_type{[](){
             return "{{#what}}";
         }}});
         CHECK(tmpl.is_valid() == true);
@@ -464,10 +464,10 @@ TEST_CASE("errors") {
 
     SECTION("partial2") {
         mustache tmpl{"Hello {{>partial}}!"};
-        data data("partial", {data::PartialType{[](){
+        data data("partial", {data::partial_type{[](){
             return "{{what}}";
         }}});
-        data["what"] = data::LambdaType{[](const std::string&){
+        data["what"] = data::lambda_type{[](const std::string&){
             return "{{#blah}}";
         }};
         CHECK(tmpl.is_valid() == true);
@@ -479,7 +479,7 @@ TEST_CASE("errors") {
     
     SECTION("section_lambda") {
         mustache tmpl{"{{#what}}asdf{{/what}}"};
-        data data("what", data::LambdaType{[](const std::string&){
+        data data("what", data::lambda_type{[](const std::string&){
             return "{{blah";
         }});
         CHECK(tmpl.is_valid() == true);
@@ -501,7 +501,7 @@ TEST_CASE("partials") {
 
     SECTION("basic") {
         mustache tmpl{"{{>header}}"};
-        data::PartialType partial = []() {
+        data::partial_type partial = []() {
             return "Hello World";
         };
         data dat("header", data{partial});
@@ -510,7 +510,7 @@ TEST_CASE("partials") {
 
     SECTION("context") {
         mustache tmpl{"{{>header}}"};
-        data::PartialType partial{[]() {
+        data::partial_type partial{[]() {
             return "Hello {{name}}";
         }};
         data dat("header", data{partial});
@@ -520,10 +520,10 @@ TEST_CASE("partials") {
     
     SECTION("nested") {
         mustache tmpl{"{{>header}}"};
-        data::PartialType header{[]() {
+        data::partial_type header{[]() {
             return "Hello {{name}} {{>footer}}";
         }};
-        data::PartialType footer{[]() {
+        data::partial_type footer{[]() {
             return "Goodbye {{#names}}{{.}}|{{/names}}";
         }};
         data names{data::List()};
@@ -538,7 +538,7 @@ TEST_CASE("partials") {
 
     SECTION("dotted") {
         mustache tmpl{"{{>a.b}}"};
-        data::PartialType a_b{[]() {
+        data::partial_type a_b{[]() {
             return "test";
         }};
         data data("a.b", a_b);
@@ -550,7 +550,7 @@ TEST_CASE("lambdas") {
     
     SECTION("basic") {
         mustache tmpl{"{{lambda}}"};
-        data dat("lambda", data{data::LambdaType{[](const std::string&){
+        data dat("lambda", data{data::lambda_type{[](const std::string&){
             return "Hello {{planet}}";
         }}});
         dat["planet"] = "world";
@@ -559,7 +559,7 @@ TEST_CASE("lambdas") {
 
     SECTION("delimiters") {
         mustache tmpl{"{{= | | =}}Hello, (|&lambda|)!"};
-        data dat("lambda", data{data::LambdaType{[](const std::string&){
+        data dat("lambda", data{data::lambda_type{[](const std::string&){
             return "|planet| => {{planet}}";
         }}});
         dat["planet"] = "world";
@@ -569,7 +569,7 @@ TEST_CASE("lambdas") {
     SECTION("nocaching") {
         mustache tmpl{"{{lambda}} == {{{lambda}}} == {{lambda}}"};
         int calls = 0;
-        data dat("lambda", data{data::LambdaType{[&calls](const std::string&){
+        data dat("lambda", data{data::lambda_type{[&calls](const std::string&){
             ++calls;
             return std::to_string(calls);
         }}});
@@ -578,7 +578,7 @@ TEST_CASE("lambdas") {
 
     SECTION("escape") {
         mustache tmpl{"<{{lambda}}{{{lambda}}}"};
-        data dat("lambda", data{data::LambdaType{[](const std::string&){
+        data dat("lambda", data{data::lambda_type{[](const std::string&){
             return ">";
         }}});
         CHECK(tmpl.render(dat) == "<&gt;>");
@@ -586,7 +586,7 @@ TEST_CASE("lambdas") {
     
     SECTION("section") {
         mustache tmpl{"<{{#lambda}}{{x}}{{/lambda}}>"};
-        data dat("lambda", data{data::LambdaType{[](const std::string& text){
+        data dat("lambda", data{data::lambda_type{[](const std::string& text){
             return text == "{{x}}" ? "yes" : "no";
         }}});
         CHECK(tmpl.render(dat) == "<yes>");
@@ -594,7 +594,7 @@ TEST_CASE("lambdas") {
 
     SECTION("section_expansion") {
         mustache tmpl{"<{{#lambda}}-{{/lambda}}>"};
-        data dat("lambda", data{data::LambdaType{[](const std::string& text){
+        data dat("lambda", data{data::lambda_type{[](const std::string& text){
             return text + "{{planet}}" + text;
         }}});
         dat["planet"] = "Earth";
@@ -603,14 +603,14 @@ TEST_CASE("lambdas") {
 
     SECTION("section_alternate_delimiters") {
         mustache tmpl{"{{= | | =}}<|#lambda|-|/lambda|>"};
-        data dat("lambda", data{data::LambdaType{[](const std::string& text){
+        data dat("lambda", data{data::lambda_type{[](const std::string& text){
             return text + "{{planet}} => |planet|" + text;
         }}});
         dat["planet"] = "Earth";
         CHECK(tmpl.render(dat) == "<-{{planet}} => Earth->");
     }
 
-    const data::LambdaType sectionLambda{[](const std::string& text){
+    const data::lambda_type sectionLambda{[](const std::string& text){
         return "__" + text + "__";
     }};
 
