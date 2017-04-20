@@ -192,9 +192,6 @@ public:
         }
         
         // Type info
-        enum type type() const {
-            return type_;
-        }
         bool is_object() const {
             return type_ == type::object;
         }
@@ -218,6 +215,9 @@ public:
         }
         bool is_lambda() const {
             return type_ == type::lambda;
+        }
+        bool is_invalid() const {
+            return type_ == type::invalid;
         }
         
         // Object data
@@ -279,7 +279,7 @@ public:
         }
         
     private:
-        enum type type_;
+        type type_;
         std::unique_ptr<object_type> obj_;
         std::unique_ptr<string_type> str_;
         std::unique_ptr<list_type> list_;

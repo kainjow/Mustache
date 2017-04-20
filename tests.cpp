@@ -343,7 +343,7 @@ TEST_CASE("data") {
         CHECK(obj1.is_list());
         data obj2{std::move(obj1)};
         CHECK(obj2.is_list());
-        CHECK(obj1.type() == data::type::invalid);
+        CHECK(obj1.is_invalid());
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
     }
 
@@ -352,13 +352,13 @@ TEST_CASE("data") {
         CHECK(obj1.is_list());
         data obj2 = std::move(obj1);
         CHECK(obj2.is_list());
-        CHECK(obj1.type() == data::type::invalid);
+        CHECK(obj1.is_invalid());
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
 
         data lambda1{data::lambda_type{[](const std::string&){ return "{{#what}}"; }}};
         data lambda2 = std::move(lambda1);
         CHECK(lambda2.is_lambda());
-        CHECK(lambda1.type() == data::type::invalid);
+        CHECK(lambda1.is_invalid());
     }
 
 }
