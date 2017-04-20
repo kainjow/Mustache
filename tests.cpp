@@ -134,7 +134,7 @@ TEST_CASE("set_delimiter") {
     SECTION("whitespace") {
         mustache tmpl("|{{= @   @ =}}|");
         data data;
-        REQUIRE(tmpl.isValid());
+        REQUIRE(tmpl.is_valid());
         CHECK(tmpl.render(data) == "||");
     }
 
@@ -282,8 +282,8 @@ TEST_CASE("examples") {
     SECTION("one") {
         mustache tmpl{"Hello {{what}}!"};
         std::cout << tmpl.render({"what", "World"}) << std::endl;
-        CHECK(tmpl.isValid());
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render({"what", "World"}) == "Hello World!");
     }
 
@@ -292,8 +292,8 @@ TEST_CASE("examples") {
         data employees{data::List()};
         employees << data{"name", "Steve"} << data{"name", "Bill"};
         std::ostream& stream = tmpl.render({"employees", employees}, std::cout) << std::endl;
-        CHECK(tmpl.isValid());
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render({"employees", employees}) == "Steve, Bill, ");
         CHECK(&stream == &std::cout);
     }
@@ -304,8 +304,8 @@ TEST_CASE("examples") {
         tmpl.render({"what", "World"}, [&ss](const std::string& str) {
             ss << str;
         });
-        CHECK(tmpl.isValid());
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "");
         CHECK(ss.str() == "Hello World!");
     }
 
@@ -328,36 +328,36 @@ TEST_CASE("data") {
         CHECK(age != (const data*)0);
         CHECK(is_human != (const data*)0);
         CHECK(dat.get("miss") == (const data*)0);
-        REQUIRE(name->isString());
-        CHECK(name->stringValue() == "Steve");
-        REQUIRE(age->isString());
-        CHECK(age->stringValue() == "42");
-        CHECK(is_human->isTrue());
-        CHECK(is_human->isBool());
-        CHECK(emptyStr.isString());
-        CHECK(emptyStr.stringValue() == "");
+        REQUIRE(name->is_string());
+        CHECK(name->string_value() == "Steve");
+        REQUIRE(age->is_string());
+        CHECK(age->string_value() == "42");
+        CHECK(is_human->is_true());
+        CHECK(is_human->is_bool());
+        CHECK(emptyStr.is_string());
+        CHECK(emptyStr.string_value() == "");
     }
 
     SECTION("move_ctor") {
         data obj1{data::List()};
-        CHECK(obj1.isList());
+        CHECK(obj1.is_list());
         data obj2{std::move(obj1)};
-        CHECK(obj2.isList());
+        CHECK(obj2.is_list());
         CHECK(obj1.type() == data::type::invalid);
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
     }
 
     SECTION("move_assign") {
         data obj1{data::List()};
-        CHECK(obj1.isList());
+        CHECK(obj1.is_list());
         data obj2 = std::move(obj1);
-        CHECK(obj2.isList());
+        CHECK(obj2.is_list());
         CHECK(obj1.type() == data::type::invalid);
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
 
         data lambda1{data::LambdaType{[](const std::string&){ return "{{#what}}"; }}};
         data lambda2 = std::move(lambda1);
-        CHECK(lambda2.isLambda());
+        CHECK(lambda2.is_lambda());
         CHECK(lambda1.type() == data::type::invalid);
     }
 
@@ -367,8 +367,8 @@ TEST_CASE("errors") {
 
     SECTION("unclosed_section") {
         mustache tmpl("test {{#employees}}");
-        CHECK_FALSE(tmpl.isValid());
-        CHECK(tmpl.errorMessage() == "Unclosed section \"employees\" at 5");
+        CHECK_FALSE(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "Unclosed section \"employees\" at 5");
     }
     
     SECTION("unclosed_section_nested") {
@@ -377,8 +377,8 @@ TEST_CASE("errors") {
         data.set("var1", data::type::bool_true);
         data.set("var2", data::type::bool_true);
         CHECK(tmpl.render(data) == "");
-        CHECK(tmpl.isValid() == false);
-        CHECK(tmpl.errorMessage() == "Unclosed section \"var1\" at 0");
+        CHECK(tmpl.is_valid() == false);
+        CHECK(tmpl.error_message() == "Unclosed section \"var1\" at 0");
     }
 
     SECTION("unclosed_section_nested2") {
@@ -387,20 +387,20 @@ TEST_CASE("errors") {
         data.set("var1", data::type::bool_true);
         data.set("var2", data::type::bool_true);
         CHECK(tmpl.render(data) == "");
-        CHECK(tmpl.isValid() == false);
-        CHECK(tmpl.errorMessage() == "Unclosed section \"var1\" at 0");
+        CHECK(tmpl.is_valid() == false);
+        CHECK(tmpl.error_message() == "Unclosed section \"var1\" at 0");
     }
 
     SECTION("unclosed_tag") {
         mustache tmpl("test {{employees");
-        CHECK_FALSE(tmpl.isValid());
-        CHECK(tmpl.errorMessage() == "Unclosed tag at 5");
+        CHECK_FALSE(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "Unclosed tag at 5");
     }
     
     SECTION("unopened_section") {
         mustache tmpl("test {{/employees}}");
-        CHECK_FALSE(tmpl.isValid());
-        CHECK(tmpl.errorMessage() == "Unopened section \"employees\" at 5");
+        CHECK_FALSE(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "Unopened section \"employees\" at 5");
     }
     
     SECTION("invalid_set_delimiter") {
@@ -415,8 +415,8 @@ TEST_CASE("errors") {
         std::vector<std::string>::size_type total = 0;
         for (const auto& str: invalids) {
             mustache tmpl(str);
-            CHECK_FALSE(tmpl.isValid());
-            CHECK(tmpl.errorMessage() == "Invalid set delimiter tag at 5");
+            CHECK_FALSE(tmpl.is_valid());
+            CHECK(tmpl.error_message() == "Invalid set delimiter tag at 5");
             ++total;
         }
         CHECK(total == invalids.size());
@@ -428,11 +428,11 @@ TEST_CASE("errors") {
         data dat("lambda", data{data::LambdaType{[](const std::string&){
             return "{{#what}}";
         }}});
-        CHECK(tmpl.isValid() == true);
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid() == true);
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(dat) == "Hello ");
-        CHECK(tmpl.isValid() == false);
-        CHECK(tmpl.errorMessage() == "Unclosed section \"what\" at 0");
+        CHECK(tmpl.is_valid() == false);
+        CHECK(tmpl.error_message() == "Unclosed section \"what\" at 0");
     }
 
     SECTION("lambda2") {
@@ -443,11 +443,11 @@ TEST_CASE("errors") {
         dat["what"] = data{data::LambdaType{[](const std::string&){
             return "{{#blah}}";
         }}};
-        CHECK(tmpl.isValid() == true);
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid() == true);
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(dat) == "Hello ");
-        CHECK(tmpl.isValid() == false);
-        CHECK(tmpl.errorMessage() == "Unclosed section \"blah\" at 0");
+        CHECK(tmpl.is_valid() == false);
+        CHECK(tmpl.error_message() == "Unclosed section \"blah\" at 0");
     }
 
     SECTION("partial") {
@@ -455,11 +455,11 @@ TEST_CASE("errors") {
         data dat("partial", data{data::PartialType{[](){
             return "{{#what}}";
         }}});
-        CHECK(tmpl.isValid() == true);
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid() == true);
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(dat) == "Hello ");
-        CHECK(tmpl.isValid() == false);
-        CHECK(tmpl.errorMessage() == "Unclosed section \"what\" at 0");
+        CHECK(tmpl.is_valid() == false);
+        CHECK(tmpl.error_message() == "Unclosed section \"what\" at 0");
     }
 
     SECTION("partial2") {
@@ -470,11 +470,11 @@ TEST_CASE("errors") {
         data["what"] = data::LambdaType{[](const std::string&){
             return "{{#blah}}";
         }};
-        CHECK(tmpl.isValid() == true);
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid() == true);
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(data) == "Hello ");
-        CHECK(tmpl.isValid() == false);
-        CHECK(tmpl.errorMessage() == "Unclosed section \"blah\" at 0");
+        CHECK(tmpl.is_valid() == false);
+        CHECK(tmpl.error_message() == "Unclosed section \"blah\" at 0");
     }
     
     SECTION("section_lambda") {
@@ -482,11 +482,11 @@ TEST_CASE("errors") {
         data data("what", data::LambdaType{[](const std::string&){
             return "{{blah";
         }});
-        CHECK(tmpl.isValid() == true);
-        CHECK(tmpl.errorMessage() == "");
+        CHECK(tmpl.is_valid() == true);
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(data) == "");
-        CHECK(tmpl.isValid() == false);
-        CHECK(tmpl.errorMessage() == "Unclosed tag at 0");
+        CHECK(tmpl.is_valid() == false);
+        CHECK(tmpl.error_message() == "Unclosed tag at 0");
     }
 
 }

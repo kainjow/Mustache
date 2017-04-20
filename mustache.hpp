@@ -198,39 +198,39 @@ public:
         enum type type() const {
             return type_;
         }
-        bool isObject() const {
+        bool is_object() const {
             return type_ == type::object;
         }
-        bool isString() const {
+        bool is_string() const {
             return type_ == type::string;
         }
-        bool isList() const {
+        bool is_list() const {
             return type_ == type::list;
         }
-        bool isBool() const {
-            return isTrue() || isFalse();
+        bool is_bool() const {
+            return is_true() || is_false();
         }
-        bool isTrue() const {
+        bool is_true() const {
             return type_ == type::bool_true;
         }
-        bool isFalse() const {
+        bool is_false() const {
             return type_ == type::bool_false;
         }
-        bool isPartial() const {
+        bool is_partial() const {
             return type_ == type::partial;
         }
-        bool isLambda() const {
+        bool is_lambda() const {
             return type_ == type::lambda;
         }
         
         // Object data
         void set(const StringType& name, const data& var) {
-            if (isObject()) {
+            if (is_object()) {
                 obj_->insert(std::pair<StringType,data>{name, var});
             }
         }
         const data* get(const StringType& name) const {
-            if (!isObject()) {
+            if (!is_object()) {
                 return nullptr;
             }
             const auto& it = obj_->find(name);
@@ -242,18 +242,18 @@ public:
         
         // List data
         void push_back(const data& var) {
-            if (isList()) {
+            if (is_list()) {
                 list_->push_back(var);
             }
         }
         const ListType& list() const {
             return *list_;
         }
-        bool isEmptyList() const {
-            return isList() && list_->empty();
+        bool is_empty_list() const {
+            return is_list() && list_->empty();
         }
-        bool isNonEmptyList() const {
-            return isList() && !list_->empty();
+        bool is_non_empty_list() const {
+            return is_list() && !list_->empty();
         }
         data& operator<< (const data& data) {
             push_back(data);
@@ -261,7 +261,7 @@ public:
         }
         
         // String data
-        const StringType& stringValue() const {
+        const StringType& string_value() const {
             return *str_;
         }
         
@@ -295,11 +295,11 @@ public:
         parse(input, ctx);
     }
     
-    bool isValid() const {
+    bool is_valid() const {
         return errorMessage_.empty();
     }
     
-    const StringType& errorMessage() const {
+    const StringType& error_message() const {
         return errorMessage_;
     }
 
@@ -318,7 +318,7 @@ public:
 
     using RenderHandler = std::function<void(const StringType&)>;
     void render(const data& data, const RenderHandler& handler) {
-        if (!isValid()) {
+        if (!is_valid()) {
             return;
         }
         Context ctx{&data};
@@ -720,33 +720,33 @@ private:
                 break;
             case Tag::Type::SectionBegin:
                 if ((var = ctx.get(tag.name)) != nullptr) {
-                    if (var->isLambda()) {
+                    if (var->is_lambda()) {
                         if (!renderLambda(handler, var, ctx, false, *comp.tag.sectionText, true)) {
                             return WalkControl::Stop;
                         }
-                    } else if (!var->isFalse() && !var->isEmptyList()) {
+                    } else if (!var->is_false() && !var->is_empty_list()) {
                         renderSection(handler, ctx, comp, var);
                     }
                 }
                 return WalkControl::Skip;
             case Tag::Type::SectionBeginInverted:
-                if ((var = ctx.get(tag.name)) == nullptr || var->isFalse() || var->isEmptyList()) {
+                if ((var = ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
                     renderSection(handler, ctx, comp, var);
                 }
                 return WalkControl::Skip;
             case Tag::Type::Partial:
-                if ((var = ctx.get_partial(tag.name)) != nullptr && var->isPartial()) {
+                if ((var = ctx.get_partial(tag.name)) != nullptr && var->is_partial()) {
                     const auto partial = var->partial();
                     basic_mustache tmpl{partial()};
-                    if (!tmpl.isValid()) {
-                        errorMessage_ = tmpl.errorMessage();
+                    if (!tmpl.is_valid()) {
+                        errorMessage_ = tmpl.error_message();
                     } else {
                         tmpl.render(handler, ctx);
-                        if (!tmpl.isValid()) {
-                            errorMessage_ = tmpl.errorMessage();
+                        if (!tmpl.is_valid()) {
+                            errorMessage_ = tmpl.error_message();
                         }
                     }
-                    if (!tmpl.isValid()) {
+                    if (!tmpl.is_valid()) {
                         return WalkControl::Stop;
                     }
                 }
@@ -763,26 +763,26 @@ private:
     
     bool renderLambda(const RenderHandler& handler, const data* var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
         const auto lambdaResult = var->callLambda(text);
-        assert(lambdaResult.isString());
-        basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult.stringValue(), ctx} : basic_mustache{lambdaResult.stringValue()};
-        if (!tmpl.isValid()) {
-            errorMessage_ = tmpl.errorMessage();
+        assert(lambdaResult.is_string());
+        basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult.string_value(), ctx} : basic_mustache{lambdaResult.string_value()};
+        if (!tmpl.is_valid()) {
+            errorMessage_ = tmpl.error_message();
         } else {
             const StringType str{tmpl.render(ctx)};
-            if (!tmpl.isValid()) {
-                errorMessage_ = tmpl.errorMessage();
+            if (!tmpl.is_valid()) {
+                errorMessage_ = tmpl.error_message();
             } else {
                 handler(escaped ? escape(str) : str);
             }
         }
-        return tmpl.isValid();
+        return tmpl.is_valid();
     }
     
     bool renderVariable(const RenderHandler& handler, const data* var, Context& ctx, bool escaped) {
-        if (var->isString()) {
-            const auto varstr = var->stringValue();
+        if (var->is_string()) {
+            const auto varstr = var->string_value();
             handler(escaped ? escape(varstr) : varstr);
-        } else if (var->isLambda()) {
+        } else if (var->is_lambda()) {
             return renderLambda(handler, var, ctx, escaped, {}, false);
         }
         return true;
@@ -792,7 +792,7 @@ private:
         const auto callback = [&handler, &ctx, this](Component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };
-        if (var && var->isNonEmptyList()) {
+        if (var && var->is_non_empty_list()) {
             for (const auto& item : var->list()) {
                 const ContextPusher ctxpusher{ctx, &item};
                 walkChildren(callback, incomp);
