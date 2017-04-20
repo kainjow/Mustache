@@ -136,6 +136,8 @@ public:
         data(const lambda_type& lambda) : type_{type::lambda} {
             lambda_.reset(new lambda_type(lambda));
         }
+        data(bool b) : type_{b ? type::bool_true : type::bool_false} {
+        }
         
         // Copying
         data(const data& data) : type_(data.type_) {

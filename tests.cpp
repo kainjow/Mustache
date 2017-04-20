@@ -339,6 +339,8 @@ TEST_CASE("data") {
         data emptyStr = data::type::string;
         dat["name"] = "Steve";
         dat["is_human"] = data::type::bool_true;
+        dat["is_dog"] = false;
+        dat["is_organic"] = true;
         const data* name;
         const data* age;
         const data* is_human;
@@ -357,6 +359,10 @@ TEST_CASE("data") {
         CHECK(is_human->is_bool());
         CHECK(emptyStr.is_string());
         CHECK(emptyStr.string_value() == "");
+        CHECK(dat["is_dog"].is_bool());
+        CHECK(dat["is_dog"].is_false());
+        CHECK(dat["is_organic"].is_bool());
+        CHECK(dat["is_organic"].is_true());
     }
 
     SECTION("move_ctor") {
