@@ -109,7 +109,7 @@ public:
         data(const typename string_type::value_type* string) : type_{type::string} {
             str_.reset(new string_type(string));
         }
-        data(const list_type& list) : type_{type::List} {
+        data(const list_type& list) : type_{type::list} {
             list_.reset(new list_type(list));
         }
         data(type t) : type_{t} {
