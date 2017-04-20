@@ -78,9 +78,12 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 #### 3.0 - in progress
 
-* Namespace, classes, and methods are now in snake case to match the STL. For example, `Kainjow::Mustache` is now `kainjow::mustache`
-* Removed `Data::List()` - use `data{data::type::list}` instead
-* Removed `Data::type()` - use the various `is_xxx` methods to identity the type
+* Even simpler API. Not backwards compatible but upgrading should be straightforward
+  * Namespace, classes, and methods are now in snake case to match the STL. For example, `Kainjow::Mustache` is now `kainjow::mustache`
+  * Classes and aliases are now under a `mustache` namespace, instead of being under the mustache class
+  * object, list, partial, and lambda no longer use the _type suffix
+  * Removed `Data::List()` - use `data{data::type::list}` instead
+  * Removed `Data::type()` - use the various `is_xxx` methods to identity the type
 
 #### 2.0 - June 11, 2016
 
