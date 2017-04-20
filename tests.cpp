@@ -9,7 +9,6 @@
 #include "catch.hpp"
 
 using kainjow::mustache;
-using kainjow::mustachew;
 using data = mustache::data;
 
 TEST_CASE("variables") {
@@ -40,8 +39,8 @@ TEST_CASE("variables") {
     }
 
     SECTION("single_exist_wide") {
-        mustachew tmpl(L"Hello {{name}}");
-        mustachew::data data;
+        kainjow::mustachew tmpl(L"Hello {{name}}");
+        kainjow::mustachew::data data;
         data.set(L"name", L"Steve");
         CHECK(tmpl.render(data) == L"Hello Steve");
     }
