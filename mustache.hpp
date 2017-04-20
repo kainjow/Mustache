@@ -592,26 +592,26 @@ private:
     };
     using WalkCallback = std::function<WalkControl(Component&)>;
     
-    void walk(const WalkCallback& callback) const {
+    void walk(const WalkCallback& callback) {
         walkChildren(callback, rootComponent_);
     }
 
-    void walkChildren(const WalkCallback& callback, const Component& comp) const {
-        for (auto childComp : comp.children) {
+    void walkChildren(const WalkCallback& callback, Component& comp) {
+        for (auto& childComp : comp.children) {
             if (walkComponent(callback, childComp) != WalkControl::Continue) {
                 break;
             }
         }
     }
     
-    WalkControl walkComponent(const WalkCallback& callback, Component& comp) const {
+    WalkControl walkComponent(const WalkCallback& callback, Component& comp) {
         WalkControl control{callback(comp)};
         if (control == WalkControl::Stop) {
             return control;
         } else if (control == WalkControl::Skip) {
             return WalkControl::Continue;
         }
-        for (auto childComp : comp.children) {
+        for (auto& childComp : comp.children) {
             control = walkComponent(callback, childComp);
             assert(control == WalkControl::Continue);
         }
