@@ -304,6 +304,25 @@ private:
     std::unique_ptr<basic_lambda<string_type>> lambda_;
 };
 
+template <typename string_type>
+class delimiter_set {
+public:
+    string_type begin;
+    string_type end;
+    delimiter_set()
+        : begin(default_begin)
+        , end(default_end)
+    {}
+    bool is_default() const { return begin == default_begin && end == default_end; }
+    static const string_type default_begin;
+    static const string_type default_end;
+};
+
+template <typename string_type>
+const string_type delimiter_set<string_type>::default_begin(2, '{');
+template <typename string_type>
+const string_type delimiter_set<string_type>::default_end(2, '}');
+
 template <typename StringType>
 class basic_mustache {
 public:
@@ -347,26 +366,6 @@ public:
 private:
     using StringSizeType = typename string_type::size_type;
     
-    class DelimiterSet {
-    public:
-        string_type begin;
-        string_type end;
-        DelimiterSet() {
-            reset();
-        }
-        bool isDefault() const { return begin == defaultBegin() && end == defaultEnd(); }
-        void reset() {
-            begin = defaultBegin();
-            end = defaultEnd();
-        }
-        static string_type defaultBegin() {
-            return string_type(2, '{');
-        }
-        static string_type defaultEnd() {
-            return string_type(2, '}');
-        }
-    };
-    
     class Tag {
     public:
         enum class Type {
@@ -383,7 +382,7 @@ private:
         string_type name;
         Type type = Type::Invalid;
         std::shared_ptr<string_type> sectionText;
-        std::shared_ptr<DelimiterSet> delimiterSet;
+        std::shared_ptr<delimiter_set<string_type>> delimiterSet;
         bool isSectionBegin() const {
             return type == Type::SectionBegin || type == Type::SectionBeginInverted;
         }
@@ -470,7 +469,7 @@ private:
         Context(const Context&) = delete;
         Context& operator= (const Context&) = delete;
         
-        DelimiterSet delimiterSet;
+        delimiter_set<string_type> delimiterSet;
 
     private:
         std::vector<const basic_data<string_type>*> items_;
@@ -500,7 +499,7 @@ private:
         const string_type braceDelimiterEndUnescaped(3, '}');
         const StringSizeType inputSize{input.size()};
         
-        bool currentDelimiterIsBrace{ctx.delimiterSet.isDefault()};
+        bool currentDelimiterIsBrace{ctx.delimiterSet.is_default()};
         
         std::vector<Component*> sections{&rootComponent_};
         std::vector<StringSizeType> sectionStarts;
@@ -547,9 +546,9 @@ private:
                     errorMessage_.assign(ss.str());
                     return;
                 }
-                currentDelimiterIsBrace = ctx.delimiterSet.isDefault();
+                currentDelimiterIsBrace = ctx.delimiterSet.is_default();
                 comp.tag.type = Tag::Type::SetDelimiter;
-                comp.tag.delimiterSet.reset(new DelimiterSet(ctx.delimiterSet));
+                comp.tag.delimiterSet.reset(new delimiter_set<string_type>(ctx.delimiterSet));
             }
             if (comp.tag.type != Tag::Type::SetDelimiter) {
                 parseTagContents(tagIsUnescapedVar, tagContents, comp.tag);
@@ -639,7 +638,7 @@ private:
         return true;
     }
     
-    bool parseSetDelimiterTag(const string_type& contents, DelimiterSet& delimiterSet) {
+    bool parseSetDelimiterTag(const string_type& contents, delimiter_set<string_type>& delimiterSet) {
         // Smallest legal tag is "=X X="
         if (contents.size() < 5) {
             return false;
