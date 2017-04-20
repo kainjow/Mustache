@@ -284,10 +284,6 @@ public:
         return (*lambda_);
     }
 
-    basic_data callLambda(const string_type& text) const {
-        return (*lambda_)(text);
-    }
-
 private:
     type type_;
     std::unique_ptr<basic_object<string_type>> obj_;
@@ -773,9 +769,8 @@ private:
     }
     
     bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, bool escaped, const string_type& text, bool parseWithSameContext) {
-        const auto lambdaResult = var->callLambda(text);
-        assert(lambdaResult.is_string());
-        basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult.string_value(), ctx} : basic_mustache{lambdaResult.string_value()};
+        const auto lambdaResult = var->lambda_value()(text);
+        basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult, ctx} : basic_mustache{lambdaResult};
         if (!tmpl.is_valid()) {
             errorMessage_ = tmpl.error_message();
         } else {
