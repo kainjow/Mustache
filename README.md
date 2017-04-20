@@ -70,6 +70,26 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
     build.bat 14
 
+## Release Notes
+
+#### 3.0 - in progress
+
+* Namespace, classes, and methods are now in snake case to match the STL. For example, `Kainjow::Mustache` is now `kainjow::mustache`
+* Removed `Data::List()` - use `data{data::type::list}` instead
+* Removed `Data::type()` - use the various `is_xxx` methods to identity the type
+
+#### 2.0 - June 11, 2016
+
+* New simpler API (not backwards compatible)
+* std::wstring support
+* Bug fixes (thanks to Shen-Ta Hsieh)
+* Automated tests on OS X
+* 100% test coverage
+
+#### 1.0 - April 19, 2015
+
+* All current Mustache features are implemented.
+
 ## License
 
     Copyright 2015-2017 Kevin Wojniak
