@@ -136,9 +136,6 @@ public:
         data(const lambda_type& lambda) : type_{type::lambda} {
             lambda_.reset(new lambda_type(lambda));
         }
-        static data List() {
-            return {data::type::list};
-        }
         
         // Copying
         data(const data& data) : type_(data.type_) {

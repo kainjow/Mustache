@@ -20,7 +20,7 @@ std::cout << tmpl.render({"what", "World"}) << std::endl;
 ````cpp
 using data = kainjow::mustache::data;
 kainjow::mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
-data employees{data::List()};
+data employees{data::type::list};
 employees << data{"name", "Steve"} << data{"name", "Bill"};
 tmpl.render({"employees", employees}, std::cout);
 // Steve, Bill, 

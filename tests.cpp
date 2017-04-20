@@ -197,7 +197,7 @@ TEST_CASE("section_lists") {
     
     SECTION("list") {
         mustache tmpl("{{#people}}Hello {{name}}, {{/people}}");
-        data people = data::List();
+        data people = data::type::list;
         for (auto& name : {"Steve", "Bill", "Tim"}) {
             people.push_back(data("name", name));
         }
@@ -207,16 +207,16 @@ TEST_CASE("section_lists") {
     
     SECTION("nested") {
         mustache tmpl("{{#families}}surname={{surname}}, members={{#members}}{{given}},{{/members}}|{{/families}}");
-        data families = data::List();
+        data families = data::type::list;
         data family1;
         family1.set("surname", "Smith");
-        data members1 = data::List();
+        data members1 = data::type::list;
         data member1a; member1a.set("given", "Steve"); members1.push_back(member1a);
         data member1b; member1b.set("given", "Joe"); members1.push_back(member1b);
         family1.set("members", members1);
         data family2;
         family2.set("surname", "Lee");
-        data members2 = data::List();
+        data members2 = data::type::list;
         data member2a; member2a.set("given", "Bill"); members2.push_back(member2a);
         data member2b; member2b.set("given", "Peter"); members2.push_back(member2b);
         family2.set("members", members2);
@@ -229,7 +229,7 @@ TEST_CASE("section_lists") {
     
     SECTION("dot") {
         mustache tmpl("{{#names}}Hello {{.}}, {{/names}}");
-        data names = data::List();
+        data names = data::type::list;
         names.push_back(data("Steve"));
         names.push_back(data("Bill"));
         names.push_back(data("Tim"));
@@ -239,7 +239,7 @@ TEST_CASE("section_lists") {
 
     SECTION("dot2") {
         mustache tmpl("{{#names}}Hello {{.}}{{/names}}{{#friends}} and {{.}}{{/friends}}");
-        data friends = data::List();
+        data friends = data::type::list;
         friends.push_back("Bill");
         friends.push_back("Tim");
         data data;
@@ -289,7 +289,7 @@ TEST_CASE("examples") {
 
     SECTION("two") {
         mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
-        data employees{data::List()};
+        data employees{data::type::list};
         employees << data{"name", "Steve"} << data{"name", "Bill"};
         std::ostream& stream = tmpl.render({"employees", employees}, std::cout) << std::endl;
         CHECK(tmpl.is_valid());
@@ -339,7 +339,7 @@ TEST_CASE("data") {
     }
 
     SECTION("move_ctor") {
-        data obj1{data::List()};
+        data obj1{data::type::list};
         CHECK(obj1.is_list());
         data obj2{std::move(obj1)};
         CHECK(obj2.is_list());
@@ -348,7 +348,7 @@ TEST_CASE("data") {
     }
 
     SECTION("move_assign") {
-        data obj1{data::List()};
+        data obj1{data::type::list};
         CHECK(obj1.is_list());
         data obj2 = std::move(obj1);
         CHECK(obj2.is_list());
@@ -526,7 +526,7 @@ TEST_CASE("partials") {
         data::partial_type footer{[]() {
             return "Goodbye {{#names}}{{.}}|{{/names}}";
         }};
-        data names{data::List()};
+        data names{data::type::list};
         names.push_back("Jack");
         names.push_back("Jill");
         data dat("header", header);
@@ -657,14 +657,14 @@ TEST_CASE("dotted_names") {
 
     SECTION("broken_chains1") {
         mustache tmpl{"\"{{a.b.c}}\" == \"\""};
-        data data{"a", data::List()};
+        data data{"a", data::type::list};
         CHECK(tmpl.render(data) == "\"\" == \"\"");
     }
 
     SECTION("broken_chains2") {
         mustache tmpl{"\"{{a.b.c.name}}\" == \"\""};
         data data;
-        data["a"] = {"b", data::List()};
+        data["a"] = {"b", data::type::list};
         data["c"] = {"name", "Jim"};
         CHECK(tmpl.render(data) == "\"\" == \"\"");
     }
