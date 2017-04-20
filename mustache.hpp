@@ -81,6 +81,17 @@ string_type escape(const string_type& s) {
 }
 
 template <typename string_type>
+std::vector<string_type> split(const string_type& s, typename string_type::value_type delim) {
+    std::vector<string_type> elems;
+    std::basic_stringstream<typename string_type::value_type> ss(s);
+    string_type item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+template <typename string_type>
 class basic_data;
 template <typename string_type>
 using basic_object = std::unordered_map<string_type, basic_data<string_type>>;
@@ -411,16 +422,6 @@ private:
             items_.erase(items_.begin());
         }
         
-        static std::vector<string_type> split(const string_type& s, typename string_type::value_type delim) {
-            std::vector<string_type> elems;
-            std::basic_stringstream<typename string_type::value_type> ss(s);
-            string_type item;
-            while (std::getline(ss, item, delim)) {
-                elems.push_back(item);
-            }
-            return elems;
-        }
-
         const basic_data<string_type>* get(const string_type& name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
