@@ -151,22 +151,22 @@ TEST_CASE("sections") {
     SECTION("false") {
         mustache tmpl("{{#var}}not shown{{/var}}");
         data dat;
-        dat.set("var", data(data::Type::False));
+        dat.set("var", data(data::type::bool_false));
         CHECK(tmpl.render(dat) == "");
     }
 
     SECTION("emptylist") {
         mustache tmpl("{{#var}}not shown{{/var}}");
         data dat;
-        dat.set("var", data(data::Type::List));
+        dat.set("var", data(data::type::list));
         CHECK(tmpl.render(dat) == "");
     }
     
     SECTION("nested") {
         mustache tmpl("{{#var1}}hello{{#var2}}world{{/var2}}{{/var1}}");
         data data;
-        data.set("var1", data::Type::True);
-        data.set("var2", data::Type::True);
+        data.set("var1", data::type::bool_true);
+        data.set("var2", data::type::bool_true);
         CHECK(tmpl.render(data) == "helloworld");
     }
 
@@ -181,13 +181,13 @@ TEST_CASE("sections_inverted") {
     
     SECTION("false") {
         mustache tmpl("{{^var}}shown{{/var}}");
-        data dat("var", data(data::Type::False));
+        data dat("var", data(data::type::bool_false));
         CHECK(tmpl.render(dat) == "shown");
     }
     
     SECTION("emptylist") {
         mustache tmpl("{{^var}}shown{{/var}}");
-        data dat("var", data(data::Type::List));
+        data dat("var", data(data::type::list));
         CHECK(tmpl.render(dat) == "shown");
     }
     
@@ -315,9 +315,9 @@ TEST_CASE("data") {
 
     SECTION("types") {
         data dat("age", "42");
-        data emptyStr = data::Type::String;
+        data emptyStr = data::type::string;
         dat["name"] = "Steve";
-        dat["is_human"] = data::Type::True;
+        dat["is_human"] = data::type::bool_true;
         const data* name;
         const data* age;
         const data* is_human;
@@ -343,7 +343,7 @@ TEST_CASE("data") {
         CHECK(obj1.isList());
         data obj2{std::move(obj1)};
         CHECK(obj2.isList());
-        CHECK(obj1.type() == data::Type::Invalid);
+        CHECK(obj1.type() == data::type::invalid);
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
     }
 
@@ -352,13 +352,13 @@ TEST_CASE("data") {
         CHECK(obj1.isList());
         data obj2 = std::move(obj1);
         CHECK(obj2.isList());
-        CHECK(obj1.type() == data::Type::Invalid);
+        CHECK(obj1.type() == data::type::invalid);
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
 
         data lambda1{data::LambdaType{[](const std::string&){ return "{{#what}}"; }}};
         data lambda2 = std::move(lambda1);
         CHECK(lambda2.isLambda());
-        CHECK(lambda1.type() == data::Type::Invalid);
+        CHECK(lambda1.type() == data::type::invalid);
     }
 
 }
@@ -374,8 +374,8 @@ TEST_CASE("errors") {
     SECTION("unclosed_section_nested") {
         mustache tmpl("{{#var1}}hello{{#var2}}world");
         data data;
-        data.set("var1", data::Type::True);
-        data.set("var2", data::Type::True);
+        data.set("var1", data::type::bool_true);
+        data.set("var2", data::type::bool_true);
         CHECK(tmpl.render(data) == "");
         CHECK(tmpl.isValid() == false);
         CHECK(tmpl.errorMessage() == "Unclosed section \"var1\" at 0");
@@ -384,8 +384,8 @@ TEST_CASE("errors") {
     SECTION("unclosed_section_nested2") {
         mustache tmpl("{{#var1}}hello{{#var2}}world{{/var1}}");
         data data;
-        data.set("var1", data::Type::True);
-        data.set("var2", data::Type::True);
+        data.set("var1", data::type::bool_true);
+        data.set("var2", data::type::bool_true);
         CHECK(tmpl.render(data) == "");
         CHECK(tmpl.isValid() == false);
         CHECK(tmpl.errorMessage() == "Unclosed section \"var1\" at 0");

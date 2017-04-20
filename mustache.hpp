@@ -84,15 +84,15 @@ class basic_mustache {
 public:
     class data {
     public:
-        enum class Type {
-            Object,
-            String,
-            List,
-            True,
-            False,
-            Partial,
-            Lambda,
-            Invalid,
+        enum class type {
+            object,
+            string,
+            list,
+            bool_true,
+            bool_false,
+            partial,
+            lambda,
+            invalid,
         };
         
         using ObjectType = std::unordered_map<StringType, data>;
@@ -101,26 +101,26 @@ public:
         using LambdaType = std::function<StringType(const StringType&)>;
         
         // Construction
-        data() : data(Type::Object) {
+        data() : data(type::object) {
         }
-        data(const StringType& string) : type_{Type::String} {
+        data(const StringType& string) : type_{type::string} {
             str_.reset(new StringType(string));
         }
-        data(const typename StringType::value_type* string) : type_{Type::String} {
+        data(const typename StringType::value_type* string) : type_{type::string} {
             str_.reset(new StringType(string));
         }
-        data(const ListType& list) : type_{Type::List} {
+        data(const ListType& list) : type_{type::List} {
             list_.reset(new ListType(list));
         }
-        data(Type type) : type_{type} {
+        data(type type) : type_{type} {
             switch (type_) {
-                case Type::Object:
+                case type::object:
                     obj_.reset(new ObjectType);
                     break;
-                case Type::String:
+                case type::string:
                     str_.reset(new StringType);
                     break;
-                case Type::List:
+                case type::list:
                     list_.reset(new ListType);
                     break;
                 default:
@@ -130,14 +130,14 @@ public:
         data(const StringType& name, const data& var) : data{} {
             set(name, var);
         }
-        data(const PartialType& partial) : type_{Type::Partial} {
+        data(const PartialType& partial) : type_{type::partial} {
             partial_.reset(new PartialType(partial));
         }
-        data(const LambdaType& lambda) : type_{Type::Lambda} {
+        data(const LambdaType& lambda) : type_{type::lambda} {
             lambda_.reset(new LambdaType(lambda));
         }
         static data List() {
-            return {data::Type::List};
+            return {data::type::list};
         }
         
         // Copying
@@ -168,7 +168,7 @@ public:
             } else if (data.lambda_) {
                 lambda_ = std::move(data.lambda_);
             }
-            data.type_ = data::Type::Invalid;
+            data.type_ = data::type::invalid;
         }
         data& operator= (data&& data) {
             if (this != &data) {
@@ -189,38 +189,38 @@ public:
                     lambda_ = std::move(data.lambda_);
                 }
                 type_ = data.type_;
-                data.type_ = data::Type::Invalid;
+                data.type_ = data::type::invalid;
             }
             return *this;
         }
         
         // Type info
-        Type type() const {
+        enum type type() const {
             return type_;
         }
         bool isObject() const {
-            return type_ == Type::Object;
+            return type_ == type::object;
         }
         bool isString() const {
-            return type_ == Type::String;
+            return type_ == type::string;
         }
         bool isList() const {
-            return type_ == Type::List;
+            return type_ == type::list;
         }
         bool isBool() const {
-            return type_ == Type::True || type_ == Type::False;
+            return isTrue() || isFalse();
         }
         bool isTrue() const {
-            return type_ == Type::True;
+            return type_ == type::bool_true;
         }
         bool isFalse() const {
-            return type_ == Type::False;
+            return type_ == type::bool_false;
         }
         bool isPartial() const {
-            return type_ == Type::Partial;
+            return type_ == type::partial;
         }
         bool isLambda() const {
-            return type_ == Type::Lambda;
+            return type_ == type::lambda;
         }
         
         // Object data
@@ -282,7 +282,7 @@ public:
         }
         
     private:
-        Type type_;
+        enum type type_;
         std::unique_ptr<ObjectType> obj_;
         std::unique_ptr<StringType> str_;
         std::unique_ptr<ListType> list_;
