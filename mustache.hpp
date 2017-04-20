@@ -427,7 +427,17 @@ private:
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
             }
-            // process normal name
+            if (name.find('.') == string_type::npos) {
+                // process normal name without having to split which is slower
+                for (const auto& item : items_) {
+                    const auto var = item->get(name);
+                    if (var) {
+                        return var;
+                    }
+                }
+                return nullptr;
+            }
+            // process x.y-like name
             auto names = split(name, '.');
             if (names.size() == 0) {
                 names.resize(1);
