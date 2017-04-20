@@ -712,3 +712,61 @@ TEST_CASE("dotted_names") {
         CHECK(tmpl.render(data) == "\"Phil\" == \"Phil\"");
     }
 }
+
+TEST_CASE("bustache_benchmark") {
+
+    // https://github.com/jamboree/bustache/blob/master/test/benchmark.cpp
+    int n = 0;
+    data::object_type dat
+    {
+        {"header", "Colors"},
+        {"items",
+            data::list_type
+            {
+                data::object_type
+                {
+                    {"name", "red"},
+                    {"first", true},
+                    {"url", "#Red"}
+                },
+                data::object_type
+                {
+                    {"name", "green"},
+                    {"link", true},
+                    {"url", "#Green"}
+                },
+                data::object_type
+                {
+                    {"name", "blue"},
+                    {"link", true},
+                    {"url", "#Blue"}
+                }
+            }
+        },
+        {"empty", false},
+        {"count", data::lambda_type{[&n](const std::string&) { return std::to_string(++n); }}},
+        {"array", data::list_type{"1", "2", "3"}},
+        {"a", data::object_type{{"b", data::object_type{{"c", true}}}}},
+        {"comments",
+            data::list_type
+            {
+                data::object_type
+                {
+                    {"name", "Joe"},
+                    {"body", "<html> should be escaped"}
+                },
+                data::object_type
+                {
+                    {"name", "Sam"},
+                    {"body", "{{mustache}} can be seen"}
+                },
+                data::object_type
+                {
+                    {"name", "New"},
+                    {"body", "break\nup"}
+                }
+            }
+        }
+    };
+
+}

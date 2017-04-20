@@ -109,6 +109,9 @@ public:
         data(const typename string_type::value_type* string) : type_{type::string} {
             str_.reset(new string_type(string));
         }
+        data(const object_type& obj) : type_{type::object} {
+            obj_.reset(new object_type(obj));
+        }
         data(const list_type& list) : type_{type::list} {
             list_.reset(new list_type(list));
         }
