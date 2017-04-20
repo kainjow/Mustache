@@ -18,10 +18,10 @@ std::cout << tmpl.render({"what", "World"}) << std::endl;
 ## Example 2
 
 ````cpp
-using Data = kainjow::mustache::Data;
+using data = kainjow::mustache::data;
 kainjow::mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
-Data employees{Data::List()};
-employees << Data{"name", "Steve"} << Data{"name", "Bill"};
+data employees{data::List()};
+employees << data{"name", "Steve"} << data{"name", "Bill"};
 tmpl.render({"employees", employees}, std::cout);
 // Steve, Bill, 
 ````

@@ -82,7 +82,7 @@ StringType escape(const StringType& s) {
 template <typename StringType>
 class basic_mustache {
 public:
-    class Data {
+    class data {
     public:
         enum class Type {
             Object,
@@ -95,24 +95,24 @@ public:
             Invalid,
         };
         
-        using ObjectType = std::unordered_map<StringType, Data>;
-        using ListType = std::vector<Data>;
+        using ObjectType = std::unordered_map<StringType, data>;
+        using ListType = std::vector<data>;
         using PartialType = std::function<StringType()>;
         using LambdaType = std::function<StringType(const StringType&)>;
         
         // Construction
-        Data() : Data(Type::Object) {
+        data() : data(Type::Object) {
         }
-        Data(const StringType& string) : type_{Type::String} {
+        data(const StringType& string) : type_{Type::String} {
             str_.reset(new StringType(string));
         }
-        Data(const typename StringType::value_type* string) : type_{Type::String} {
+        data(const typename StringType::value_type* string) : type_{Type::String} {
             str_.reset(new StringType(string));
         }
-        Data(const ListType& list) : type_{Type::List} {
+        data(const ListType& list) : type_{Type::List} {
             list_.reset(new ListType(list));
         }
-        Data(Type type) : type_{type} {
+        data(Type type) : type_{type} {
             switch (type_) {
                 case Type::Object:
                     obj_.reset(new ObjectType);
@@ -127,21 +127,21 @@ public:
                     break;
             }
         }
-        Data(const StringType& name, const Data& var) : Data{} {
+        data(const StringType& name, const data& var) : data{} {
             set(name, var);
         }
-        Data(const PartialType& partial) : type_{Type::Partial} {
+        data(const PartialType& partial) : type_{Type::Partial} {
             partial_.reset(new PartialType(partial));
         }
-        Data(const LambdaType& lambda) : type_{Type::Lambda} {
+        data(const LambdaType& lambda) : type_{Type::Lambda} {
             lambda_.reset(new LambdaType(lambda));
         }
-        static Data List() {
-            return {Data::Type::List};
+        static data List() {
+            return {data::Type::List};
         }
         
         // Copying
-        Data(const Data& data) : type_(data.type_) {
+        data(const data& data) : type_(data.type_) {
             if (data.obj_) {
                 obj_.reset(new ObjectType(*data.obj_));
             } else if (data.str_) {
@@ -156,7 +156,7 @@ public:
         }
         
         // Move
-        Data(Data&& data) : type_{data.type_} {
+        data(data&& data) : type_{data.type_} {
             if (data.obj_) {
                 obj_ = std::move(data.obj_);
             } else if (data.str_) {
@@ -168,9 +168,9 @@ public:
             } else if (data.lambda_) {
                 lambda_ = std::move(data.lambda_);
             }
-            data.type_ = Data::Type::Invalid;
+            data.type_ = data::Type::Invalid;
         }
-        Data& operator= (Data&& data) {
+        data& operator= (data&& data) {
             if (this != &data) {
                 obj_.reset();
                 str_.reset();
@@ -189,7 +189,7 @@ public:
                     lambda_ = std::move(data.lambda_);
                 }
                 type_ = data.type_;
-                data.type_ = Data::Type::Invalid;
+                data.type_ = data::Type::Invalid;
             }
             return *this;
         }
@@ -224,12 +224,12 @@ public:
         }
         
         // Object data
-        void set(const StringType& name, const Data& var) {
+        void set(const StringType& name, const data& var) {
             if (isObject()) {
-                obj_->insert(std::pair<StringType,Data>{name, var});
+                obj_->insert(std::pair<StringType,data>{name, var});
             }
         }
-        const Data* get(const StringType& name) const {
+        const data* get(const StringType& name) const {
             if (!isObject()) {
                 return nullptr;
             }
@@ -241,7 +241,7 @@ public:
         }
         
         // List data
-        void push_back(const Data& var) {
+        void push_back(const data& var) {
             if (isList()) {
                 list_->push_back(var);
             }
@@ -255,7 +255,7 @@ public:
         bool isNonEmptyList() const {
             return isList() && !list_->empty();
         }
-        Data& operator<< (const Data& data) {
+        data& operator<< (const data& data) {
             push_back(data);
             return *this;
         }
@@ -265,7 +265,7 @@ public:
             return *str_;
         }
         
-        Data& operator[] (const StringType& key) {
+        data& operator[] (const StringType& key) {
             return (*obj_)[key];
         }
         
@@ -277,7 +277,7 @@ public:
             return (*lambda_);
         }
         
-        Data callLambda(const StringType& text) const {
+        data callLambda(const StringType& text) const {
             return (*lambda_)(text);
         }
         
@@ -304,20 +304,20 @@ public:
     }
 
     template <typename StreamType>
-    StreamType& render(const Data& data, StreamType& stream) {
+    StreamType& render(const data& data, StreamType& stream) {
         render(data, [&stream](const StringType& str) {
             stream << str;
         });
         return stream;
     }
     
-    StringType render(const Data& data) {
+    StringType render(const data& data) {
         std::basic_ostringstream<typename StringType::value_type> ss;
         return render(data, ss).str();
     }
 
     using RenderHandler = std::function<void(const StringType&)>;
-    void render(const Data& data, const RenderHandler& handler) {
+    void render(const data& data, const RenderHandler& handler) {
         if (!isValid()) {
             return;
         }
@@ -388,14 +388,14 @@ private:
     
     class Context {
     public:
-        Context(const Data* data) {
+        Context(const data* data) {
             push(data);
         }
 
         Context() {
         }
 
-        void push(const Data* data) {
+        void push(const data* data) {
             items_.insert(items_.begin(), data);
         }
 
@@ -413,7 +413,7 @@ private:
             return elems;
         }
 
-        const Data* get(const StringType& name) const {
+        const data* get(const StringType& name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
@@ -424,7 +424,7 @@ private:
                 names.resize(1);
             }
             for (const auto& item : items_) {
-                const Data* var{item};
+                const data* var{item};
                 for (const auto& n : names) {
                     var = var->get(n);
                     if (!var) {
@@ -438,9 +438,9 @@ private:
             return nullptr;
         }
 
-        const Data* get_partial(const StringType& name) const {
+        const data* get_partial(const StringType& name) const {
             for (const auto& item : items_) {
-                const Data* var{item};
+                const data* var{item};
                 var = var->get(name);
                 if (var) {
                     return var;
@@ -455,12 +455,12 @@ private:
         DelimiterSet delimiterSet;
 
     private:
-        std::vector<const Data*> items_;
+        std::vector<const data*> items_;
     };
 
     class ContextPusher {
     public:
-        ContextPusher(Context& ctx, const Data* data) : ctx_(ctx) {
+        ContextPusher(Context& ctx, const data* data) : ctx_(ctx) {
             ctx.push(data);
         }
         ~ContextPusher() {
@@ -708,7 +708,7 @@ private:
         }
         
         const Tag& tag{comp.tag};
-        const Data* var = nullptr;
+        const data* var = nullptr;
         switch (tag.type) {
             case Tag::Type::Variable:
             case Tag::Type::UnescapedVariable:
@@ -761,7 +761,7 @@ private:
         return WalkControl::Continue;
     }
     
-    bool renderLambda(const RenderHandler& handler, const Data* var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
+    bool renderLambda(const RenderHandler& handler, const data* var, Context& ctx, bool escaped, const StringType& text, bool parseWithSameContext) {
         const auto lambdaResult = var->callLambda(text);
         assert(lambdaResult.isString());
         basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult.stringValue(), ctx} : basic_mustache{lambdaResult.stringValue()};
@@ -778,7 +778,7 @@ private:
         return tmpl.isValid();
     }
     
-    bool renderVariable(const RenderHandler& handler, const Data* var, Context& ctx, bool escaped) {
+    bool renderVariable(const RenderHandler& handler, const data* var, Context& ctx, bool escaped) {
         if (var->isString()) {
             const auto varstr = var->stringValue();
             handler(escaped ? escape(varstr) : varstr);
@@ -788,7 +788,7 @@ private:
         return true;
     }
 
-    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const Data* var) {
+    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const data* var) {
         const auto callback = [&handler, &ctx, this](Component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };
