@@ -29,8 +29,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-using kainjow::mustache;
-using data = mustache::data;
+using namespace kainjow::mustache;
 
 TEST_CASE("variables") {
 
@@ -60,8 +59,8 @@ TEST_CASE("variables") {
     }
 
     SECTION("single_exist_wide") {
-        kainjow::mustachew tmpl(L"Hello {{name}}");
-        kainjow::mustachew::data data;
+        mustachew tmpl(L"Hello {{name}}");
+        dataw data;
         data.set(L"name", L"Steve");
         CHECK(tmpl.render(data) == L"Hello Steve");
     }
@@ -382,7 +381,7 @@ TEST_CASE("data") {
         CHECK(obj1.is_invalid());
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
 
-        data lambda1{data::lambda_type{[](const std::string&){ return "{{#what}}"; }}};
+        data lambda1{lambda{[](const std::string&){ return "{{#what}}"; }}};
         data lambda2 = std::move(lambda1);
         CHECK(lambda2.is_lambda());
         CHECK(lambda1.is_invalid());
@@ -452,7 +451,7 @@ TEST_CASE("errors") {
     
     SECTION("lambda") {
         mustache tmpl{"Hello {{lambda}}!"};
-        data dat("lambda", data{data::lambda_type{[](const std::string&){
+        data dat("lambda", data{lambda{[](const std::string&){
             return "{{#what}}";
         }}});
         CHECK(tmpl.is_valid() == true);
@@ -464,10 +463,10 @@ TEST_CASE("errors") {
 
     SECTION("lambda2") {
         mustache tmpl{"Hello {{lambda}}!"};
-        data dat("lambda", data{data::lambda_type{[](const std::string&){
+        data dat("lambda", data{lambda{[](const std::string&){
             return "{{what}}";
         }}});
-        dat["what"] = data{data::lambda_type{[](const std::string&){
+        dat["what"] = data{lambda{[](const std::string&){
             return "{{#blah}}";
         }}};
         CHECK(tmpl.is_valid() == true);
@@ -479,7 +478,7 @@ TEST_CASE("errors") {
 
     SECTION("partial") {
         mustache tmpl{"Hello {{>partial}}!"};
-        data dat("partial", data{data::partial_type{[](){
+        data dat("partial", data{partial{[](){
             return "{{#what}}";
         }}});
         CHECK(tmpl.is_valid() == true);
@@ -491,10 +490,10 @@ TEST_CASE("errors") {
 
     SECTION("partial2") {
         mustache tmpl{"Hello {{>partial}}!"};
-        data data("partial", {data::partial_type{[](){
+        data data("partial", {partial{[](){
             return "{{what}}";
         }}});
-        data["what"] = data::lambda_type{[](const std::string&){
+        data["what"] = lambda{[](const std::string&){
             return "{{#blah}}";
         }};
         CHECK(tmpl.is_valid() == true);
@@ -506,7 +505,7 @@ TEST_CASE("errors") {
     
     SECTION("section_lambda") {
         mustache tmpl{"{{#what}}asdf{{/what}}"};
-        data data("what", data::lambda_type{[](const std::string&){
+        data data("what", lambda{[](const std::string&){
             return "{{blah";
         }});
         CHECK(tmpl.is_valid() == true);
@@ -528,29 +527,29 @@ TEST_CASE("partials") {
 
     SECTION("basic") {
         mustache tmpl{"{{>header}}"};
-        data::partial_type partial = []() {
+        partial part = []() {
             return "Hello World";
         };
-        data dat("header", data{partial});
+        data dat("header", data{part});
         CHECK(tmpl.render(dat) == "Hello World");
     }
 
     SECTION("context") {
         mustache tmpl{"{{>header}}"};
-        data::partial_type partial{[]() {
+        partial part{[]() {
             return "Hello {{name}}";
         }};
-        data dat("header", data{partial});
+        data dat("header", data{part});
         dat["name"] = "Steve";
         CHECK(tmpl.render(dat) == "Hello Steve");
     }
     
     SECTION("nested") {
         mustache tmpl{"{{>header}}"};
-        data::partial_type header{[]() {
+        partial header{[]() {
             return "Hello {{name}} {{>footer}}";
         }};
-        data::partial_type footer{[]() {
+        partial footer{[]() {
             return "Goodbye {{#names}}{{.}}|{{/names}}";
         }};
         data names{data::type::list};
@@ -565,7 +564,7 @@ TEST_CASE("partials") {
 
     SECTION("dotted") {
         mustache tmpl{"{{>a.b}}"};
-        data::partial_type a_b{[]() {
+        partial a_b{[]() {
             return "test";
         }};
         data data("a.b", a_b);
@@ -577,7 +576,7 @@ TEST_CASE("lambdas") {
     
     SECTION("basic") {
         mustache tmpl{"{{lambda}}"};
-        data dat("lambda", data{data::lambda_type{[](const std::string&){
+        data dat("lambda", data{lambda{[](const std::string&){
             return "Hello {{planet}}";
         }}});
         dat["planet"] = "world";
@@ -586,7 +585,7 @@ TEST_CASE("lambdas") {
 
     SECTION("delimiters") {
         mustache tmpl{"{{= | | =}}Hello, (|&lambda|)!"};
-        data dat("lambda", data{data::lambda_type{[](const std::string&){
+        data dat("lambda", data{lambda{[](const std::string&){
             return "|planet| => {{planet}}";
         }}});
         dat["planet"] = "world";
@@ -596,7 +595,7 @@ TEST_CASE("lambdas") {
     SECTION("nocaching") {
         mustache tmpl{"{{lambda}} == {{{lambda}}} == {{lambda}}"};
         int calls = 0;
-        data dat("lambda", data{data::lambda_type{[&calls](const std::string&){
+        data dat("lambda", data{lambda{[&calls](const std::string&){
             ++calls;
             return std::to_string(calls);
         }}});
@@ -605,7 +604,7 @@ TEST_CASE("lambdas") {
 
     SECTION("escape") {
         mustache tmpl{"<{{lambda}}{{{lambda}}}"};
-        data dat("lambda", data{data::lambda_type{[](const std::string&){
+        data dat("lambda", data{lambda{[](const std::string&){
             return ">";
         }}});
         CHECK(tmpl.render(dat) == "<&gt;>");
@@ -613,7 +612,7 @@ TEST_CASE("lambdas") {
     
     SECTION("section") {
         mustache tmpl{"<{{#lambda}}{{x}}{{/lambda}}>"};
-        data dat("lambda", data{data::lambda_type{[](const std::string& text){
+        data dat("lambda", data{lambda{[](const std::string& text){
             return text == "{{x}}" ? "yes" : "no";
         }}});
         CHECK(tmpl.render(dat) == "<yes>");
@@ -621,7 +620,7 @@ TEST_CASE("lambdas") {
 
     SECTION("section_expansion") {
         mustache tmpl{"<{{#lambda}}-{{/lambda}}>"};
-        data dat("lambda", data{data::lambda_type{[](const std::string& text){
+        data dat("lambda", data{lambda{[](const std::string& text){
             return text + "{{planet}}" + text;
         }}});
         dat["planet"] = "Earth";
@@ -630,14 +629,14 @@ TEST_CASE("lambdas") {
 
     SECTION("section_alternate_delimiters") {
         mustache tmpl{"{{= | | =}}<|#lambda|-|/lambda|>"};
-        data dat("lambda", data{data::lambda_type{[](const std::string& text){
+        data dat("lambda", data{lambda{[](const std::string& text){
             return text + "{{planet}} => |planet|" + text;
         }}});
         dat["planet"] = "Earth";
         CHECK(tmpl.render(dat) == "<-{{planet}} => Earth->");
     }
 
-    const data::lambda_type sectionLambda{[](const std::string& text){
+    const lambda sectionLambda{[](const std::string& text){
         return "__" + text + "__";
     }};
 
@@ -717,25 +716,25 @@ TEST_CASE("bustache_benchmark") {
 
     // https://github.com/jamboree/bustache/blob/master/test/benchmark.cpp
     int n = 0;
-    data::object_type dat
+    object dat
     {
         {"header", "Colors"},
         {"items",
-            data::list_type
+            list
             {
-                data::object_type
+                object
                 {
                     {"name", "red"},
                     {"first", true},
                     {"url", "#Red"}
                 },
-                data::object_type
+                object
                 {
                     {"name", "green"},
                     {"link", true},
                     {"url", "#Green"}
                 },
-                data::object_type
+                object
                 {
                     {"name", "blue"},
                     {"link", true},
@@ -744,23 +743,23 @@ TEST_CASE("bustache_benchmark") {
             }
         },
         {"empty", false},
-        {"count", data::lambda_type{[&n](const std::string&) { return std::to_string(++n); }}},
-        {"array", data::list_type{"1", "2", "3"}},
-        {"a", data::object_type{{"b", data::object_type{{"c", true}}}}},
+        {"count", lambda{[&n](const std::string&) { return std::to_string(++n); }}},
+        {"array", list{"1", "2", "3"}},
+        {"a", object{{"b", object{{"c", true}}}}},
         {"comments",
-            data::list_type
+            list
             {
-                data::object_type
+                object
                 {
                     {"name", "Joe"},
                     {"body", "<html> should be escaped"}
                 },
-                data::object_type
+                object
                 {
                     {"name", "Sam"},
                     {"body", "{{mustache}} can be seen"}
                 },
-                data::object_type
+                object
                 {
                     {"name", "New"},
                     {"body", "break\nup"}

@@ -3,33 +3,37 @@
 * [Mustache](http://mustache.github.io) implementation for modern C++ (requires C++11)
 * Header only
 * Zero dependencies
+* Templated string type for compatibility with any STL-like string (std::string, std::wstring, etc)
 * Boost license
 
 [![travis](https://travis-ci.org/kainjow/Mustache.svg?branch=master)](https://travis-ci.org/kainjow/Mustache) [![appveyor](https://ci.appveyor.com/api/projects/status/6uh5d5weajrffkyw?svg=true)](https://ci.appveyor.com/project/kainjow/mustache) [![codecov](https://codecov.io/gh/kainjow/Mustache/branch/master/graph/badge.svg)](https://codecov.io/gh/kainjow/Mustache)
 
-## Example 1
+## Example usage
+
+All examples assume `using namespace kainjow::mustache`.
+
+### Example 1 - Hello World
 
 ````cpp
-kainjow::mustache tmpl{"Hello {{what}}!"};
+mustache tmpl{"Hello {{what}}!"};
 std::cout << tmpl.render({"what", "World"}) << std::endl;
 // Hello World!
 ````
 
-## Example 2
+### Example 2 - Lists
 
 ````cpp
-using data = kainjow::mustache::data;
-kainjow::mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
+mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
 data employees{data::type::list};
 employees << data{"name", "Steve"} << data{"name", "Bill"};
 tmpl.render({"employees", employees}, std::cout);
 // Steve, Bill, 
 ````
 
-## Example 3
+### Example 3 - Custom Render Handler
 
 ````cpp
-kainjow::mustache tmpl("Hello {{what}}!");
+mustache tmpl("Hello {{what}}!");
 std::stringstream ss;
 tmpl.render({"what", "World"}, [&ss](const std::string& str) {
     ss << str;
