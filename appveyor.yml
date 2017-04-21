@@ -8,6 +8,8 @@ environment:
       CMAKE_GENERATOR: 12
     - image: Visual Studio 2015
       CMAKE_GENERATOR: 14
+    - image: Visual Studio 2017
+      CMAKE_GENERATOR: 15
 
 platform: x64
 configuration: Release
