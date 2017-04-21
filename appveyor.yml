@@ -1,7 +1,6 @@
 branches:
   only:
     - master
-
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
@@ -10,10 +9,7 @@ environment:
       CMAKE_GENERATOR: 14
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       CMAKE_GENERATOR: 15
-
 platform: x64
-configuration: Release
-
 build_script:
   - cmake -G "Visual Studio %CMAKE_GENERATOR% Win64" -DCMAKE_BUILD_TYPE=Release
   - cmake --build . --config Release
