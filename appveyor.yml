@@ -2,16 +2,17 @@ branches:
   only:
     - master
 
-os: Windows Server 2012 R2
+environment:
+  matrix:
+    - image: Visual Studio 2013
+      CMAKE_GENERATOR: 12
+    - image: Visual Studio 2015
+      CMAKE_GENERATOR: 14
 
 platform: x64
 configuration: Release
 
-before_build:
-  - cmake -G "Visual Studio 12 Win64"
-
-build:
-  project: mustache.sln
-
-after_build:
+build_script:
+  - cmake -G "Visual Studio %CMAKE_GENERATOR% Win64" -DCMAKE_BUILD_TYPE=Release
+  - cmake --build . --config Release
   - Release\mustache.exe
