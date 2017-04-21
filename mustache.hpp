@@ -333,6 +333,11 @@ public:
         parse(input, ctx);
     }
     
+    basic_mustache(const basic_mustache&) = delete;
+    basic_mustache& operator= (const basic_mustache&) = delete;
+    basic_mustache(basic_mustache&&) = default;
+    basic_mustache& operator= (basic_mustache&&) = default;
+
     bool is_valid() const {
         return errorMessage_.empty();
     }
