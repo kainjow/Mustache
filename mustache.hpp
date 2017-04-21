@@ -779,19 +779,26 @@ private:
     }
     
     bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, bool escaped, const string_type& text, bool parseWithSameContext) {
-        const auto lambdaResult = var->lambda_value()(text);
-        basic_mustache tmpl = parseWithSameContext ? basic_mustache{lambdaResult, ctx} : basic_mustache{lambdaResult};
-        if (!tmpl.is_valid()) {
-            errorMessage_ = tmpl.error_message();
-        } else {
-            const string_type str{tmpl.render(ctx)};
+        const auto processTemplate = [this, &handler, var, &ctx, escaped](basic_mustache& tmpl) {
             if (!tmpl.is_valid()) {
                 errorMessage_ = tmpl.error_message();
             } else {
-                handler(escaped ? escape(str) : str);
+                const string_type str{tmpl.render(ctx)};
+                if (!tmpl.is_valid()) {
+                    errorMessage_ = tmpl.error_message();
+                } else {
+                    handler(escaped ? escape(str) : str);
+                }
             }
+            return tmpl.is_valid();
+        };
+        const auto lambdaResult = var->lambda_value()(text);
+        if (parseWithSameContext) {
+            basic_mustache tmpl{lambdaResult, ctx};
+            return processTemplate(tmpl);
         }
-        return tmpl.is_valid();
+        basic_mustache tmpl{lambdaResult};
+        return processTemplate(tmpl);
     }
     
     bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, bool escaped) {
