@@ -783,4 +783,68 @@ TEST_CASE("lambda_render") {
         CHECK(tmpl.render(data) == "<b>Willy is awesome.</b>");
     }
 
+    SECTION("no-render") {
+        mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer&) {
+            CHECK(text == "{{name}} is awesome.");
+            return "<b>" + text + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "<b>{{name}} is awesome.</b>");
+    }
+
+    SECTION("manual-render") {
+        mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) {
+            CHECK(text == "{{name}} is awesome.");
+            const auto renderedText = render(text);
+            CHECK(renderedText == "Willy is awesome.");
+            return "<b>" + renderedText + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "<b>Willy is awesome.</b>");
+    }
+
+    SECTION("manual-render-append-tag") {
+        // When using the render lambda, any text returned should not be itself rendered.
+        mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) {
+            CHECK(text == "{{name}} is awesome.");
+            const auto renderedText = render(text);
+            CHECK(renderedText == "Willy is awesome.");
+            return "<b>" + renderedText + "</b>Hello {{name}}.";
+        }};
+        CHECK(tmpl.render(data) == "<b>Willy is awesome.</b>Hello {{name}}.");
+    }
+
+    SECTION("manual-render-error") {
+        mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) -> mustache::string_type {
+            CHECK(text == "{{name}} is awesome.");
+            const auto renderedText = render("{{name is awesome");
+            CHECK(renderedText == "");
+            return {};
+        }};
+        CHECK(tmpl.render(data) == "");
+        CHECK_FALSE(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "Unclosed tag at 0");
+    }
+
+    SECTION("lambda-render-variable") {
+        mustache tmpl{"{{name}} is awesome."};
+        data data;
+        data["name"] = lambda2{[](const std::string&, const renderer&) -> mustache::string_type {
+            return {};
+        }};
+        CHECK(tmpl.render(data) == "");
+        CHECK_FALSE(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "Lambda with render argument is not allowed for regular variables");
+    }
+
 }

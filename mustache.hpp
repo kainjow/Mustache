@@ -101,6 +101,10 @@ template <typename string_type>
 using basic_partial = std::function<string_type()>;
 template <typename string_type>
 using basic_lambda = std::function<string_type(const string_type&)>;
+template <typename string_type>
+using basic_renderer = std::function<string_type(const string_type&)>;
+template <typename string_type>
+using basic_lambda2 = std::function<string_type(const string_type&, const basic_renderer<string_type>& render)>;
 
 template <typename string_type>
 class basic_data {
@@ -113,6 +117,7 @@ public:
         bool_false,
         partial,
         lambda,
+        lambda2,
         invalid,
     };
 
@@ -155,6 +160,9 @@ public:
     basic_data(const basic_lambda<string_type>& l) : type_{type::lambda} {
         lambda_.reset(new basic_lambda<string_type>(l));
     }
+    basic_data(const basic_lambda2<string_type>& l) : type_{type::lambda2} {
+        lambda2_.reset(new basic_lambda2<string_type>(l));
+    }
     basic_data(bool b) : type_{b ? type::bool_true : type::bool_false} {
     }
 
@@ -170,6 +178,8 @@ public:
             partial_.reset(new basic_partial<string_type>(*dat.partial_));
         } else if (dat.lambda_) {
             lambda_.reset(new basic_lambda<string_type>(*dat.lambda_));
+        } else if (dat.lambda2_) {
+            lambda2_.reset(new basic_lambda2<string_type>(*dat.lambda2_));
         }
     }
 
@@ -185,6 +195,8 @@ public:
             partial_ = std::move(dat.partial_);
         } else if (dat.lambda_) {
             lambda_ = std::move(dat.lambda_);
+        } else if (dat.lambda2_) {
+            lambda2_ = std::move(dat.lambda2_);
         }
         dat.type_ = type::invalid;
     }
@@ -195,6 +207,7 @@ public:
             list_.reset();
             partial_.reset();
             lambda_.reset();
+            lambda2_.reset();
             if (dat.obj_) {
                 obj_ = std::move(dat.obj_);
             } else if (dat.str_) {
@@ -205,6 +218,8 @@ public:
                 partial_ = std::move(dat.partial_);
             } else if (dat.lambda_) {
                 lambda_ = std::move(dat.lambda_);
+            } else if (dat.lambda2_) {
+                lambda2_ = std::move(dat.lambda2_);
             }
             type_ = dat.type_;
             dat.type_ = type::invalid;
@@ -236,6 +251,9 @@ public:
     }
     bool is_lambda() const {
         return type_ == type::lambda;
+    }
+    bool is_lambda2() const {
+        return type_ == type::lambda2;
     }
     bool is_invalid() const {
         return type_ == type::invalid;
@@ -295,6 +313,10 @@ public:
         return (*lambda_);
     }
 
+    const basic_lambda2<string_type>& lambda2_value() const {
+        return (*lambda2_);
+    }
+
 private:
     type type_;
     std::unique_ptr<basic_object<string_type>> obj_;
@@ -302,6 +324,7 @@ private:
     std::unique_ptr<basic_list<string_type>> list_;
     std::unique_ptr<basic_partial<string_type>> partial_;
     std::unique_ptr<basic_lambda<string_type>> lambda_;
+    std::unique_ptr<basic_lambda2<string_type>> lambda2_;
 };
 
 template <typename string_type>
@@ -737,7 +760,7 @@ private:
                 break;
             case Tag::Type::SectionBegin:
                 if ((var = ctx.get(tag.name)) != nullptr) {
-                    if (var->is_lambda()) {
+                    if (var->is_lambda() || var->is_lambda2()) {
                         if (!renderLambda(handler, var, ctx, false, *comp.tag.sectionText, true)) {
                             return WalkControl::Stop;
                         }
@@ -779,26 +802,32 @@ private:
     }
     
     bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, bool escaped, const string_type& text, bool parseWithSameContext) {
-        const auto processTemplate = [this, &handler, var, &ctx, escaped](basic_mustache& tmpl) {
-            if (!tmpl.is_valid()) {
-                errorMessage_ = tmpl.error_message();
-            } else {
+        const basic_renderer<string_type> render = [this, &handler, var, &ctx, escaped, parseWithSameContext](const string_type& text) {
+            const auto processTemplate = [this, &handler, var, &ctx, escaped](basic_mustache& tmpl) -> string_type {
+                if (!tmpl.is_valid()) {
+                    errorMessage_ = tmpl.error_message();
+                    return {};
+                }
                 const string_type str{tmpl.render(ctx)};
                 if (!tmpl.is_valid()) {
                     errorMessage_ = tmpl.error_message();
-                } else {
-                    handler(escaped ? escape(str) : str);
+                    return {};
                 }
+                return escaped ? escape(str) : str;
+            };
+            if (parseWithSameContext) {
+                basic_mustache tmpl{text, ctx};
+                return processTemplate(tmpl);
             }
-            return tmpl.is_valid();
-        };
-        const auto lambdaResult = var->lambda_value()(text);
-        if (parseWithSameContext) {
-            basic_mustache tmpl{lambdaResult, ctx};
+            basic_mustache tmpl{text};
             return processTemplate(tmpl);
+        };
+        if (var->is_lambda2()) {
+            handler(var->lambda2_value()(text, render));
+        } else {
+            handler(render(var->lambda_value()(text)));
         }
-        basic_mustache tmpl{lambdaResult};
-        return processTemplate(tmpl);
+        return errorMessage_.empty();
     }
     
     bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, bool escaped) {
@@ -807,6 +836,12 @@ private:
             handler(escaped ? escape(varstr) : varstr);
         } else if (var->is_lambda()) {
             return renderLambda(handler, var, ctx, escaped, {}, false);
+        } else if (var->is_lambda2()) {
+            using streamstring = std::basic_ostringstream<typename string_type::value_type>;
+            streamstring ss;
+            ss << "Lambda with render argument is not allowed for regular variables";
+            errorMessage_ = ss.str();
+            return false;
         }
         return true;
     }
@@ -839,6 +874,8 @@ using object = basic_object<mustache::string_type>;
 using list = basic_list<mustache::string_type>;
 using partial = basic_partial<mustache::string_type>;
 using lambda = basic_lambda<mustache::string_type>;
+using lambda2 = basic_lambda2<mustache::string_type>;
+using renderer = basic_renderer<mustache::string_type>;
 
 using mustachew = basic_mustache<std::wstring>;
 using dataw = basic_data<mustachew::string_type>;
