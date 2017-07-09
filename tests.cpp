@@ -31,6 +31,27 @@
 
 using namespace kainjow::mustache;
 
+TEST_CASE("split") {
+
+    std::vector<std::string> names;
+    names = split<std::string>("", '.');
+    REQUIRE(names.size() == 0);
+    names = split<std::string>("test", '.');
+    REQUIRE(names.size() == 1);
+    CHECK(names[0] == "test");
+    names = split<std::string>("a.b", '.');
+    REQUIRE(names.size() == 2);
+    CHECK(names[0] == "a");
+    CHECK(names[1] == "b");
+    names = split<std::string>(".", '.');
+    REQUIRE(names.size() == 1);
+    CHECK(names[0] == "");
+    names = split<std::string>("a.", '.');
+    REQUIRE(names.size() == 1);
+    CHECK(names[0] == "a");
+
+}
+
 TEST_CASE("variables") {
 
     SECTION("empty") {

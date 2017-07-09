@@ -460,10 +460,7 @@ private:
                 return nullptr;
             }
             // process x.y-like name
-            auto names = split(name, '.');
-            if (names.size() == 0) {
-                names.resize(1);
-            }
+            const auto names = split(name, '.');
             for (const auto& item : items_) {
                 auto var = item;
                 for (const auto& n : names) {
