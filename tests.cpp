@@ -381,10 +381,17 @@ TEST_CASE("data") {
         CHECK(obj1.is_invalid());
         obj2.push_back({"name", "Steve"}); // this should puke if the internal data isn't setup correctly
 
-        data lambda1{lambda{[](const std::string&){ return "{{#what}}"; }}};
-        data lambda2 = std::move(lambda1);
-        CHECK(lambda2.is_lambda());
-        CHECK(lambda1.is_invalid());
+        data lambda0{lambda{[](const std::string&){ return ""; }}};
+        CHECK(lambda0.is_lambda());
+        data lambda1 = std::move(lambda0);
+        CHECK(lambda1.is_lambda());
+        CHECK(lambda0.is_invalid());
+
+        data lambda3{lambda2{[](const std::string&, const renderer&){ return ""; }}};
+        CHECK(lambda3.is_lambda2());
+        data lambda4 = std::move(lambda3);
+        CHECK(lambda4.is_lambda2());
+        CHECK(lambda3.is_invalid());
     }
 
 }
