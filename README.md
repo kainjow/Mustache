@@ -78,7 +78,7 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 #### 3.1 - in progress
 
-* Added a new lambda type that takes an additional render function. The existing lambda type (since version 3.0 and below) incorrectly always rendered its result. This new lambda type (innovatively called `lambda2`) does not render its result but allows the user to call the `render` argument to render the section text, or any other text.
+* Added a new lambda type (innovatively called `lambda2`) that takes an additional render function. It will not render its result but allows the user to call the `render` argument to render the section text, or any other text.
 
 #### 3.0 - July 8, 2017
 
