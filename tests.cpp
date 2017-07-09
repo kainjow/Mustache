@@ -769,3 +769,18 @@ TEST_CASE("bustache_benchmark") {
     };
 
 }
+
+TEST_CASE("lambda_render") {
+
+    SECTION("auto-render") {
+        mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda{[](const std::string& text) {
+            CHECK(text == "{{name}} is awesome.");
+            return "<b>" + text + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "<b>Willy is awesome.</b>");
+    }
+
+}
