@@ -417,7 +417,7 @@ TEST_CASE("data") {
 
     SECTION("lambda_copy_ctor") {
         data l1{lambda{[](const std::string&){ return ""; }}};
-        auto l2{l1};
+        data l2{l1};
         CHECK(l1.is_lambda());
         CHECK(l2.is_lambda());
         CHECK(l1.lambda_value()("") == l2.lambda_value()(""));
@@ -425,7 +425,7 @@ TEST_CASE("data") {
 
     SECTION("lambda2_copy_ctor") {
         data l1{lambda2{[](const std::string&, const renderer& r){ return r(""); }}};
-        auto l2{l1};
+        data l2{l1};
         CHECK(l1.is_lambda2());
         CHECK(l2.is_lambda2());
         const auto r = [](const std::string& text) { return text; };
