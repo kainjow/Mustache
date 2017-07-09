@@ -10,7 +10,7 @@
 
 ## Example usage
 
-All examples assume `using namespace kainjow::mustache`.
+All examples assume `using namespace kainjow::mustache`. Additional examples and usage can be found in the `tests.cpp` file.
 
 ### Example 1 - Hello World
 
