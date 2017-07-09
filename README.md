@@ -76,10 +76,10 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## Release Notes
 
-#### 3.0 - in progress
+#### 3.0 - July 8, 2017
 
 * Performance improvements - about 45% faster than version 2
-* Even simpler API. Not backwards compatible but upgrading should be straightforward
+* Even simpler API. Not backwards compatible but upgrading should be straightforward:
   * Namespace, classes, and methods are now in snake case to match the STL. For example, `Kainjow::Mustache` is now `kainjow::mustache`
   * Classes and aliases are now under a `mustache` namespace, instead of being under the mustache class
   * Removed `Data::List()` - use `data{data::type::list}` instead
