@@ -52,7 +52,7 @@ string_type trim(const string_type& s) {
 }
 
 template <typename string_type>
-string_type escape(const string_type& s) {
+string_type html_escape(const string_type& s) {
     string_type ret;
     ret.reserve(s.size()*2);
     for (const auto ch : s) {
@@ -362,6 +362,15 @@ public:
     
     const string_type& error_message() const {
         return errorMessage_;
+    }
+
+    bool is_custom_escape() const {
+        return bool(escapeFn_);
+    }
+
+    template <typename FnType>
+    void set_custom_escape(FnType escape_fn) {
+        escapeFn_ = escape_fn;
     }
 
     template <typename StreamType>
@@ -860,9 +869,14 @@ private:
         }
     }
 
+    string_type escape(const string_type& s) const {
+        return escapeFn_ ? escapeFn_(s) : html_escape(s);
+    }
+
 private:
     string_type errorMessage_;
     Component rootComponent_;
+    std::function<string_type(const string_type&)> escapeFn_;
 };
 
 using mustache = basic_mustache<std::string>;
