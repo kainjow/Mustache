@@ -917,4 +917,26 @@ TEST_CASE("custom_escape") {
         CHECK(tmpl.render(data) == "printf(\"Say \\\"friend\\\" and enter\");\n");
     }
 
+    SECTION("no_html_escape") {
+        // make sure when using a custom escape that HTML is not escaped
+        mustache tmpl("hello {{world}}");
+        tmpl.set_custom_escape([](const std::string& s) {
+            std::string ret; ret.reserve(s.size());
+            for (const auto ch: s) {
+                switch (ch) {
+                    case '\"':
+                    case '\n':
+                        ret.append({'\\', ch});
+                        break;
+                    default:
+                        ret.append(1, ch);
+                        break;
+                }
+            }
+            return ret;
+        });
+        object data{ { "world", "<world>" } };
+        CHECK(tmpl.render(data) == "hello <world>");
+    }
+
 }
