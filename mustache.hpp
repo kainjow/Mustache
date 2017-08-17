@@ -365,10 +365,6 @@ public:
         return errorMessage_;
     }
 
-    bool is_custom_escape() const {
-        return bool(escape_);
-    }
-
     template <typename FnType>
     void set_custom_escape(FnType escape_fn) {
         escape_ = escape_fn;
