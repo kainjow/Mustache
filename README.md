@@ -27,7 +27,7 @@ mustache tmpl{"{{#employees}}{{name}}, {{/employees}}"};
 data employees{data::type::list};
 employees << data{"name", "Steve"} << data{"name", "Bill"};
 tmpl.render({"employees", employees}, std::cout);
-// Steve, Bill, 
+// Steve, Bill,
 ````
 
 ### Example 3 - Custom Render Handler
@@ -43,7 +43,7 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 
 ## Supported Features
 
-This library supports all current Mustache features.
+This library supports all current Mustache features:
 
 - Variables
 - HTML escaping
@@ -55,6 +55,10 @@ This library supports all current Mustache features.
 - Partials
 - Comments
 - Set Delimiter
+
+Additional features:
+
+- Custom escape function for use outside of HTML
 
 ## Run Tests
 
