@@ -351,7 +351,8 @@ class basic_mustache {
 public:
     using string_type = StringType;
 
-    basic_mustache(const string_type& input) {
+    basic_mustache(const string_type& input)
+        : basic_mustache() {
         Context ctx;
         parse(input, ctx);
     }
@@ -365,12 +366,12 @@ public:
     }
 
     bool is_custom_escape() const {
-        return bool(escapeFn_);
+        return bool(escape_);
     }
 
     template <typename FnType>
     void set_custom_escape(FnType escape_fn) {
-        escapeFn_ = escape_fn;
+        escape_ = escape_fn;
     }
 
     template <typename StreamType>
@@ -517,8 +518,14 @@ private:
     private:
         Context& ctx_;
     };
+
+    basic_mustache()
+        : escape_(html_escape<string_type>)
+    {
+    }
     
-    basic_mustache(const string_type& input, Context& ctx) {
+    basic_mustache(const string_type& input, Context& ctx)
+        : basic_mustache() {
         parse(input, ctx);
     }
 
@@ -819,7 +826,7 @@ private:
                     errorMessage_ = tmpl.error_message();
                     return {};
                 }
-                return escaped ? escape(str) : str;
+                return escaped ? escape_(str) : str;
             };
             if (parseWithSameContext) {
                 basic_mustache tmpl{text, ctx};
@@ -839,7 +846,7 @@ private:
     bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, bool escaped) {
         if (var->is_string()) {
             const auto varstr = var->string_value();
-            handler(escaped ? escape(varstr) : varstr);
+            handler(escaped ? escape_(varstr) : varstr);
         } else if (var->is_lambda()) {
             return renderLambda(handler, var, ctx, escaped, {}, false);
         } else if (var->is_lambda2()) {
@@ -869,14 +876,10 @@ private:
         }
     }
 
-    string_type escape(const string_type& s) const {
-        return escapeFn_ ? escapeFn_(s) : html_escape(s);
-    }
-
 private:
     string_type errorMessage_;
     Component rootComponent_;
-    std::function<string_type(const string_type&)> escapeFn_;
+    std::function<string_type(const string_type&)> escape_;
 };
 
 using mustache = basic_mustache<std::string>;
