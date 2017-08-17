@@ -985,4 +985,12 @@ TEST_CASE("custom_escape") {
         CHECK(tmpl.render(dat) == "hello \\\"friend\\\"");
     }
 
+    SECTION("none") {
+        mustache tmpl("hello {{what}}");
+        mustache::EscapeHandler esc;
+        tmpl.set_custom_escape(esc);
+        object dat({ {"what", "\"friend\""} });
+        CHECK_THROWS_AS(tmpl.render(dat), std::bad_function_call);
+    }
+
 }
