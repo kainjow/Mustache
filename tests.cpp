@@ -939,4 +939,50 @@ TEST_CASE("custom_escape") {
         CHECK(tmpl.render(data) == "hello <world>");
     }
 
+    SECTION("lambda") {
+        mustache tmpl{"hello {{lambda}}"};
+        data dat("lambda", data{lambda{[](const std::string&){
+            return "\"friend\"";
+        }}});
+        tmpl.set_custom_escape([](const std::string& s) {
+            std::string ret; ret.reserve(s.size());
+            for (const auto ch: s) {
+                switch (ch) {
+                    case '\"':
+                    case '\n':
+                        ret.append({'\\', ch});
+                        break;
+                    default:
+                        ret.append(1, ch);
+                        break;
+                }
+            }
+            return ret;
+        });
+        CHECK(tmpl.render(dat) == "hello \\\"friend\\\"");
+    }
+
+    SECTION("partial") {
+        mustache tmpl{"hello {{>partial}}"};
+        object dat({{"what", "\"friend\""}, {"partial", data{partial{[](){
+            return "{{what}}";
+        }}}}});
+        tmpl.set_custom_escape([](const std::string& s) {
+            std::string ret; ret.reserve(s.size());
+            for (const auto ch: s) {
+                switch (ch) {
+                    case '\"':
+                    case '\n':
+                        ret.append({'\\', ch});
+                        break;
+                    default:
+                        ret.append(1, ch);
+                        break;
+                }
+            }
+            return ret;
+        });
+        CHECK(tmpl.render(dat) == "hello \\\"friend\\\"");
+    }
+
 }

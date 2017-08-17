@@ -787,6 +787,7 @@ private:
                 if ((var = ctx.get_partial(tag.name)) != nullptr && var->is_partial()) {
                     const auto partial = var->partial_value();
                     basic_mustache tmpl{partial()};
+                    tmpl.set_custom_escape(escape_);
                     if (!tmpl.is_valid()) {
                         errorMessage_ = tmpl.error_message();
                     } else {
