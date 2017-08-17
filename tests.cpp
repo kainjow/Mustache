@@ -114,27 +114,6 @@ TEST_CASE("variables") {
         CHECK(tmpl.render(data) == "Hello \"S\"<br>te&v\'e");
     }
 
-    SECTION("custom_escaped") {
-        mustache tmpl("printf(\"Say {{password}} and enter\");{{&newline}}");
-        tmpl.set_custom_escape([](const std::string& s) {
-            std::string ret; ret.reserve(s.size());
-            for (const auto ch: s) {
-                switch (ch) {
-                    case '\"':
-                    case '\n':
-                        ret.append({'\\', ch});
-                        break;
-                    default:
-                        ret.append(1, ch);
-                        break;
-                }
-            }
-            return ret;
-        });
-        object data{ { "password", "\"friend\"" }, { "newline", "\n" } };
-        CHECK(tmpl.render(data) == "printf(\"Say \\\"friend\\\" and enter\");\n");
-    }
-
     SECTION("empty_name") {
         mustache tmpl("Hello {{}}");
         data data;
@@ -911,6 +890,31 @@ TEST_CASE("lambda_render") {
         CHECK(tmpl.render(data) == "");
         CHECK_FALSE(tmpl.is_valid());
         CHECK(tmpl.error_message() == "Lambda with render argument is not allowed for regular variables");
+    }
+
+}
+
+TEST_CASE("custom_escape") {
+
+    SECTION("basic") {
+        mustache tmpl("printf(\"Say {{password}} and enter\");{{&newline}}");
+        tmpl.set_custom_escape([](const std::string& s) {
+            std::string ret; ret.reserve(s.size());
+            for (const auto ch: s) {
+                switch (ch) {
+                    case '\"':
+                    case '\n':
+                        ret.append({'\\', ch});
+                        break;
+                    default:
+                        ret.append(1, ch);
+                        break;
+                }
+            }
+            return ret;
+        });
+        object data{ { "password", "\"friend\"" }, { "newline", "\n" } };
+        CHECK(tmpl.render(data) == "printf(\"Say \\\"friend\\\" and enter\");\n");
     }
 
 }
