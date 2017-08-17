@@ -116,7 +116,7 @@ TEST_CASE("variables") {
 
     SECTION("custom_escaped") {
         mustache tmpl("printf(\"Say {{password}} and enter\");{{&newline}}");
-        tmpl.set_custom_escape([](const std::string& s) -> std::string {
+        tmpl.set_custom_escape([](const std::string& s) {
             std::string ret; ret.reserve(s.size());
             for (const auto ch: s) {
                 switch (ch) {
