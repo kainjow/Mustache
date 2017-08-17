@@ -126,6 +126,7 @@ TEST_CASE("variables") {
                         break;
                     default:
                         ret.append(1, ch);
+                        break;
                 }
             }
             return ret;
