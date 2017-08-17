@@ -365,8 +365,8 @@ public:
         return errorMessage_;
     }
 
-    using EscapeHandler = std::function<string_type(const string_type&)>;
-    void set_custom_escape(const EscapeHandler& escape_fn) {
+    using escape_handler = std::function<string_type(const string_type&)>;
+    void set_custom_escape(const escape_handler& escape_fn) {
         escape_ = escape_fn;
     }
 
@@ -876,7 +876,7 @@ private:
 private:
     string_type errorMessage_;
     Component rootComponent_;
-    EscapeHandler escape_;
+    escape_handler escape_;
 };
 
 using mustache = basic_mustache<std::string>;
