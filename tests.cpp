@@ -962,6 +962,29 @@ TEST_CASE("custom_escape") {
         CHECK(tmpl.render(dat) == "hello \\\"friend\\\"");
     }
 
+    SECTION("#lambda") {
+        mustache tmpl{"hello {{#quote}}friend{{/quote}}"};
+        data dat("quote", data{lambda{[](const std::string& s){
+            return '"' + s + '"';
+        }}});
+        tmpl.set_custom_escape([](const std::string& s) {
+            std::string ret; ret.reserve(s.size());
+            for (const auto ch: s) {
+                switch (ch) {
+                    case '\"':
+                    case '\n':
+                        ret.append({'\\', ch});
+                        break;
+                    default:
+                        ret.append(1, ch);
+                        break;
+                }
+            }
+            return ret;
+        });
+        CHECK(tmpl.render(dat) == "hello \\\"friend\\\"");
+    }
+
     SECTION("partial") {
         mustache tmpl{"hello {{>partial}}"};
         object dat({{"what", "\"friend\""}, {"partial", data{partial{[](){
