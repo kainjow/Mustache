@@ -965,7 +965,7 @@ TEST_CASE("custom_escape") {
     SECTION("#lambda") {
         mustache tmpl{"hello {{#quote}}friend{{/quote}}"};
         data dat("quote", data{lambda{[](const std::string& s){
-            return '"' + s + '"';
+            return "<\"" + s + "\">";
         }}});
         tmpl.set_custom_escape([](const std::string& s) {
             std::string ret; ret.reserve(s.size());
