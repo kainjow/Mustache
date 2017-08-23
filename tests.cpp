@@ -964,8 +964,11 @@ TEST_CASE("custom_escape") {
 
     SECTION("#lambda") {
         mustache tmpl{"hello {{#quote}}friend{{/quote}}"};
-        data dat("quote", data{lambda{[](const std::string& s){
-            return "<\"" + s + "\">";
+        data dat1("quote", data{lambda3{[](const std::string& s, const renderer2& r){
+            return r("<\"" + s + "\">", true);
+        }}});
+        data dat2("quote", data{lambda3{[](const std::string& s, const renderer2& r){
+            return r("<\"" + s + "\">", false);
         }}});
         tmpl.set_custom_escape([](const std::string& s) {
             std::string ret; ret.reserve(s.size());
@@ -982,7 +985,8 @@ TEST_CASE("custom_escape") {
             }
             return ret;
         });
-        CHECK(tmpl.render(dat) == "hello \\\"friend\\\"");
+        CHECK(tmpl.render(dat1) == "hello <\\\"friend\\\">");
+        CHECK(tmpl.render(dat2) == "hello <\"friend\">");
     }
 
     SECTION("partial") {
