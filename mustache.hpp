@@ -827,9 +827,11 @@ private:
             };
             if (parseWithSameContext) {
                 basic_mustache tmpl{text, ctx};
+                tmpl.set_custom_escape(escape_);
                 return processTemplate(tmpl);
             }
             basic_mustache tmpl{text};
+            tmpl.set_custom_escape(escape_);
             return processTemplate(tmpl);
         };
         if (var->is_lambda2()) {
