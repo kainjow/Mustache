@@ -428,8 +428,6 @@ TEST_CASE("data") {
         data l2{l1};
         CHECK(l1.is_lambda2());
         CHECK(l2.is_lambda2());
-        const auto r = [](const std::string& text) { return text; };
-        CHECK(l1.lambda2_value()("", r) == l2.lambda2_value()("", r));
     }
 
 }
@@ -622,6 +620,15 @@ TEST_CASE("lambdas") {
     SECTION("basic") {
         mustache tmpl{"{{lambda}}"};
         data dat("lambda", data{lambda{[](const std::string&){
+            return "Hello {{planet}}";
+        }}});
+        dat["planet"] = "world";
+        CHECK(tmpl.render(dat) == "Hello world");
+    }
+
+    SECTION("basic_t") {
+        mustache tmpl{"{{lambda}}"};
+        data dat("lambda", data{lambda_t{[](const std::string&){
             return "Hello {{planet}}";
         }}});
         dat["planet"] = "world";
@@ -839,11 +846,35 @@ TEST_CASE("lambda_render") {
         CHECK(tmpl.render(data) == "<b>{{name}} is awesome.</b>");
     }
 
+    SECTION("no-render-lambda_t") {
+        mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda_t{[](const std::string& text, const renderer&) {
+            CHECK(text == "{{name}} is awesome.");
+            return "<b>" + text + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "<b>{{name}} is awesome.</b>");
+    }
+
     SECTION("manual-render") {
         mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
         data data;
         data["name"] = "Willy";
         data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) {
+            CHECK(text == "{{name}} is awesome.");
+            const auto renderedText = render(text);
+            CHECK(renderedText == "Willy is awesome.");
+            return "<b>" + renderedText + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "<b>Willy is awesome.</b>");
+    }
+
+    SECTION("manual-render-lambda_t") {
+        mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda_t{[](const std::string& text, const renderer& render) {
             CHECK(text == "{{name}} is awesome.");
             const auto renderedText = render(text);
             CHECK(renderedText == "Willy is awesome.");
@@ -964,10 +995,10 @@ TEST_CASE("custom_escape") {
 
     SECTION("#lambda") {
         mustache tmpl{"hello {{#quote}}friend{{/quote}}"};
-        data dat1("quote", data{lambda3{[](const std::string& s, const renderer2& r){
+        data dat1("quote", data{lambda_t{[](const std::string& s, const renderer& r){
             return r("<\"" + s + "\">", true);
         }}});
-        data dat2("quote", data{lambda3{[](const std::string& s, const renderer2& r){
+        data dat2("quote", data{lambda_t{[](const std::string& s, const renderer& r){
             return r("<\"" + s + "\">", false);
         }}});
         tmpl.set_custom_escape([](const std::string& s) {
