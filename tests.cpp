@@ -31,6 +31,12 @@
 
 using namespace kainjow::mustache;
 
+#if defined(_MSC_VER) && _MSC_VER == 1800
+#define MUSTACHE_VS2013 1
+#else
+#define MUSTACHE_VS2013 0
+#endif
+
 TEST_CASE("split") {
 
     std::vector<std::string> names;
@@ -628,15 +634,13 @@ TEST_CASE("lambdas") {
 
     SECTION("basic_t") {
         mustache tmpl{"{{lambda}}"};
-#if defined(_MSC_VER) && _MSC_VER == 1800
-        data dat("lambda", data{lambda_t(lambda_t::type1([](const std::string&){
-            return "Hello {{planet}}";
-        }))});
+#if MUSTACHE_VS2013
+        data dat("lambda", data{lambda_t{lambda_t::type1{[](const std::string&){
 #else
-        data dat("lambda", data{lambda_t{[](const std::string&){
-            return "Hello {{planet}}";
-        }}});
+        data dat("lambda", data{lambda_t{{[](const std::string&){
 #endif
+            return "Hello {{planet}}";
+        }}}});
         dat["planet"] = "world";
         CHECK(tmpl.render(dat) == "Hello world");
     }
@@ -856,10 +860,14 @@ TEST_CASE("lambda_render") {
         mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
         data data;
         data["name"] = "Willy";
-        data["wrapped"] = lambda_t{[](const std::string& text, const renderer&) {
+#if MUSTACHE_VS2013
+        data["wrapped"] = lambda_t{lambda_t::type2{[](const std::string& text, const renderer&) {
+#else
+        data["wrapped"] = lambda_t{{[](const std::string& text, const renderer&) {
+#endif
             CHECK(text == "{{name}} is awesome.");
             return "<b>" + text + "</b>";
-        }};
+        }}};
         CHECK(tmpl.render(data) == "<b>{{name}} is awesome.</b>");
     }
 
@@ -880,12 +888,16 @@ TEST_CASE("lambda_render") {
         mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
         data data;
         data["name"] = "Willy";
-        data["wrapped"] = lambda_t{[](const std::string& text, const renderer& render) {
+#if MUSTACHE_VS2013
+        data["wrapped"] = lambda_t{lambda_t::type2{[](const std::string& text, const renderer& render) {
+#else
+        data["wrapped"] = lambda_t{{[](const std::string& text, const renderer& render) {
+#endif
             CHECK(text == "{{name}} is awesome.");
             const auto renderedText = render(text);
             CHECK(renderedText == "Willy is awesome.");
             return "<b>" + renderedText + "</b>";
-        }};
+        }}};
         CHECK(tmpl.render(data) == "<b>Willy is awesome.</b>");
     }
 
@@ -1001,12 +1013,20 @@ TEST_CASE("custom_escape") {
 
     SECTION("#lambda") {
         mustache tmpl{"hello {{#quote}}friend{{/quote}}"};
-        data dat1("quote", data{lambda_t{[](const std::string& s, const renderer& r){
+#if MUSTACHE_VS2013
+        data dat1("quote", data{lambda_t{lambda_t::type2{[](const std::string& s, const renderer& r){
+#else
+        data dat1("quote", data{lambda_t{{[](const std::string& s, const renderer& r){
+#endif
             return r("<\"" + s + "\">", true);
-        }}});
-        data dat2("quote", data{lambda_t{[](const std::string& s, const renderer& r){
+        }}}});
+#if MUSTACHE_VS2013
+        data dat2("quote", data{lambda_t{lambda_t::type2{[](const std::string& s, const renderer& r){
+#else
+        data dat2("quote", data{lambda_t{{[](const std::string& s, const renderer& r){
+#endif
             return r("<\"" + s + "\">", false);
-        }}});
+        }}}});
         tmpl.set_custom_escape([](const std::string& s) {
             std::string ret; ret.reserve(s.size());
             for (const auto ch: s) {
