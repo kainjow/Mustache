@@ -482,17 +482,17 @@ private:
         }
     };
     
-    class Component {
+    class component {
     public:
         string_type text;
         Tag tag;
-        std::vector<Component> children;
+        std::vector<component> children;
         StringSizeType position = string_type::npos;
         bool isText() const {
             return tag.type == Tag::Type::Invalid;
         }
-        Component() {}
-        Component(const string_type& t, StringSizeType p) : text(t), position(p) {}
+        component() {}
+        component(const string_type& t, StringSizeType p) : text(t), position(p) {}
     };
     
     class context {
@@ -595,7 +595,7 @@ private:
         
         bool currentDelimiterIsBrace{ctx.delimiterSet.is_default()};
         
-        std::vector<Component*> sections{&rootComponent_};
+        std::vector<component*> sections{&rootComponent_};
         std::vector<StringSizeType> sectionStarts;
         
         StringSizeType inputPosition{0};
@@ -605,12 +605,12 @@ private:
             const StringSizeType tagLocationStart{input.find(ctx.delimiterSet.begin, inputPosition)};
             if (tagLocationStart == string_type::npos) {
                 // No tag found. Add the remaining text.
-                const Component comp{{input, inputPosition, inputSize - inputPosition}, inputPosition};
+                const component comp{{input, inputPosition, inputSize - inputPosition}, inputPosition};
                 sections.back()->children.push_back(comp);
                 break;
             } else if (tagLocationStart != inputPosition) {
                 // Tag found, add text up to this tag.
-                const Component comp{{input, inputPosition, tagLocationStart - inputPosition}, inputPosition};
+                const component comp{{input, inputPosition, tagLocationStart - inputPosition}, inputPosition};
                 sections.back()->children.push_back(comp);
             }
             
@@ -632,7 +632,7 @@ private:
             
             // Parse tag
             const string_type tagContents{trim(string_type{input, tagContentsLocation, tagLocationEnd - tagContentsLocation})};
-            Component comp;
+            component comp;
             if (!tagContents.empty() && tagContents[0] == '=') {
                 if (!parseSetDelimiterTag(tagContents, ctx.delimiterSet)) {
                     streamstring ss;
@@ -671,7 +671,7 @@ private:
         }
         
         // Check for sections without an ending tag
-        walk([this](Component& comp) -> WalkControl {
+        walk([this](component& comp) -> WalkControl {
             if (!comp.tag.isSectionBegin()) {
                 return WalkControl::Continue;
             }
@@ -694,13 +694,13 @@ private:
         Stop,
         Skip,
     };
-    using WalkCallback = std::function<WalkControl(Component&)>;
+    using WalkCallback = std::function<WalkControl(component&)>;
     
     void walk(const WalkCallback& callback) {
         walkChildren(callback, rootComponent_);
     }
 
-    void walkChildren(const WalkCallback& callback, Component& comp) {
+    void walkChildren(const WalkCallback& callback, component& comp) {
         for (auto& childComp : comp.children) {
             if (walkComponent(callback, childComp) != WalkControl::Continue) {
                 break;
@@ -708,7 +708,7 @@ private:
         }
     }
     
-    WalkControl walkComponent(const WalkCallback& callback, Component& comp) {
+    WalkControl walkComponent(const WalkCallback& callback, component& comp) {
         WalkControl control{callback(comp)};
         if (control == WalkControl::Stop) {
             return control;
@@ -799,7 +799,7 @@ private:
     }
     
     void render(const RenderHandler& handler, context& ctx) {
-        walk([&handler, &ctx, this](Component& comp) -> WalkControl {
+        walk([&handler, &ctx, this](component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         });
     }
@@ -812,7 +812,7 @@ private:
         return ss.str();
     }
     
-    WalkControl renderComponent(const RenderHandler& handler, context& ctx, Component& comp) {
+    WalkControl renderComponent(const RenderHandler& handler, context& ctx, component& comp) {
         if (comp.isText()) {
             handler(comp.text);
             return WalkControl::Continue;
@@ -943,8 +943,8 @@ private:
         return true;
     }
 
-    void renderSection(const RenderHandler& handler, context& ctx, Component& incomp, const basic_data<string_type>* var) {
-        const auto callback = [&handler, &ctx, this](Component& comp) -> WalkControl {
+    void renderSection(const RenderHandler& handler, context& ctx, component& incomp, const basic_data<string_type>* var) {
+        const auto callback = [&handler, &ctx, this](component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };
         if (var && var->is_non_empty_list()) {
@@ -962,7 +962,7 @@ private:
 
 private:
     string_type errorMessage_;
-    Component rootComponent_;
+    component rootComponent_;
     escape_handler escape_;
 };
 
