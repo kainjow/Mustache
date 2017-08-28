@@ -31,10 +31,12 @@
 
 using namespace kainjow::mustache;
 
-#if defined(_MSC_VER) && _MSC_VER == 1800
-#define MUSTACHE_VS2013 1
-#else
-#define MUSTACHE_VS2013 0
+#ifndef MUSTACHE_VS2013
+    #if defined(_MSC_VER) && _MSC_VER == 1800
+        #define MUSTACHE_VS2013 1
+    #else
+        #define MUSTACHE_VS2013 0
+    #endif
 #endif
 
 TEST_CASE("split") {
