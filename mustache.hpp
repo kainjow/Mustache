@@ -408,6 +408,18 @@ const string_type delimiter_set<string_type>::default_begin(2, '{');
 template <typename string_type>
 const string_type delimiter_set<string_type>::default_end(2, '}');
 
+template <typename string_type>
+class basic_context {
+public:
+    virtual void push(const basic_data<string_type>* data) = 0;
+    virtual void pop() = 0;
+
+    virtual const basic_data<string_type>* get(const string_type& name) const = 0;
+    virtual const basic_data<string_type>* get_partial(const string_type& name) const = 0;
+
+    delimiter_set<string_type> delimiterSet;
+};
+
 template <typename StringType>
 class basic_mustache {
 public:
@@ -443,6 +455,14 @@ public:
     string_type render(const basic_data<string_type>& data) {
         std::basic_ostringstream<typename string_type::value_type> ss;
         return render(data, ss).str();
+    }
+
+    string_type render(basic_context<string_type>& ctx) {
+        std::basic_ostringstream<typename string_type::value_type> ss;
+        render([&ss](const string_type& str) {
+            ss << str;
+        }, ctx);
+        return ss.str();
     }
 
     using RenderHandler = std::function<void(const string_type&)>;
@@ -495,7 +515,7 @@ private:
         component(const string_type& t, StringSizeType p) : text(t), position(p) {}
     };
     
-    class context {
+    class context : public basic_context<string_type> {
     public:
         context(const basic_data<string_type>* data) {
             push(data);
@@ -504,15 +524,15 @@ private:
         context() {
         }
 
-        void push(const basic_data<string_type>* data) {
+        virtual void push(const basic_data<string_type>* data) override {
             items_.insert(items_.begin(), data);
         }
 
-        void pop() {
+        virtual void pop() override {
             items_.erase(items_.begin());
         }
         
-        const basic_data<string_type>* get(const string_type& name) const {
+        virtual const basic_data<string_type>* get(const string_type& name) const override {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
@@ -544,7 +564,7 @@ private:
             return nullptr;
         }
 
-        const basic_data<string_type>* get_partial(const string_type& name) const {
+        virtual const basic_data<string_type>* get_partial(const string_type& name) const override {
             for (const auto& item : items_) {
                 const auto var = item->get(name);
                 if (var) {
@@ -556,8 +576,6 @@ private:
 
         context(const context&) = delete;
         context& operator= (const context&) = delete;
-        
-        delimiter_set<string_type> delimiterSet;
 
     private:
         std::vector<const basic_data<string_type>*> items_;
@@ -565,7 +583,7 @@ private:
 
     class context_pusher {
     public:
-        context_pusher(context& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
+        context_pusher(basic_context<string_type>& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
             ctx.push(data);
         }
         ~context_pusher() {
@@ -574,7 +592,7 @@ private:
         context_pusher(const context_pusher&) = delete;
         context_pusher& operator= (const context_pusher&) = delete;
     private:
-        context& ctx_;
+        basic_context<string_type>& ctx_;
     };
 
     basic_mustache()
@@ -582,12 +600,12 @@ private:
     {
     }
     
-    basic_mustache(const string_type& input, context& ctx)
+    basic_mustache(const string_type& input, basic_context<string_type>& ctx)
         : basic_mustache() {
         parse(input, ctx);
     }
 
-    void parse(const string_type& input, context& ctx) {
+    void parse(const string_type& input, basic_context<string_type>& ctx) {
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
         const string_type braceDelimiterEndUnescaped(3, '}');
@@ -798,21 +816,13 @@ private:
         }
     }
     
-    void render(const RenderHandler& handler, context& ctx) {
+    void render(const RenderHandler& handler, basic_context<string_type>& ctx) {
         walk([&handler, &ctx, this](component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         });
     }
     
-    string_type render(context& ctx) {
-        std::basic_ostringstream<typename string_type::value_type> ss;
-        render([&ss](const string_type& str) {
-            ss << str;
-        }, ctx);
-        return ss.str();
-    }
-    
-    WalkControl renderComponent(const RenderHandler& handler, context& ctx, component& comp) {
+    WalkControl renderComponent(const RenderHandler& handler, basic_context<string_type>& ctx, component& comp) {
         if (comp.isText()) {
             handler(comp.text);
             return WalkControl::Continue;
@@ -879,7 +889,7 @@ private:
         Optional,
     };
     
-    bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, context& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
+    bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, basic_context<string_type>& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
         const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parseWithSameContext, escape](const string_type& text, bool escaped) {
             const auto processTemplate = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
@@ -926,7 +936,7 @@ private:
         return errorMessage_.empty();
     }
     
-    bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, context& ctx, bool escaped) {
+    bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, basic_context<string_type>& ctx, bool escaped) {
         if (var->is_string()) {
             const auto varstr = var->string_value();
             handler(escaped ? escape_(varstr) : varstr);
@@ -943,7 +953,7 @@ private:
         return true;
     }
 
-    void renderSection(const RenderHandler& handler, context& ctx, component& incomp, const basic_data<string_type>* var) {
+    void renderSection(const RenderHandler& handler, basic_context<string_type>& ctx, component& incomp, const basic_data<string_type>* var) {
         const auto callback = [&handler, &ctx, this](component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };

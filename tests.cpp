@@ -1080,3 +1080,48 @@ TEST_CASE("custom_escape") {
     }
 
 }
+
+template <typename string_type>
+class my_context : public basic_context<string_type> {
+public:
+    my_context()
+        : value_("Steve")
+    {
+    }
+
+    virtual void push(const basic_data<string_type>* /*data*/) override {
+    }
+
+    virtual void pop() override {
+    }
+
+    virtual const basic_data<string_type>* get(const string_type& name) const override {
+        if (name == "what") {
+            return &value_;
+        }
+        return nullptr;
+    }
+
+    virtual const basic_data<string_type>* get_partial(const string_type& /*name*/) const override {
+        return nullptr;
+    }
+
+private:
+    basic_data<string_type> value_;
+};
+
+TEST_CASE("custom_context") {
+
+    SECTION("basic") {
+        my_context<mustache::string_type> ctx;
+        mustache tmpl("Hello {{what}}");
+        CHECK(tmpl.render(ctx) == "Hello Steve");
+    }
+
+    SECTION("empty") {
+        my_context<mustache::string_type> ctx;
+        mustache tmpl("Hello {{world}}");
+        CHECK(tmpl.render(ctx) == "Hello ");
+    }
+
+}
