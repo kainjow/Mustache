@@ -563,16 +563,16 @@ private:
         std::vector<const basic_data<string_type>*> items_;
     };
 
-    class ContextPusher {
+    class context_pusher {
     public:
-        ContextPusher(context& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
+        context_pusher(context& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
             ctx.push(data);
         }
-        ~ContextPusher() {
+        ~context_pusher() {
             ctx_.pop();
         }
-        ContextPusher(const ContextPusher&) = delete;
-        ContextPusher& operator= (const ContextPusher&) = delete;
+        context_pusher(const context_pusher&) = delete;
+        context_pusher& operator= (const context_pusher&) = delete;
     private:
         context& ctx_;
     };
@@ -949,11 +949,11 @@ private:
         };
         if (var && var->is_non_empty_list()) {
             for (const auto& item : var->list_value()) {
-                const ContextPusher ctxpusher{ctx, &item};
+                const context_pusher ctxpusher{ctx, &item};
                 walkChildren(callback, incomp);
             }
         } else if (var) {
-            const ContextPusher ctxpusher{ctx, var};
+            const context_pusher ctxpusher{ctx, var};
             walkChildren(callback, incomp);
         } else {
             walkChildren(callback, incomp);
