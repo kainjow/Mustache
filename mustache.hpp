@@ -415,7 +415,7 @@ public:
 
     basic_mustache(const string_type& input)
         : basic_mustache() {
-        Context ctx;
+        context ctx;
         parse(input, ctx);
     }
 
@@ -450,7 +450,7 @@ public:
         if (!is_valid()) {
             return;
         }
-        Context ctx{&data};
+        context ctx{&data};
         render(handler, ctx);
     }
 
@@ -495,13 +495,13 @@ private:
         Component(const string_type& t, StringSizeType p) : text(t), position(p) {}
     };
     
-    class Context {
+    class context {
     public:
-        Context(const basic_data<string_type>* data) {
+        context(const basic_data<string_type>* data) {
             push(data);
         }
 
-        Context() {
+        context() {
         }
 
         void push(const basic_data<string_type>* data) {
@@ -554,8 +554,8 @@ private:
             return nullptr;
         }
 
-        Context(const Context&) = delete;
-        Context& operator= (const Context&) = delete;
+        context(const context&) = delete;
+        context& operator= (const context&) = delete;
         
         delimiter_set<string_type> delimiterSet;
 
@@ -565,7 +565,7 @@ private:
 
     class ContextPusher {
     public:
-        ContextPusher(Context& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
+        ContextPusher(context& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
             ctx.push(data);
         }
         ~ContextPusher() {
@@ -574,7 +574,7 @@ private:
         ContextPusher(const ContextPusher&) = delete;
         ContextPusher& operator= (const ContextPusher&) = delete;
     private:
-        Context& ctx_;
+        context& ctx_;
     };
 
     basic_mustache()
@@ -582,12 +582,12 @@ private:
     {
     }
     
-    basic_mustache(const string_type& input, Context& ctx)
+    basic_mustache(const string_type& input, context& ctx)
         : basic_mustache() {
         parse(input, ctx);
     }
 
-    void parse(const string_type& input, Context& ctx) {
+    void parse(const string_type& input, context& ctx) {
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
         const string_type braceDelimiterEndUnescaped(3, '}');
@@ -798,13 +798,13 @@ private:
         }
     }
     
-    void render(const RenderHandler& handler, Context& ctx) {
+    void render(const RenderHandler& handler, context& ctx) {
         walk([&handler, &ctx, this](Component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         });
     }
     
-    string_type render(Context& ctx) {
+    string_type render(context& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
         render([&ss](const string_type& str) {
             ss << str;
@@ -812,7 +812,7 @@ private:
         return ss.str();
     }
     
-    WalkControl renderComponent(const RenderHandler& handler, Context& ctx, Component& comp) {
+    WalkControl renderComponent(const RenderHandler& handler, context& ctx, Component& comp) {
         if (comp.isText()) {
             handler(comp.text);
             return WalkControl::Continue;
@@ -879,7 +879,7 @@ private:
         Optional,
     };
     
-    bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
+    bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, context& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
         const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parseWithSameContext, escape](const string_type& text, bool escaped) {
             const auto processTemplate = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
@@ -926,7 +926,7 @@ private:
         return errorMessage_.empty();
     }
     
-    bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, Context& ctx, bool escaped) {
+    bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, context& ctx, bool escaped) {
         if (var->is_string()) {
             const auto varstr = var->string_value();
             handler(escaped ? escape_(varstr) : varstr);
@@ -943,7 +943,7 @@ private:
         return true;
     }
 
-    void renderSection(const RenderHandler& handler, Context& ctx, Component& incomp, const basic_data<string_type>* var) {
+    void renderSection(const RenderHandler& handler, context& ctx, Component& incomp, const basic_data<string_type>* var) {
         const auto callback = [&handler, &ctx, this](Component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };
