@@ -628,9 +628,15 @@ TEST_CASE("lambdas") {
 
     SECTION("basic_t") {
         mustache tmpl{"{{lambda}}"};
-        data dat("lambda", data{lambda_t([](const std::string&){
+#if defined(_MSC_VER) && _MSC_VER == 1800
+        data dat("lambda", data{lambda_t(lambda_t::type1([](const std::string&){
             return "Hello {{planet}}";
-        })});
+        }))});
+#else
+        data dat("lambda", data{lambda_t{[](const std::string&){
+            return "Hello {{planet}}";
+        }}});
+#endif
         dat["planet"] = "world";
         CHECK(tmpl.render(dat) == "Hello world");
     }
