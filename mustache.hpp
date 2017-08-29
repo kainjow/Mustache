@@ -443,8 +443,8 @@ public:
         escape_ = escape_fn;
     }
 
-    template <typename StreamType>
-    StreamType& render(const basic_data<string_type>& data, StreamType& stream) {
+    template <typename stream_type>
+    stream_type& render(const basic_data<string_type>& data, stream_type& stream) {
         render(data, [&stream](const string_type& str) {
             stream << str;
         });
