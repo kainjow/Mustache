@@ -416,8 +416,6 @@ public:
 
     virtual const basic_data<string_type>* get(const string_type& name) const = 0;
     virtual const basic_data<string_type>* get_partial(const string_type& name) const = 0;
-
-    delimiter_set<string_type> delimiterSet;
 };
 
 template <typename StringType>
@@ -428,7 +426,8 @@ public:
     basic_mustache(const string_type& input)
         : basic_mustache() {
         context ctx;
-        parse(input, ctx);
+        context_internal context{ctx};
+        parse(input, context);
     }
 
     bool is_valid() const {
@@ -459,9 +458,10 @@ public:
 
     string_type render(basic_context<string_type>& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
+        context_internal context{ctx};
         render([&ss](const string_type& str) {
             ss << str;
-        }, ctx);
+        }, context);
         return ss.str();
     }
 
@@ -471,7 +471,8 @@ public:
             return;
         }
         context ctx{&data};
-        render(handler, ctx);
+        context_internal context{ctx};
+        render(handler, context);
     }
 
 private:
@@ -581,18 +582,29 @@ private:
         std::vector<const basic_data<string_type>*> items_;
     };
 
+    class context_internal {
+    public:
+        basic_context<string_type>& ctx;
+        delimiter_set<string_type> delimiterSet;
+
+        context_internal(basic_context<string_type>& a_ctx)
+            : ctx(a_ctx)
+        {
+        }
+    };
+
     class context_pusher {
     public:
-        context_pusher(basic_context<string_type>& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
-            ctx.push(data);
+        context_pusher(context_internal& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
+            ctx.ctx.push(data);
         }
         ~context_pusher() {
-            ctx_.pop();
+            ctx_.ctx.pop();
         }
         context_pusher(const context_pusher&) = delete;
         context_pusher& operator= (const context_pusher&) = delete;
     private:
-        basic_context<string_type>& ctx_;
+        context_internal& ctx_;
     };
 
     basic_mustache()
@@ -600,12 +612,12 @@ private:
     {
     }
     
-    basic_mustache(const string_type& input, basic_context<string_type>& ctx)
+    basic_mustache(const string_type& input, context_internal& ctx)
         : basic_mustache() {
         parse(input, ctx);
     }
 
-    void parse(const string_type& input, basic_context<string_type>& ctx) {
+    void parse(const string_type& input, context_internal& ctx) {
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
         const string_type braceDelimiterEndUnescaped(3, '}');
@@ -815,14 +827,22 @@ private:
             }
         }
     }
-    
-    void render(const RenderHandler& handler, basic_context<string_type>& ctx) {
+
+    string_type render(context_internal& ctx) {
+        std::basic_ostringstream<typename string_type::value_type> ss;
+        render([&ss](const string_type& str) {
+            ss << str;
+        }, ctx);
+        return ss.str();
+    }
+
+    void render(const RenderHandler& handler, context_internal& ctx) {
         walk([&handler, &ctx, this](component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         });
     }
-    
-    WalkControl renderComponent(const RenderHandler& handler, basic_context<string_type>& ctx, component& comp) {
+
+    WalkControl renderComponent(const RenderHandler& handler, context_internal& ctx, component& comp) {
         if (comp.isText()) {
             handler(comp.text);
             return WalkControl::Continue;
@@ -833,14 +853,14 @@ private:
         switch (tag.type) {
             case Tag::Type::Variable:
             case Tag::Type::UnescapedVariable:
-                if ((var = ctx.get(tag.name)) != nullptr) {
+                if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                     if (!renderVariable(handler, var, ctx, tag.type == Tag::Type::Variable)) {
                         return WalkControl::Stop;
                     }
                 }
                 break;
             case Tag::Type::SectionBegin:
-                if ((var = ctx.get(tag.name)) != nullptr) {
+                if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                     if (var->is_lambda() || var->is_lambda2()) {
                         if (!renderLambda(handler, var, ctx, RenderLambdaEscape::Optional, *comp.tag.sectionText, true)) {
                             return WalkControl::Stop;
@@ -851,12 +871,12 @@ private:
                 }
                 return WalkControl::Skip;
             case Tag::Type::SectionBeginInverted:
-                if ((var = ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
+                if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
                     renderSection(handler, ctx, comp, var);
                 }
                 return WalkControl::Skip;
             case Tag::Type::Partial:
-                if ((var = ctx.get_partial(tag.name)) != nullptr && var->is_partial()) {
+                if ((var = ctx.ctx.get_partial(tag.name)) != nullptr && var->is_partial()) {
                     const auto partial = var->partial_value();
                     basic_mustache tmpl{partial()};
                     tmpl.set_custom_escape(escape_);
@@ -889,7 +909,7 @@ private:
         Optional,
     };
     
-    bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, basic_context<string_type>& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
+    bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, context_internal& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
         const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parseWithSameContext, escape](const string_type& text, bool escaped) {
             const auto processTemplate = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
@@ -936,7 +956,7 @@ private:
         return errorMessage_.empty();
     }
     
-    bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, basic_context<string_type>& ctx, bool escaped) {
+    bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, context_internal& ctx, bool escaped) {
         if (var->is_string()) {
             const auto varstr = var->string_value();
             handler(escaped ? escape_(varstr) : varstr);
@@ -953,7 +973,7 @@ private:
         return true;
     }
 
-    void renderSection(const RenderHandler& handler, basic_context<string_type>& ctx, component& incomp, const basic_data<string_type>* var) {
+    void renderSection(const RenderHandler& handler, context_internal& ctx, component& incomp, const basic_data<string_type>* var) {
         const auto callback = [&handler, &ctx, this](component& comp) -> WalkControl {
             return renderComponent(handler, ctx, comp);
         };
