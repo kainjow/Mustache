@@ -1125,3 +1125,45 @@ TEST_CASE("custom_context") {
     }
 
 }
+
+template <typename string_type>
+class file_partial_context : public context<string_type> {
+public:
+    file_partial_context(const basic_data<string_type>* data)
+        : context<string_type>(data)
+    {
+    }
+
+    virtual const basic_data<string_type>* get_partial(const string_type& name) const override {
+        const auto cached = cached_files_.find(name);
+        if (cached != cached_files_.end()) {
+            return &cached->second;
+        }
+        string_type result;
+        if (read_file(name, result)) {
+            return &cached_files_.insert(std::make_pair(name, basic_data<string_type>(result))).first->second;
+        }
+        return nullptr;
+    }
+
+private:
+    bool read_file(const string_type& name, string_type& file_contents) const {
+        // read from file [name].mustache (fake the data for the test)
+        if (name == "what") {
+            file_contents = "World";
+            return true;
+        }
+        return false;
+    }
+
+    mutable std::unordered_map<string_type, basic_data<string_type>> cached_files_;
+};
+
+TEST_CASE("file_partial_context") {
+
+    data dat("punctuation", "!");
+    file_partial_context<mustache::string_type> ctx{&dat};
+    mustache tmpl("Hello {{>what}}{{punctuation}}");
+    CHECK(tmpl.render(ctx) == "Hello World!");
+
+}

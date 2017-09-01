@@ -418,6 +418,73 @@ public:
     virtual const basic_data<string_type>* get_partial(const string_type& name) const = 0;
 };
 
+template <typename string_type>
+class context : public basic_context<string_type> {
+public:
+    context(const basic_data<string_type>* data) {
+        push(data);
+    }
+
+    context() {
+    }
+
+    virtual void push(const basic_data<string_type>* data) override {
+        items_.insert(items_.begin(), data);
+    }
+
+    virtual void pop() override {
+        items_.erase(items_.begin());
+    }
+    
+    virtual const basic_data<string_type>* get(const string_type& name) const override {
+        // process {{.}} name
+        if (name.size() == 1 && name.at(0) == '.') {
+            return items_.front();
+        }
+        if (name.find('.') == string_type::npos) {
+            // process normal name without having to split which is slower
+            for (const auto& item : items_) {
+                const auto var = item->get(name);
+                if (var) {
+                    return var;
+                }
+            }
+            return nullptr;
+        }
+        // process x.y-like name
+        const auto names = split(name, '.');
+        for (const auto& item : items_) {
+            auto var = item;
+            for (const auto& n : names) {
+                var = var->get(n);
+                if (!var) {
+                    break;
+                }
+            }
+            if (var) {
+                return var;
+            }
+        }
+        return nullptr;
+    }
+
+    virtual const basic_data<string_type>* get_partial(const string_type& name) const override {
+        for (const auto& item : items_) {
+            const auto var = item->get(name);
+            if (var) {
+                return var;
+            }
+        }
+        return nullptr;
+    }
+
+    context(const context&) = delete;
+    context& operator= (const context&) = delete;
+
+private:
+    std::vector<const basic_data<string_type>*> items_;
+};
+
 template <typename StringType>
 class basic_mustache {
 public:
@@ -425,7 +492,7 @@ public:
 
     basic_mustache(const string_type& input)
         : basic_mustache() {
-        context ctx;
+        context<string_type> ctx;
         context_internal context{ctx};
         parse(input, context);
     }
@@ -470,7 +537,7 @@ public:
         if (!is_valid()) {
             return;
         }
-        context ctx{&data};
+        context<string_type> ctx{&data};
         context_internal context{ctx};
         render(handler, context);
     }
@@ -514,72 +581,6 @@ private:
         }
         component() {}
         component(const string_type& t, StringSizeType p) : text(t), position(p) {}
-    };
-    
-    class context : public basic_context<string_type> {
-    public:
-        context(const basic_data<string_type>* data) {
-            push(data);
-        }
-
-        context() {
-        }
-
-        virtual void push(const basic_data<string_type>* data) override {
-            items_.insert(items_.begin(), data);
-        }
-
-        virtual void pop() override {
-            items_.erase(items_.begin());
-        }
-        
-        virtual const basic_data<string_type>* get(const string_type& name) const override {
-            // process {{.}} name
-            if (name.size() == 1 && name.at(0) == '.') {
-                return items_.front();
-            }
-            if (name.find('.') == string_type::npos) {
-                // process normal name without having to split which is slower
-                for (const auto& item : items_) {
-                    const auto var = item->get(name);
-                    if (var) {
-                        return var;
-                    }
-                }
-                return nullptr;
-            }
-            // process x.y-like name
-            const auto names = split(name, '.');
-            for (const auto& item : items_) {
-                auto var = item;
-                for (const auto& n : names) {
-                    var = var->get(n);
-                    if (!var) {
-                        break;
-                    }
-                }
-                if (var) {
-                    return var;
-                }
-            }
-            return nullptr;
-        }
-
-        virtual const basic_data<string_type>* get_partial(const string_type& name) const override {
-            for (const auto& item : items_) {
-                const auto var = item->get(name);
-                if (var) {
-                    return var;
-                }
-            }
-            return nullptr;
-        }
-
-        context(const context&) = delete;
-        context& operator= (const context&) = delete;
-
-    private:
-        std::vector<const basic_data<string_type>*> items_;
     };
 
     class context_internal {
@@ -876,9 +877,9 @@ private:
                 }
                 return WalkControl::Skip;
             case Tag::Type::Partial:
-                if ((var = ctx.ctx.get_partial(tag.name)) != nullptr && var->is_partial()) {
-                    const auto partial = var->partial_value();
-                    basic_mustache tmpl{partial()};
+                if ((var = ctx.ctx.get_partial(tag.name)) != nullptr && (var->is_partial() || var->is_string())) {
+                    const auto partial_result = var->is_partial() ? var->partial_value()() : var->string_value();
+                    basic_mustache tmpl{partial_result};
                     tmpl.set_custom_escape(escape_);
                     if (!tmpl.is_valid()) {
                         errorMessage_ = tmpl.error_message();
