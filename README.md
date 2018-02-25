@@ -80,7 +80,7 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## Release Notes
 
-#### 3.2 - in progress
+#### 3.2 - February 24, 2018
 
 * Added ability to provide a custom escape function (thanks to Kitsune Ral)
 * Allow `data.set()` to override an existing value
