@@ -551,39 +551,40 @@ public:
 private:
     using string_size_type = typename string_type::size_type;
     
-    class Tag {
+    enum class tag_type {
+        invalid,
+        variable,
+        unescaped_variable,
+        section_begin,
+        section_end,
+        section_begin_inverted,
+        comment,
+        partial,
+        set_delimiter,
+    };
+
+    class tag {
     public:
-        enum class Type {
-            Invalid,
-            Variable,
-            UnescapedVariable,
-            SectionBegin,
-            SectionEnd,
-            SectionBeginInverted,
-            Comment,
-            Partial,
-            SetDelimiter,
-        };
         string_type name;
-        Type type = Type::Invalid;
+        tag_type type = tag_type::invalid;
         std::shared_ptr<string_type> section_text;
         std::shared_ptr<delimiter_set<string_type>> delimiter_set;
         bool is_section_begin() const {
-            return type == Type::SectionBegin || type == Type::SectionBeginInverted;
+            return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
         }
         bool is_section_end() const {
-            return type == Type::SectionEnd;
+            return type == tag_type::section_end;
         }
     };
     
     class component {
     public:
         string_type text;
-        Tag tag;
+        tag tag;
         std::vector<component> children;
         string_size_type position = string_type::npos;
-        bool isText() const {
-            return tag.type == Tag::Type::Invalid;
+        bool is_text() const {
+            return tag.type == tag_type::invalid;
         }
         component() {}
         component(const string_type& t, string_size_type p) : text(t), position(p) {}
@@ -678,10 +679,10 @@ private:
                     return;
                 }
                 current_delimiter_is_brace = ctx.delimiter_set.is_default();
-                comp.tag.type = Tag::Type::SetDelimiter;
+                comp.tag.type = tag_type::set_delimiter;
                 comp.tag.delimiter_set.reset(new delimiter_set<string_type>(ctx.delimiter_set));
             }
-            if (comp.tag.type != Tag::Type::SetDelimiter) {
+            if (comp.tag.type != tag_type::set_delimiter) {
                 parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
             }
             comp.position = tag_location_start;
@@ -777,15 +778,15 @@ private:
         if (contents.back() != '=') {
             return false;
         }
-        const auto contentsSubstr = trim(contents.substr(1, contents.size() - 2));
-        const auto spacepos = contentsSubstr.find(' ');
+        const auto contents_substr = trim(contents.substr(1, contents.size() - 2));
+        const auto spacepos = contents_substr.find(' ');
         if (spacepos == string_type::npos) {
             return false;
         }
-        const auto nonspace = contentsSubstr.find_first_not_of(' ', spacepos + 1);
+        const auto nonspace = contents_substr.find_first_not_of(' ', spacepos + 1);
         assert(nonspace != string_type::npos);
-        const string_type begin = contentsSubstr.substr(0, spacepos);
-        const string_type end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
+        const string_type begin = contents_substr.substr(0, spacepos);
+        const string_type end = contents_substr.substr(nonspace, contents_substr.size() - nonspace);
         if (!is_set_delimiter_valid(begin) || !is_set_delimiter_valid(end)) {
             return false;
         }
@@ -794,38 +795,38 @@ private:
         return true;
     }
     
-    void parse_tag_contents(bool isUnescapedVar, const string_type& contents, Tag& tag) {
-        if (isUnescapedVar) {
-            tag.type = Tag::Type::UnescapedVariable;
+    void parse_tag_contents(bool is_unescaped_var, const string_type& contents, tag& tag) {
+        if (is_unescaped_var) {
+            tag.type = tag_type::unescaped_variable;
             tag.name = contents;
         } else if (contents.empty()) {
-            tag.type = Tag::Type::Variable;
+            tag.type = tag_type::variable;
             tag.name.clear();
         } else {
             switch (contents.at(0)) {
                 case '#':
-                    tag.type = Tag::Type::SectionBegin;
+                    tag.type = tag_type::section_begin;
                     break;
                 case '^':
-                    tag.type = Tag::Type::SectionBeginInverted;
+                    tag.type = tag_type::section_begin_inverted;
                     break;
                 case '/':
-                    tag.type = Tag::Type::SectionEnd;
+                    tag.type = tag_type::section_end;
                     break;
                 case '>':
-                    tag.type = Tag::Type::Partial;
+                    tag.type = tag_type::partial;
                     break;
                 case '&':
-                    tag.type = Tag::Type::UnescapedVariable;
+                    tag.type = tag_type::unescaped_variable;
                     break;
                 case '!':
-                    tag.type = Tag::Type::Comment;
+                    tag.type = tag_type::comment;
                     break;
                 default:
-                    tag.type = Tag::Type::Variable;
+                    tag.type = tag_type::variable;
                     break;
             }
-            if (tag.type == Tag::Type::Variable) {
+            if (tag.type == tag_type::variable) {
                 tag.name = contents;
             } else {
                 string_type name{contents};
@@ -850,23 +851,23 @@ private:
     }
 
     walk_control render_component(const render_handler& handler, context_internal& ctx, component& comp) {
-        if (comp.isText()) {
+        if (comp.is_text()) {
             handler(comp.text);
             return walk_control::walk;
         }
         
-        const Tag& tag{comp.tag};
+        const tag& tag{comp.tag};
         const basic_data<string_type>* var = nullptr;
         switch (tag.type) {
-            case Tag::Type::Variable:
-            case Tag::Type::UnescapedVariable:
+            case tag_type::variable:
+            case tag_type::unescaped_variable:
                 if ((var = ctx.ctx.get(tag.name)) != nullptr) {
-                    if (!render_variable(handler, var, ctx, tag.type == Tag::Type::Variable)) {
+                    if (!render_variable(handler, var, ctx, tag.type == tag_type::variable)) {
                         return walk_control::stop;
                     }
                 }
                 break;
-            case Tag::Type::SectionBegin:
+            case tag_type::section_begin:
                 if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                     if (var->is_lambda() || var->is_lambda2()) {
                         if (!render_lambda(handler, var, ctx, render_lambda_escape::optional, *comp.tag.section_text, true)) {
@@ -877,12 +878,12 @@ private:
                     }
                 }
                 return walk_control::skip;
-            case Tag::Type::SectionBeginInverted:
+            case tag_type::section_begin_inverted:
                 if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
                     render_section(handler, ctx, comp, var);
                 }
                 return walk_control::skip;
-            case Tag::Type::Partial:
+            case tag_type::partial:
                 if ((var = ctx.ctx.get_partial(tag.name)) != nullptr && (var->is_partial() || var->is_string())) {
                     const auto partial_result = var->is_partial() ? var->partial_value()() : var->string_value();
                     basic_mustache tmpl{partial_result};
@@ -900,7 +901,7 @@ private:
                     }
                 }
                 break;
-            case Tag::Type::SetDelimiter:
+            case tag_type::set_delimiter:
                 ctx.delimiter_set = *comp.tag.delimiter_set;
                 break;
             default:
@@ -916,9 +917,9 @@ private:
         optional,
     };
     
-    bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal& ctx, render_lambda_escape escape, const string_type& text, bool parseWithSameContext) {
-        const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parseWithSameContext, escape](const string_type& text, bool escaped) {
-            const auto processTemplate = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
+    bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal& ctx, render_lambda_escape escape, const string_type& text, bool parse_with_same_context) {
+        const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parse_with_same_context, escape](const string_type& text, bool escaped) {
+            const auto process_template = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
                     error_message_ = tmpl.error_message();
                     return {};
@@ -928,28 +929,28 @@ private:
                     error_message_ = tmpl.error_message();
                     return {};
                 }
-                bool doEscape = false;
+                bool do_escape = false;
                 switch (escape) {
                     case render_lambda_escape::escape:
-                        doEscape = true;
+                        do_escape = true;
                         break;
                     case render_lambda_escape::unescape:
-                        doEscape = false;
+                        do_escape = false;
                         break;
                     case render_lambda_escape::optional:
-                        doEscape = escaped;
+                        do_escape = escaped;
                         break;
                 }
-                return doEscape ? escape_(str) : str;
+                return do_escape ? escape_(str) : str;
             };
-            if (parseWithSameContext) {
+            if (parse_with_same_context) {
                 basic_mustache tmpl{text, ctx};
                 tmpl.set_custom_escape(escape_);
-                return processTemplate(tmpl);
+                return process_template(tmpl);
             }
             basic_mustache tmpl{text};
             tmpl.set_custom_escape(escape_);
-            return processTemplate(tmpl);
+            return process_template(tmpl);
         };
         const typename basic_renderer<string_type>::type1 render = [&render2](const string_type& text) {
             return render2(text, false);
@@ -968,8 +969,8 @@ private:
             const auto varstr = var->string_value();
             handler(escaped ? escape_(varstr) : varstr);
         } else if (var->is_lambda()) {
-            const render_lambda_escape escapeOpt = escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
-            return render_lambda(handler, var, ctx, escapeOpt, {}, false);
+            const render_lambda_escape escape_opt = escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
+            return render_lambda(handler, var, ctx, escape_opt, {}, false);
         } else if (var->is_lambda2()) {
             using streamstring = std::basic_ostringstream<typename string_type::value_type>;
             streamstring ss;
