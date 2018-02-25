@@ -83,6 +83,7 @@ For Visual Studio 2015 (CMake 3.1+ required):
 #### 3.2 - in progress
 
 * Added ability to provide a custom escape function (thanks to Kitsune Ral)
+* Allow `data.set()` to override an existing value
 
 #### 3.1 - July 22, 2017
 
@@ -111,7 +112,7 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## License
 
-    Copyright 2015-2017 Kevin Wojniak
+    Copyright 2015-2018 Kevin Wojniak
 
     Permission is hereby granted, free of charge, to any person or organization
     obtaining a copy of the software and accompanying documentation covered by

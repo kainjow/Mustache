@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Kevin Wojniak
+ * Copyright 2015-2018 Kevin Wojniak
  *
  * Permission is hereby granted, free of charge, to any person or organization
  * obtaining a copy of the software and accompanying documentation covered by
@@ -436,6 +436,16 @@ TEST_CASE("data") {
         data l2{l1};
         CHECK(l1.is_lambda2());
         CHECK(l2.is_lambda2());
+    }
+    
+    SECTION("data_set") {
+        data data;
+        data.set("var", data::type::bool_true);
+        CHECK(data.get("var")->is_bool());
+        CHECK(data.get("var")->is_true());
+        data.set("var", "hello");
+        CHECK(data.get("var")->is_string());
+        CHECK(data.get("var")->string_value() == "hello");
     }
 
 }
