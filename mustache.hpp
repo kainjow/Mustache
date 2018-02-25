@@ -504,11 +504,11 @@ public:
     }
 
     bool is_valid() const {
-        return errorMessage_.empty();
+        return error_message_.empty();
     }
     
     const string_type& error_message() const {
-        return errorMessage_;
+        return error_message_;
     }
 
     using escape_handler = std::function<string_type(const string_type&)>;
@@ -538,8 +538,8 @@ public:
         return ss.str();
     }
 
-    using RenderHandler = std::function<void(const string_type&)>;
-    void render(const basic_data<string_type>& data, const RenderHandler& handler) {
+    using render_handler = std::function<void(const string_type&)>;
+    void render(const basic_data<string_type>& data, const render_handler& handler) {
         if (!is_valid()) {
             return;
         }
@@ -549,7 +549,7 @@ public:
     }
 
 private:
-    using StringSizeType = typename string_type::size_type;
+    using string_size_type = typename string_type::size_type;
     
     class Tag {
     public:
@@ -568,10 +568,10 @@ private:
         Type type = Type::Invalid;
         std::shared_ptr<string_type> sectionText;
         std::shared_ptr<delimiter_set<string_type>> delimiterSet;
-        bool isSectionBegin() const {
+        bool is_section_begin() const {
             return type == Type::SectionBegin || type == Type::SectionBeginInverted;
         }
-        bool isSectionEnd() const {
+        bool is_section_end() const {
             return type == Type::SectionEnd;
         }
     };
@@ -581,12 +581,12 @@ private:
         string_type text;
         Tag tag;
         std::vector<component> children;
-        StringSizeType position = string_type::npos;
+        string_size_type position = string_type::npos;
         bool isText() const {
             return tag.type == Tag::Type::Invalid;
         }
         component() {}
-        component(const string_type& t, StringSizeType p) : text(t), position(p) {}
+        component(const string_type& t, string_size_type p) : text(t), position(p) {}
     };
 
     class context_internal {
@@ -628,42 +628,42 @@ private:
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
         const string_type braceDelimiterEndUnescaped(3, '}');
-        const StringSizeType inputSize{input.size()};
+        const string_size_type inputSize{input.size()};
         
-        bool currentDelimiterIsBrace{ctx.delimiterSet.is_default()};
+        bool current_delimiter_is_brace{ctx.delimiterSet.is_default()};
         
-        std::vector<component*> sections{&rootComponent_};
-        std::vector<StringSizeType> sectionStarts;
+        std::vector<component*> sections{&root_component_};
+        std::vector<string_size_type> section_starts;
         
-        StringSizeType inputPosition{0};
-        while (inputPosition != inputSize) {
+        string_size_type input_position{0};
+        while (input_position != inputSize) {
             
             // Find the next tag start delimiter
-            const StringSizeType tagLocationStart{input.find(ctx.delimiterSet.begin, inputPosition)};
+            const string_size_type tagLocationStart{input.find(ctx.delimiterSet.begin, input_position)};
             if (tagLocationStart == string_type::npos) {
                 // No tag found. Add the remaining text.
-                const component comp{{input, inputPosition, inputSize - inputPosition}, inputPosition};
+                const component comp{{input, input_position, inputSize - input_position}, input_position};
                 sections.back()->children.push_back(comp);
                 break;
-            } else if (tagLocationStart != inputPosition) {
+            } else if (tagLocationStart != input_position) {
                 // Tag found, add text up to this tag.
-                const component comp{{input, inputPosition, tagLocationStart - inputPosition}, inputPosition};
+                const component comp{{input, input_position, tagLocationStart - input_position}, input_position};
                 sections.back()->children.push_back(comp);
             }
             
             // Find the next tag end delimiter
-            StringSizeType tagContentsLocation{tagLocationStart + ctx.delimiterSet.begin.size()};
-            const bool tagIsUnescapedVar{currentDelimiterIsBrace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == ctx.delimiterSet.begin.at(0)};
+            string_size_type tagContentsLocation{tagLocationStart + ctx.delimiterSet.begin.size()};
+            const bool tagIsUnescapedVar{current_delimiter_is_brace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == ctx.delimiterSet.begin.at(0)};
             const string_type& currentTagDelimiterEnd{tagIsUnescapedVar ? braceDelimiterEndUnescaped : ctx.delimiterSet.end};
-            const auto currentTagDelimiterEndSize = currentTagDelimiterEnd.size();
+            const auto current_tag_delimiter_end_size = currentTagDelimiterEnd.size();
             if (tagIsUnescapedVar) {
                 ++tagContentsLocation;
             }
-            StringSizeType tagLocationEnd{input.find(currentTagDelimiterEnd, tagContentsLocation)};
+            string_size_type tagLocationEnd{input.find(currentTagDelimiterEnd, tagContentsLocation)};
             if (tagLocationEnd == string_type::npos) {
                 streamstring ss;
                 ss << "Unclosed tag at " << tagLocationStart;
-                errorMessage_.assign(ss.str());
+                error_message_.assign(ss.str());
                 return;
             }
             
@@ -674,10 +674,10 @@ private:
                 if (!parseSetDelimiterTag(tagContents, ctx.delimiterSet)) {
                     streamstring ss;
                     ss << "Invalid set delimiter tag at " << tagLocationStart;
-                    errorMessage_.assign(ss.str());
+                    error_message_.assign(ss.str());
                     return;
                 }
-                currentDelimiterIsBrace = ctx.delimiterSet.is_default();
+                current_delimiter_is_brace = ctx.delimiterSet.is_default();
                 comp.tag.type = Tag::Type::SetDelimiter;
                 comp.tag.delimiterSet.reset(new delimiter_set<string_type>(ctx.delimiterSet));
             }
@@ -688,73 +688,73 @@ private:
             sections.back()->children.push_back(comp);
             
             // Start next search after this tag
-            inputPosition = tagLocationEnd + currentTagDelimiterEndSize;
+            input_position = tagLocationEnd + current_tag_delimiter_end_size;
 
             // Push or pop sections
-            if (comp.tag.isSectionBegin()) {
+            if (comp.tag.is_section_begin()) {
                 sections.push_back(&sections.back()->children.back());
-                sectionStarts.push_back(inputPosition);
-            } else if (comp.tag.isSectionEnd()) {
+                section_starts.push_back(input_position);
+            } else if (comp.tag.is_section_end()) {
                 if (sections.size() == 1) {
                     streamstring ss;
                     ss << "Unopened section \"" << comp.tag.name << "\" at " << comp.position;
-                    errorMessage_.assign(ss.str());
+                    error_message_.assign(ss.str());
                     return;
                 }
-                sections.back()->tag.sectionText.reset(new string_type(input.substr(sectionStarts.back(), tagLocationStart - sectionStarts.back())));
+                sections.back()->tag.sectionText.reset(new string_type(input.substr(section_starts.back(), tagLocationStart - section_starts.back())));
                 sections.pop_back();
-                sectionStarts.pop_back();
+                section_starts.pop_back();
             }
         }
         
         // Check for sections without an ending tag
-        walk([this](component& comp) -> WalkControl {
-            if (!comp.tag.isSectionBegin()) {
-                return WalkControl::Continue;
+        walk([this](component& comp) -> walk_control {
+            if (!comp.tag.is_section_begin()) {
+                return walk_control::walk;
             }
-            if (comp.children.empty() || !comp.children.back().tag.isSectionEnd() || comp.children.back().tag.name != comp.tag.name) {
+            if (comp.children.empty() || !comp.children.back().tag.is_section_end() || comp.children.back().tag.name != comp.tag.name) {
                 streamstring ss;
                 ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
-                errorMessage_.assign(ss.str());
-                return WalkControl::Stop;
+                error_message_.assign(ss.str());
+                return walk_control::stop;
             }
             comp.children.pop_back(); // remove now useless end section component
-            return WalkControl::Continue;
+            return walk_control::walk;
         });
-        if (!errorMessage_.empty()) {
+        if (!error_message_.empty()) {
             return;
         }
     }
     
-    enum class WalkControl {
-        Continue,
-        Stop,
-        Skip,
+    enum class walk_control {
+        walk, // "continue" is reserved :/
+        stop,
+        skip,
     };
-    using WalkCallback = std::function<WalkControl(component&)>;
+    using walk_callback = std::function<walk_control(component&)>;
     
-    void walk(const WalkCallback& callback) {
-        walkChildren(callback, rootComponent_);
+    void walk(const walk_callback& callback) {
+        walk_children(callback, root_component_);
     }
 
-    void walkChildren(const WalkCallback& callback, component& comp) {
-        for (auto& childComp : comp.children) {
-            if (walkComponent(callback, childComp) != WalkControl::Continue) {
+    void walk_children(const walk_callback& callback, component& comp) {
+        for (auto& child : comp.children) {
+            if (walk_component(callback, child) != walk_control::walk) {
                 break;
             }
         }
     }
     
-    WalkControl walkComponent(const WalkCallback& callback, component& comp) {
-        WalkControl control{callback(comp)};
-        if (control == WalkControl::Stop) {
+    walk_control walk_component(const walk_callback& callback, component& comp) {
+        walk_control control{callback(comp)};
+        if (control == walk_control::stop) {
             return control;
-        } else if (control == WalkControl::Skip) {
-            return WalkControl::Continue;
+        } else if (control == walk_control::skip) {
+            return walk_control::walk;
         }
-        for (auto& childComp : comp.children) {
-            control = walkComponent(callback, childComp);
-            assert(control == WalkControl::Continue);
+        for (auto& child : comp.children) {
+            control = walk_component(callback, child);
+            assert(control == walk_control::walk);
         }
         return control;
     }
@@ -843,16 +843,16 @@ private:
         return ss.str();
     }
 
-    void render(const RenderHandler& handler, context_internal& ctx) {
-        walk([&handler, &ctx, this](component& comp) -> WalkControl {
-            return renderComponent(handler, ctx, comp);
+    void render(const render_handler& handler, context_internal& ctx) {
+        walk([&handler, &ctx, this](component& comp) -> walk_control {
+            return render_component(handler, ctx, comp);
         });
     }
 
-    WalkControl renderComponent(const RenderHandler& handler, context_internal& ctx, component& comp) {
+    walk_control render_component(const render_handler& handler, context_internal& ctx, component& comp) {
         if (comp.isText()) {
             handler(comp.text);
-            return WalkControl::Continue;
+            return walk_control::walk;
         }
         
         const Tag& tag{comp.tag};
@@ -861,42 +861,42 @@ private:
             case Tag::Type::Variable:
             case Tag::Type::UnescapedVariable:
                 if ((var = ctx.ctx.get(tag.name)) != nullptr) {
-                    if (!renderVariable(handler, var, ctx, tag.type == Tag::Type::Variable)) {
-                        return WalkControl::Stop;
+                    if (!render_variable(handler, var, ctx, tag.type == Tag::Type::Variable)) {
+                        return walk_control::stop;
                     }
                 }
                 break;
             case Tag::Type::SectionBegin:
                 if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                     if (var->is_lambda() || var->is_lambda2()) {
-                        if (!renderLambda(handler, var, ctx, RenderLambdaEscape::Optional, *comp.tag.sectionText, true)) {
-                            return WalkControl::Stop;
+                        if (!render_lambda(handler, var, ctx, render_lambda_escape::optional, *comp.tag.sectionText, true)) {
+                            return walk_control::stop;
                         }
                     } else if (!var->is_false() && !var->is_empty_list()) {
-                        renderSection(handler, ctx, comp, var);
+                        render_section(handler, ctx, comp, var);
                     }
                 }
-                return WalkControl::Skip;
+                return walk_control::skip;
             case Tag::Type::SectionBeginInverted:
                 if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
-                    renderSection(handler, ctx, comp, var);
+                    render_section(handler, ctx, comp, var);
                 }
-                return WalkControl::Skip;
+                return walk_control::skip;
             case Tag::Type::Partial:
                 if ((var = ctx.ctx.get_partial(tag.name)) != nullptr && (var->is_partial() || var->is_string())) {
                     const auto partial_result = var->is_partial() ? var->partial_value()() : var->string_value();
                     basic_mustache tmpl{partial_result};
                     tmpl.set_custom_escape(escape_);
                     if (!tmpl.is_valid()) {
-                        errorMessage_ = tmpl.error_message();
+                        error_message_ = tmpl.error_message();
                     } else {
                         tmpl.render(handler, ctx);
                         if (!tmpl.is_valid()) {
-                            errorMessage_ = tmpl.error_message();
+                            error_message_ = tmpl.error_message();
                         }
                     }
                     if (!tmpl.is_valid()) {
-                        return WalkControl::Stop;
+                        return walk_control::stop;
                     }
                 }
                 break;
@@ -907,36 +907,36 @@ private:
                 break;
         }
         
-        return WalkControl::Continue;
+        return walk_control::walk;
     }
 
-    enum class RenderLambdaEscape {
-        Escape,
-        Unescape,
-        Optional,
+    enum class render_lambda_escape {
+        escape,
+        unescape,
+        optional,
     };
     
-    bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, context_internal& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
+    bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal& ctx, render_lambda_escape escape, const string_type& text, bool parseWithSameContext) {
         const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parseWithSameContext, escape](const string_type& text, bool escaped) {
             const auto processTemplate = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
-                    errorMessage_ = tmpl.error_message();
+                    error_message_ = tmpl.error_message();
                     return {};
                 }
                 const string_type str{tmpl.render(ctx)};
                 if (!tmpl.is_valid()) {
-                    errorMessage_ = tmpl.error_message();
+                    error_message_ = tmpl.error_message();
                     return {};
                 }
                 bool doEscape = false;
                 switch (escape) {
-                    case RenderLambdaEscape::Escape:
+                    case render_lambda_escape::escape:
                         doEscape = true;
                         break;
-                    case RenderLambdaEscape::Unescape:
+                    case render_lambda_escape::unescape:
                         doEscape = false;
                         break;
-                    case RenderLambdaEscape::Optional:
+                    case render_lambda_escape::optional:
                         doEscape = escaped;
                         break;
                 }
@@ -960,46 +960,46 @@ private:
         } else {
             handler(render(var->lambda_value()(text)));
         }
-        return errorMessage_.empty();
+        return error_message_.empty();
     }
     
-    bool renderVariable(const RenderHandler& handler, const basic_data<string_type>* var, context_internal& ctx, bool escaped) {
+    bool render_variable(const render_handler& handler, const basic_data<string_type>* var, context_internal& ctx, bool escaped) {
         if (var->is_string()) {
             const auto varstr = var->string_value();
             handler(escaped ? escape_(varstr) : varstr);
         } else if (var->is_lambda()) {
-            const RenderLambdaEscape escapeOpt = escaped ? RenderLambdaEscape::Escape : RenderLambdaEscape::Unescape;
-            return renderLambda(handler, var, ctx, escapeOpt, {}, false);
+            const render_lambda_escape escapeOpt = escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
+            return render_lambda(handler, var, ctx, escapeOpt, {}, false);
         } else if (var->is_lambda2()) {
             using streamstring = std::basic_ostringstream<typename string_type::value_type>;
             streamstring ss;
             ss << "Lambda with render argument is not allowed for regular variables";
-            errorMessage_ = ss.str();
+            error_message_ = ss.str();
             return false;
         }
         return true;
     }
 
-    void renderSection(const RenderHandler& handler, context_internal& ctx, component& incomp, const basic_data<string_type>* var) {
-        const auto callback = [&handler, &ctx, this](component& comp) -> WalkControl {
-            return renderComponent(handler, ctx, comp);
+    void render_section(const render_handler& handler, context_internal& ctx, component& incomp, const basic_data<string_type>* var) {
+        const auto callback = [&handler, &ctx, this](component& comp) -> walk_control {
+            return render_component(handler, ctx, comp);
         };
         if (var && var->is_non_empty_list()) {
             for (const auto& item : var->list_value()) {
                 const context_pusher ctxpusher{ctx, &item};
-                walkChildren(callback, incomp);
+                walk_children(callback, incomp);
             }
         } else if (var) {
             const context_pusher ctxpusher{ctx, var};
-            walkChildren(callback, incomp);
+            walk_children(callback, incomp);
         } else {
-            walkChildren(callback, incomp);
+            walk_children(callback, incomp);
         }
     }
 
 private:
-    string_type errorMessage_;
-    component rootComponent_;
+    string_type error_message_;
+    component root_component_;
     escape_handler escape_;
 };
 
