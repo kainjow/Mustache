@@ -112,6 +112,8 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## License
 
+    Boost Software License - Version 1.0
+
     Copyright 2015-2018 Kevin Wojniak
 
     Permission is hereby granted, free of charge, to any person or organization
