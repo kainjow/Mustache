@@ -759,7 +759,7 @@ private:
         return control;
     }
     
-    bool isSetDelimiterValid(const string_type& delimiter) {
+    bool is_set_delimiter_valid(const string_type& delimiter) const {
         // "Custom delimiters may not contain whitespace or the equals sign."
         for (const auto ch : delimiter) {
             if (ch == '=' || isspace(ch)) {
@@ -786,7 +786,7 @@ private:
         assert(nonspace != string_type::npos);
         const string_type begin = contentsSubstr.substr(0, spacepos);
         const string_type end = contentsSubstr.substr(nonspace, contentsSubstr.size() - nonspace);
-        if (!isSetDelimiterValid(begin) || !isSetDelimiterValid(end)) {
+        if (!is_set_delimiter_valid(begin) || !is_set_delimiter_valid(end)) {
             return false;
         }
         delimiterSet.begin = begin;
