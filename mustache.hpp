@@ -566,8 +566,8 @@ private:
         };
         string_type name;
         Type type = Type::Invalid;
-        std::shared_ptr<string_type> sectionText;
-        std::shared_ptr<delimiter_set<string_type>> delimiterSet;
+        std::shared_ptr<string_type> section_text;
+        std::shared_ptr<delimiter_set<string_type>> delimiter_set;
         bool is_section_begin() const {
             return type == Type::SectionBegin || type == Type::SectionBeginInverted;
         }
@@ -592,7 +592,7 @@ private:
     class context_internal {
     public:
         basic_context<string_type>& ctx;
-        delimiter_set<string_type> delimiterSet;
+        delimiter_set<string_type> delimiter_set;
 
         context_internal(basic_context<string_type>& a_ctx)
             : ctx(a_ctx)
@@ -627,68 +627,68 @@ private:
     void parse(const string_type& input, context_internal& ctx) {
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
-        const string_type braceDelimiterEndUnescaped(3, '}');
-        const string_size_type inputSize{input.size()};
+        const string_type brace_delimiter_end_unescaped(3, '}');
+        const string_size_type input_size{input.size()};
         
-        bool current_delimiter_is_brace{ctx.delimiterSet.is_default()};
+        bool current_delimiter_is_brace{ctx.delimiter_set.is_default()};
         
         std::vector<component*> sections{&root_component_};
         std::vector<string_size_type> section_starts;
         
         string_size_type input_position{0};
-        while (input_position != inputSize) {
+        while (input_position != input_size) {
             
             // Find the next tag start delimiter
-            const string_size_type tagLocationStart{input.find(ctx.delimiterSet.begin, input_position)};
-            if (tagLocationStart == string_type::npos) {
+            const string_size_type tag_location_start{input.find(ctx.delimiter_set.begin, input_position)};
+            if (tag_location_start == string_type::npos) {
                 // No tag found. Add the remaining text.
-                const component comp{{input, input_position, inputSize - input_position}, input_position};
+                const component comp{{input, input_position, input_size - input_position}, input_position};
                 sections.back()->children.push_back(comp);
                 break;
-            } else if (tagLocationStart != input_position) {
+            } else if (tag_location_start != input_position) {
                 // Tag found, add text up to this tag.
-                const component comp{{input, input_position, tagLocationStart - input_position}, input_position};
+                const component comp{{input, input_position, tag_location_start - input_position}, input_position};
                 sections.back()->children.push_back(comp);
             }
             
             // Find the next tag end delimiter
-            string_size_type tagContentsLocation{tagLocationStart + ctx.delimiterSet.begin.size()};
-            const bool tagIsUnescapedVar{current_delimiter_is_brace && tagLocationStart != (inputSize - 2) && input.at(tagContentsLocation) == ctx.delimiterSet.begin.at(0)};
-            const string_type& currentTagDelimiterEnd{tagIsUnescapedVar ? braceDelimiterEndUnescaped : ctx.delimiterSet.end};
-            const auto current_tag_delimiter_end_size = currentTagDelimiterEnd.size();
-            if (tagIsUnescapedVar) {
-                ++tagContentsLocation;
+            string_size_type tag_contents_location{tag_location_start + ctx.delimiter_set.begin.size()};
+            const bool tag_is_unescaped_var{current_delimiter_is_brace && tag_location_start != (input_size - 2) && input.at(tag_contents_location) == ctx.delimiter_set.begin.at(0)};
+            const string_type& current_tag_delimiter_end{tag_is_unescaped_var ? brace_delimiter_end_unescaped : ctx.delimiter_set.end};
+            const auto current_tag_delimiter_end_size = current_tag_delimiter_end.size();
+            if (tag_is_unescaped_var) {
+                ++tag_contents_location;
             }
-            string_size_type tagLocationEnd{input.find(currentTagDelimiterEnd, tagContentsLocation)};
-            if (tagLocationEnd == string_type::npos) {
+            const string_size_type tag_location_end{input.find(current_tag_delimiter_end, tag_contents_location)};
+            if (tag_location_end == string_type::npos) {
                 streamstring ss;
-                ss << "Unclosed tag at " << tagLocationStart;
+                ss << "Unclosed tag at " << tag_location_start;
                 error_message_.assign(ss.str());
                 return;
             }
             
             // Parse tag
-            const string_type tagContents{trim(string_type{input, tagContentsLocation, tagLocationEnd - tagContentsLocation})};
+            const string_type tag_contents{trim(string_type{input, tag_contents_location, tag_location_end - tag_contents_location})};
             component comp;
-            if (!tagContents.empty() && tagContents[0] == '=') {
-                if (!parseSetDelimiterTag(tagContents, ctx.delimiterSet)) {
+            if (!tag_contents.empty() && tag_contents[0] == '=') {
+                if (!parse_set_delimiter_tag(tag_contents, ctx.delimiter_set)) {
                     streamstring ss;
-                    ss << "Invalid set delimiter tag at " << tagLocationStart;
+                    ss << "Invalid set delimiter tag at " << tag_location_start;
                     error_message_.assign(ss.str());
                     return;
                 }
-                current_delimiter_is_brace = ctx.delimiterSet.is_default();
+                current_delimiter_is_brace = ctx.delimiter_set.is_default();
                 comp.tag.type = Tag::Type::SetDelimiter;
-                comp.tag.delimiterSet.reset(new delimiter_set<string_type>(ctx.delimiterSet));
+                comp.tag.delimiter_set.reset(new delimiter_set<string_type>(ctx.delimiter_set));
             }
             if (comp.tag.type != Tag::Type::SetDelimiter) {
-                parseTagContents(tagIsUnescapedVar, tagContents, comp.tag);
+                parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
             }
-            comp.position = tagLocationStart;
+            comp.position = tag_location_start;
             sections.back()->children.push_back(comp);
             
             // Start next search after this tag
-            input_position = tagLocationEnd + current_tag_delimiter_end_size;
+            input_position = tag_location_end + current_tag_delimiter_end_size;
 
             // Push or pop sections
             if (comp.tag.is_section_begin()) {
@@ -701,7 +701,7 @@ private:
                     error_message_.assign(ss.str());
                     return;
                 }
-                sections.back()->tag.sectionText.reset(new string_type(input.substr(section_starts.back(), tagLocationStart - section_starts.back())));
+                sections.back()->tag.section_text.reset(new string_type(input.substr(section_starts.back(), tag_location_start - section_starts.back())));
                 sections.pop_back();
                 section_starts.pop_back();
             }
@@ -769,7 +769,7 @@ private:
         return true;
     }
     
-    bool parseSetDelimiterTag(const string_type& contents, delimiter_set<string_type>& delimiterSet) {
+    bool parse_set_delimiter_tag(const string_type& contents, delimiter_set<string_type>& delimiter_set) {
         // Smallest legal tag is "=X X="
         if (contents.size() < 5) {
             return false;
@@ -789,12 +789,12 @@ private:
         if (!is_set_delimiter_valid(begin) || !is_set_delimiter_valid(end)) {
             return false;
         }
-        delimiterSet.begin = begin;
-        delimiterSet.end = end;
+        delimiter_set.begin = begin;
+        delimiter_set.end = end;
         return true;
     }
     
-    void parseTagContents(bool isUnescapedVar, const string_type& contents, Tag& tag) {
+    void parse_tag_contents(bool isUnescapedVar, const string_type& contents, Tag& tag) {
         if (isUnescapedVar) {
             tag.type = Tag::Type::UnescapedVariable;
             tag.name = contents;
@@ -869,7 +869,7 @@ private:
             case Tag::Type::SectionBegin:
                 if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                     if (var->is_lambda() || var->is_lambda2()) {
-                        if (!render_lambda(handler, var, ctx, render_lambda_escape::optional, *comp.tag.sectionText, true)) {
+                        if (!render_lambda(handler, var, ctx, render_lambda_escape::optional, *comp.tag.section_text, true)) {
                             return walk_control::stop;
                         }
                     } else if (!var->is_false() && !var->is_empty_list()) {
@@ -901,7 +901,7 @@ private:
                 }
                 break;
             case Tag::Type::SetDelimiter:
-                ctx.delimiterSet = *comp.tag.delimiterSet;
+                ctx.delimiter_set = *comp.tag.delimiter_set;
                 break;
             default:
                 break;
