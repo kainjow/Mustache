@@ -491,6 +491,18 @@ private:
     std::vector<const basic_data<string_type>*> items_;
 };
 
+template <typename string_type>
+class context_internal {
+public:
+    basic_context<string_type>& ctx;
+    delimiter_set<string_type> delimiter_set;
+    
+    context_internal(basic_context<string_type>& a_ctx)
+        : ctx(a_ctx)
+    {
+    }
+};
+
 template <typename StringType>
 class basic_mustache {
 public:
@@ -499,7 +511,7 @@ public:
     basic_mustache(const string_type& input)
         : basic_mustache() {
         context<string_type> ctx;
-        context_internal context{ctx};
+        context_internal<string_type> context{ctx};
         parse(input, context);
     }
 
@@ -531,7 +543,7 @@ public:
 
     string_type render(basic_context<string_type>& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
-        context_internal context{ctx};
+        context_internal<string_type> context{ctx};
         render([&ss](const string_type& str) {
             ss << str;
         }, context);
@@ -544,7 +556,7 @@ public:
             return;
         }
         context<string_type> ctx{&data};
-        context_internal context{ctx};
+        context_internal<string_type> context{ctx};
         render(handler, context);
     }
 
@@ -619,20 +631,9 @@ private:
         }
     };
 
-    class context_internal {
-    public:
-        basic_context<string_type>& ctx;
-        delimiter_set<string_type> delimiter_set;
-
-        context_internal(basic_context<string_type>& a_ctx)
-            : ctx(a_ctx)
-        {
-        }
-    };
-
     class context_pusher {
     public:
-        context_pusher(context_internal& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
+        context_pusher(context_internal<string_type>& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
             ctx.ctx.push(data);
         }
         ~context_pusher() {
@@ -641,7 +642,7 @@ private:
         context_pusher(const context_pusher&) = delete;
         context_pusher& operator= (const context_pusher&) = delete;
     private:
-        context_internal& ctx_;
+        context_internal<string_type>& ctx_;
     };
 
     basic_mustache()
@@ -649,12 +650,12 @@ private:
     {
     }
     
-    basic_mustache(const string_type& input, context_internal& ctx)
+    basic_mustache(const string_type& input, context_internal<string_type>& ctx)
         : basic_mustache() {
         parse(input, ctx);
     }
 
-    void parse(const string_type& input, context_internal& ctx) {
+    void parse(const string_type& input, context_internal<string_type>& ctx) {
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
         const string_type brace_delimiter_end_unescaped(3, '}');
@@ -836,7 +837,7 @@ private:
         }
     }
 
-    string_type render(context_internal& ctx) {
+    string_type render(context_internal<string_type>& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
         render([&ss](const string_type& str) {
             ss << str;
@@ -844,13 +845,13 @@ private:
         return ss.str();
     }
 
-    void render(const render_handler& handler, context_internal& ctx) {
+    void render(const render_handler& handler, context_internal<string_type>& ctx) {
         walk([&handler, &ctx, this](component& comp) -> typename component::walk_control {
             return render_component(handler, ctx, comp);
         });
     }
 
-    typename component::walk_control render_component(const render_handler& handler, context_internal& ctx, component& comp) {
+    typename component::walk_control render_component(const render_handler& handler, context_internal<string_type>& ctx, component& comp) {
         if (comp.is_text()) {
             handler(comp.text);
             return component::walk_control::walk;
@@ -917,7 +918,7 @@ private:
         optional,
     };
     
-    bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal& ctx, render_lambda_escape escape, const string_type& text, bool parse_with_same_context) {
+    bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, render_lambda_escape escape, const string_type& text, bool parse_with_same_context) {
         const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parse_with_same_context, escape](const string_type& text, bool escaped) {
             const auto process_template = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
@@ -964,7 +965,7 @@ private:
         return error_message_.empty();
     }
     
-    bool render_variable(const render_handler& handler, const basic_data<string_type>* var, context_internal& ctx, bool escaped) {
+    bool render_variable(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, bool escaped) {
         if (var->is_string()) {
             const auto varstr = var->string_value();
             handler(escaped ? escape_(varstr) : varstr);
@@ -981,7 +982,7 @@ private:
         return true;
     }
 
-    void render_section(const render_handler& handler, context_internal& ctx, component& incomp, const basic_data<string_type>* var) {
+    void render_section(const render_handler& handler, context_internal<string_type>& ctx, component& incomp, const basic_data<string_type>* var) {
         const auto callback = [&handler, &ctx, this](component& comp) -> typename component::walk_control {
             return render_component(handler, ctx, comp);
         };
