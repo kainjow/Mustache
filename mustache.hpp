@@ -572,13 +572,14 @@ public:
     
     void walk_children(const walk_callback& callback) {
         for (auto& child : children) {
-            if (child.walk_component(callback) != walk_control::walk) {
+            if (child.walk(callback) != walk_control::walk) {
                 break;
             }
         }
     }
     
-    walk_control walk_component(const walk_callback& callback) {
+private:
+    walk_control walk(const walk_callback& callback) {
         walk_control control{callback(*this)};
         if (control == walk_control::stop) {
             return control;
@@ -586,7 +587,7 @@ public:
             return walk_control::walk;
         }
         for (auto& child : children) {
-            control = child.walk_component(callback);
+            control = child.walk(callback);
             assert(control == walk_control::walk);
         }
         return control;
