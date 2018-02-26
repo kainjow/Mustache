@@ -547,6 +547,52 @@ private:
     context_internal<string_type>& ctx_;
 };
 
+template <typename string_type>
+class component {
+private:
+    using string_size_type = typename string_type::size_type;
+
+public:
+    string_type text;
+    tag<string_type> tag;
+    std::vector<component> children;
+    string_size_type position = string_type::npos;
+    bool is_text() const {
+        return tag.type == tag_type::invalid;
+    }
+    component() {}
+    component(const string_type& t, string_size_type p) : text(t), position(p) {}
+    
+    enum class walk_control {
+        walk, // "continue" is reserved :/
+        stop,
+        skip,
+    };
+    using walk_callback = std::function<walk_control(component&)>;
+    
+    void walk_children(const walk_callback& callback) {
+        for (auto& child : children) {
+            if (child.walk_component(callback) != walk_control::walk) {
+                break;
+            }
+        }
+    }
+    
+    walk_control walk_component(const walk_callback& callback) {
+        walk_control control{callback(*this)};
+        if (control == walk_control::stop) {
+            return control;
+        } else if (control == walk_control::skip) {
+            return walk_control::walk;
+        }
+        for (auto& child : children) {
+            control = child.walk_component(callback);
+            assert(control == walk_control::walk);
+        }
+        return control;
+    }
+};
+
 template <typename StringType>
 class basic_mustache {
 public:
@@ -606,48 +652,6 @@ public:
 
 private:
     using string_size_type = typename string_type::size_type;
-    
-    class component {
-    public:
-        string_type text;
-        tag<string_type> tag;
-        std::vector<component> children;
-        string_size_type position = string_type::npos;
-        bool is_text() const {
-            return tag.type == tag_type::invalid;
-        }
-        component() {}
-        component(const string_type& t, string_size_type p) : text(t), position(p) {}
-
-        enum class walk_control {
-            walk, // "continue" is reserved :/
-            stop,
-            skip,
-        };
-        using walk_callback = std::function<walk_control(component&)>;
-
-        void walk_children(const walk_callback& callback) {
-            for (auto& child : children) {
-                if (child.walk_component(callback) != walk_control::walk) {
-                    break;
-                }
-            }
-        }
-        
-        walk_control walk_component(const walk_callback& callback) {
-            walk_control control{callback(*this)};
-            if (control == walk_control::stop) {
-                return control;
-            } else if (control == walk_control::skip) {
-                return walk_control::walk;
-            }
-            for (auto& child : children) {
-                control = child.walk_component(callback);
-                assert(control == walk_control::walk);
-            }
-            return control;
-        }
-    };
 
     basic_mustache()
         : escape_(html_escape<string_type>)
@@ -667,7 +671,7 @@ private:
         
         bool current_delimiter_is_brace{ctx.delimiter_set.is_default()};
         
-        std::vector<component*> sections{&root_component_};
+        std::vector<component<string_type>*> sections{&root_component_};
         std::vector<string_size_type> section_starts;
         
         string_size_type input_position{0};
@@ -677,12 +681,12 @@ private:
             const string_size_type tag_location_start{input.find(ctx.delimiter_set.begin, input_position)};
             if (tag_location_start == string_type::npos) {
                 // No tag found. Add the remaining text.
-                const component comp{{input, input_position, input_size - input_position}, input_position};
+                const component<string_type> comp{{input, input_position, input_size - input_position}, input_position};
                 sections.back()->children.push_back(comp);
                 break;
             } else if (tag_location_start != input_position) {
                 // Tag found, add text up to this tag.
-                const component comp{{input, input_position, tag_location_start - input_position}, input_position};
+                const component<string_type> comp{{input, input_position, tag_location_start - input_position}, input_position};
                 sections.back()->children.push_back(comp);
             }
             
@@ -704,7 +708,7 @@ private:
             
             // Parse tag
             const string_type tag_contents{trim(string_type{input, tag_contents_location, tag_location_end - tag_contents_location})};
-            component comp;
+            component<string_type> comp;
             if (!tag_contents.empty() && tag_contents[0] == '=') {
                 if (!parse_set_delimiter_tag(tag_contents, ctx.delimiter_set)) {
                     streamstring ss;
@@ -743,25 +747,25 @@ private:
         }
         
         // Check for sections without an ending tag
-        walk([this](component& comp) -> typename component::walk_control {
+        walk([this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             if (!comp.tag.is_section_begin()) {
-                return component::walk_control::walk;
+                return component<string_type>::walk_control::walk;
             }
             if (comp.children.empty() || !comp.children.back().tag.is_section_end() || comp.children.back().tag.name != comp.tag.name) {
                 streamstring ss;
                 ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
                 error_message_.assign(ss.str());
-                return component::walk_control::stop;
+                return component<string_type>::walk_control::stop;
             }
             comp.children.pop_back(); // remove now useless end section component
-            return component::walk_control::walk;
+            return component<string_type>::walk_control::walk;
         });
         if (!error_message_.empty()) {
             return;
         }
     }
     
-    void walk(const typename component::walk_callback& callback) {
+    void walk(const typename component<string_type>::walk_callback& callback) {
         root_component_.walk_children(callback);
     }
 
@@ -850,15 +854,15 @@ private:
     }
 
     void render(const render_handler& handler, context_internal<string_type>& ctx) {
-        walk([&handler, &ctx, this](component& comp) -> typename component::walk_control {
+        walk([&handler, &ctx, this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             return render_component(handler, ctx, comp);
         });
     }
 
-    typename component::walk_control render_component(const render_handler& handler, context_internal<string_type>& ctx, component& comp) {
+    typename component<string_type>::walk_control render_component(const render_handler& handler, context_internal<string_type>& ctx, component<string_type>& comp) {
         if (comp.is_text()) {
             handler(comp.text);
-            return component::walk_control::walk;
+            return component<string_type>::walk_control::walk;
         }
         
         const tag<string_type>& tag{comp.tag};
@@ -868,7 +872,7 @@ private:
             case tag_type::unescaped_variable:
                 if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                     if (!render_variable(handler, var, ctx, tag.type == tag_type::variable)) {
-                        return component::walk_control::stop;
+                        return component<string_type>::walk_control::stop;
                     }
                 }
                 break;
@@ -876,18 +880,18 @@ private:
                 if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                     if (var->is_lambda() || var->is_lambda2()) {
                         if (!render_lambda(handler, var, ctx, render_lambda_escape::optional, *comp.tag.section_text, true)) {
-                            return component::walk_control::stop;
+                            return component<string_type>::walk_control::stop;
                         }
                     } else if (!var->is_false() && !var->is_empty_list()) {
                         render_section(handler, ctx, comp, var);
                     }
                 }
-                return component::walk_control::skip;
+                return component<string_type>::walk_control::skip;
             case tag_type::section_begin_inverted:
                 if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
                     render_section(handler, ctx, comp, var);
                 }
-                return component::walk_control::skip;
+                return component<string_type>::walk_control::skip;
             case tag_type::partial:
                 if ((var = ctx.ctx.get_partial(tag.name)) != nullptr && (var->is_partial() || var->is_string())) {
                     const auto partial_result = var->is_partial() ? var->partial_value()() : var->string_value();
@@ -902,7 +906,7 @@ private:
                         }
                     }
                     if (!tmpl.is_valid()) {
-                        return component::walk_control::stop;
+                        return component<string_type>::walk_control::stop;
                     }
                 }
                 break;
@@ -913,7 +917,7 @@ private:
                 break;
         }
         
-        return component::walk_control::walk;
+        return component<string_type>::walk_control::walk;
     }
 
     enum class render_lambda_escape {
@@ -986,8 +990,8 @@ private:
         return true;
     }
 
-    void render_section(const render_handler& handler, context_internal<string_type>& ctx, component& incomp, const basic_data<string_type>* var) {
-        const auto callback = [&handler, &ctx, this](component& comp) -> typename component::walk_control {
+    void render_section(const render_handler& handler, context_internal<string_type>& ctx, component<string_type>& incomp, const basic_data<string_type>* var) {
+        const auto callback = [&handler, &ctx, this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             return render_component(handler, ctx, comp);
         };
         if (var && var->is_non_empty_list()) {
@@ -1005,7 +1009,7 @@ private:
 
 private:
     string_type error_message_;
-    component root_component_;
+    component<string_type> root_component_;
     escape_handler escape_;
 };
 
