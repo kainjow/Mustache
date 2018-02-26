@@ -593,75 +593,21 @@ public:
     }
 };
 
-template <typename StringType>
-class basic_mustache {
+template <typename string_type>
+class parser {
 public:
-    using string_type = StringType;
-
-    basic_mustache(const string_type& input)
-        : basic_mustache() {
-        context<string_type> ctx;
-        context_internal<string_type> context{ctx};
-        parse(input, context);
-    }
-
-    bool is_valid() const {
-        return error_message_.empty();
-    }
-    
-    const string_type& error_message() const {
-        return error_message_;
-    }
-
-    using escape_handler = std::function<string_type(const string_type&)>;
-    void set_custom_escape(const escape_handler& escape_fn) {
-        escape_ = escape_fn;
-    }
-
-    template <typename stream_type>
-    stream_type& render(const basic_data<string_type>& data, stream_type& stream) {
-        render(data, [&stream](const string_type& str) {
-            stream << str;
-        });
-        return stream;
-    }
-    
-    string_type render(const basic_data<string_type>& data) {
-        std::basic_ostringstream<typename string_type::value_type> ss;
-        return render(data, ss).str();
-    }
-
-    string_type render(basic_context<string_type>& ctx) {
-        std::basic_ostringstream<typename string_type::value_type> ss;
-        context_internal<string_type> context{ctx};
-        render([&ss](const string_type& str) {
-            ss << str;
-        }, context);
-        return ss.str();
-    }
-
-    using render_handler = std::function<void(const string_type&)>;
-    void render(const basic_data<string_type>& data, const render_handler& handler) {
-        if (!is_valid()) {
-            return;
-        }
-        context<string_type> ctx{&data};
-        context_internal<string_type> context{ctx};
-        render(handler, context);
+    parser(const string_type& input, context_internal<string_type>& ctx, component<string_type>& root_component, string_type& error_message)
+        : root_component_(root_component)
+        , error_message_(error_message)
+    {
+        parse(input, ctx);
     }
 
 private:
     using string_size_type = typename string_type::size_type;
 
-    basic_mustache()
-        : escape_(html_escape<string_type>)
-    {
-    }
-    
-    basic_mustache(const string_type& input, context_internal<string_type>& ctx)
-        : basic_mustache() {
-        parse(input, ctx);
-    }
+    component<string_type>& root_component_;
+    string_type& error_message_;
 
     void parse(const string_type& input, context_internal<string_type>& ctx) {
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
@@ -728,7 +674,7 @@ private:
             
             // Start next search after this tag
             input_position = tag_location_end + current_tag_delimiter_end_size;
-
+            
             // Push or pop sections
             if (comp.tag.is_section_begin()) {
                 sections.push_back(&sections.back()->children.back());
@@ -747,7 +693,7 @@ private:
         }
         
         // Check for sections without an ending tag
-        walk([this](component<string_type>& comp) -> typename component<string_type>::walk_control {
+        root_component_.walk_children([this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             if (!comp.tag.is_section_begin()) {
                 return component<string_type>::walk_control::walk;
             }
@@ -765,10 +711,6 @@ private:
         }
     }
     
-    void walk(const typename component<string_type>::walk_callback& callback) {
-        root_component_.walk_children(callback);
-    }
-
     bool is_set_delimiter_valid(const string_type& delimiter) const {
         // "Custom delimiters may not contain whitespace or the equals sign."
         for (const auto ch : delimiter) {
@@ -779,7 +721,7 @@ private:
         return true;
     }
     
-    bool parse_set_delimiter_tag(const string_type& contents, delimiter_set<string_type>& delimiter_set) {
+    bool parse_set_delimiter_tag(const string_type& contents, delimiter_set<string_type>& delimiter_set) const {
         // Smallest legal tag is "=X X="
         if (contents.size() < 5) {
             return false;
@@ -804,7 +746,7 @@ private:
         return true;
     }
     
-    void parse_tag_contents(bool is_unescaped_var, const string_type& contents, tag<string_type>& tag) {
+    void parse_tag_contents(bool is_unescaped_var, const string_type& contents, tag<string_type>& tag) const {
         if (is_unescaped_var) {
             tag.type = tag_type::unescaped_variable;
             tag.name = contents;
@@ -843,6 +785,81 @@ private:
                 tag.name = trim(name);
             }
         }
+    }
+};
+
+template <typename StringType>
+class basic_mustache {
+public:
+    using string_type = StringType;
+
+    basic_mustache(const string_type& input)
+        : basic_mustache() {
+        context<string_type> ctx;
+        context_internal<string_type> context{ctx};
+        parser<string_type> parser{input, context, root_component_, error_message_};
+    }
+
+    bool is_valid() const {
+        return error_message_.empty();
+    }
+    
+    const string_type& error_message() const {
+        return error_message_;
+    }
+
+    using escape_handler = std::function<string_type(const string_type&)>;
+    void set_custom_escape(const escape_handler& escape_fn) {
+        escape_ = escape_fn;
+    }
+
+    template <typename stream_type>
+    stream_type& render(const basic_data<string_type>& data, stream_type& stream) {
+        render(data, [&stream](const string_type& str) {
+            stream << str;
+        });
+        return stream;
+    }
+    
+    string_type render(const basic_data<string_type>& data) {
+        std::basic_ostringstream<typename string_type::value_type> ss;
+        return render(data, ss).str();
+    }
+
+    string_type render(basic_context<string_type>& ctx) {
+        std::basic_ostringstream<typename string_type::value_type> ss;
+        context_internal<string_type> context{ctx};
+        render([&ss](const string_type& str) {
+            ss << str;
+        }, context);
+        return ss.str();
+    }
+
+    using render_handler = std::function<void(const string_type&)>;
+    void render(const basic_data<string_type>& data, const render_handler& handler) {
+        if (!is_valid()) {
+            return;
+        }
+        context<string_type> ctx{&data};
+        context_internal<string_type> context{ctx};
+        render(handler, context);
+    }
+
+private:
+    using string_size_type = typename string_type::size_type;
+
+    basic_mustache()
+        : escape_(html_escape<string_type>)
+    {
+    }
+    
+    basic_mustache(const string_type& input, context_internal<string_type>& ctx)
+        : basic_mustache() {
+        parser<string_type> parser{input, ctx, root_component_, error_message_};
+    }
+    
+    void walk(const typename component<string_type>::walk_callback& callback) {
+        root_component_.walk_children(callback);
     }
 
     string_type render(context_internal<string_type>& ctx) {
