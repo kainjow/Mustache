@@ -530,6 +530,23 @@ public:
     }
 };
 
+template <typename string_type>
+class context_pusher {
+public:
+    context_pusher(context_internal<string_type>& ctx, const basic_data<string_type>* data)
+        : ctx_(ctx)
+    {
+        ctx.ctx.push(data);
+    }
+    ~context_pusher() {
+        ctx_.ctx.pop();
+    }
+    context_pusher(const context_pusher&) = delete;
+    context_pusher& operator= (const context_pusher&) = delete;
+private:
+    context_internal<string_type>& ctx_;
+};
+
 template <typename StringType>
 class basic_mustache {
 public:
@@ -630,20 +647,6 @@ private:
             }
             return control;
         }
-    };
-
-    class context_pusher {
-    public:
-        context_pusher(context_internal<string_type>& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
-            ctx.ctx.push(data);
-        }
-        ~context_pusher() {
-            ctx_.ctx.pop();
-        }
-        context_pusher(const context_pusher&) = delete;
-        context_pusher& operator= (const context_pusher&) = delete;
-    private:
-        context_internal<string_type>& ctx_;
     };
 
     basic_mustache()
@@ -989,11 +992,11 @@ private:
         };
         if (var && var->is_non_empty_list()) {
             for (const auto& item : var->list_value()) {
-                const context_pusher ctxpusher{ctx, &item};
+                const context_pusher<string_type> ctxpusher{ctx, &item};
                 incomp.walk_children(callback);
             }
         } else if (var) {
-            const context_pusher ctxpusher{ctx, var};
+            const context_pusher<string_type> ctxpusher{ctx, var};
             incomp.walk_children(callback);
         } else {
             incomp.walk_children(callback);
