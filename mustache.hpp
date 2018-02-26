@@ -503,6 +503,33 @@ public:
     }
 };
 
+enum class tag_type {
+    invalid,
+    variable,
+    unescaped_variable,
+    section_begin,
+    section_end,
+    section_begin_inverted,
+    comment,
+    partial,
+    set_delimiter,
+};
+
+template <typename string_type>
+class tag {
+public:
+    string_type name;
+    tag_type type = tag_type::invalid;
+    std::shared_ptr<string_type> section_text;
+    std::shared_ptr<delimiter_set<string_type>> delimiter_set;
+    bool is_section_begin() const {
+        return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
+    }
+    bool is_section_end() const {
+        return type == tag_type::section_end;
+    }
+};
+
 template <typename StringType>
 class basic_mustache {
 public:
@@ -563,36 +590,10 @@ public:
 private:
     using string_size_type = typename string_type::size_type;
     
-    enum class tag_type {
-        invalid,
-        variable,
-        unescaped_variable,
-        section_begin,
-        section_end,
-        section_begin_inverted,
-        comment,
-        partial,
-        set_delimiter,
-    };
-
-    class tag {
-    public:
-        string_type name;
-        tag_type type = tag_type::invalid;
-        std::shared_ptr<string_type> section_text;
-        std::shared_ptr<delimiter_set<string_type>> delimiter_set;
-        bool is_section_begin() const {
-            return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
-        }
-        bool is_section_end() const {
-            return type == tag_type::section_end;
-        }
-    };
-    
     class component {
     public:
         string_type text;
-        tag tag;
+        tag<string_type> tag;
         std::vector<component> children;
         string_size_type position = string_type::npos;
         bool is_text() const {
@@ -796,7 +797,7 @@ private:
         return true;
     }
     
-    void parse_tag_contents(bool is_unescaped_var, const string_type& contents, tag& tag) {
+    void parse_tag_contents(bool is_unescaped_var, const string_type& contents, tag<string_type>& tag) {
         if (is_unescaped_var) {
             tag.type = tag_type::unescaped_variable;
             tag.name = contents;
@@ -857,7 +858,7 @@ private:
             return component::walk_control::walk;
         }
         
-        const tag& tag{comp.tag};
+        const tag<string_type>& tag{comp.tag};
         const basic_data<string_type>* var = nullptr;
         switch (tag.type) {
             case tag_type::variable:
