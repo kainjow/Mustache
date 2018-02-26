@@ -596,23 +596,23 @@ private:
         };
         using walk_callback = std::function<walk_control(component&)>;
 
-        void walk_children(const walk_callback& callback, component& comp) const {
-            for (auto& child : comp.children) {
-                if (walk_component(callback, child) != walk_control::walk) {
+        void walk_children(const walk_callback& callback) {
+            for (auto& child : children) {
+                if (child.walk_component(callback) != walk_control::walk) {
                     break;
                 }
             }
         }
         
-        walk_control walk_component(const walk_callback& callback, component& comp) const {
-            walk_control control{callback(comp)};
+        walk_control walk_component(const walk_callback& callback) {
+            walk_control control{callback(*this)};
             if (control == walk_control::stop) {
                 return control;
             } else if (control == walk_control::skip) {
                 return walk_control::walk;
             }
-            for (auto& child : comp.children) {
-                control = walk_component(callback, child);
+            for (auto& child : children) {
+                control = child.walk_component(callback);
                 assert(control == walk_control::walk);
             }
             return control;
@@ -757,7 +757,7 @@ private:
     }
     
     void walk(const typename component::walk_callback& callback) {
-        root_component_.walk_children(callback, root_component_);
+        root_component_.walk_children(callback);
     }
 
     bool is_set_delimiter_valid(const string_type& delimiter) const {
@@ -988,13 +988,13 @@ private:
         if (var && var->is_non_empty_list()) {
             for (const auto& item : var->list_value()) {
                 const context_pusher ctxpusher{ctx, &item};
-                incomp.walk_children(callback, incomp);
+                incomp.walk_children(callback);
             }
         } else if (var) {
             const context_pusher ctxpusher{ctx, var};
-            incomp.walk_children(callback, incomp);
+            incomp.walk_children(callback);
         } else {
-            incomp.walk_children(callback, incomp);
+            incomp.walk_children(callback);
         }
     }
 
