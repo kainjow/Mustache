@@ -504,7 +504,7 @@ public:
 };
 
 enum class tag_type {
-    invalid,
+    text,
     variable,
     unescaped_variable,
     section_begin,
@@ -519,7 +519,7 @@ template <typename string_type>
 class tag {
 public:
     string_type name;
-    tag_type type = tag_type::invalid;
+    tag_type type = tag_type::text;
     std::shared_ptr<string_type> section_text;
     std::shared_ptr<delimiter_set<string_type>> delimiter_set;
     bool is_section_begin() const {
@@ -569,7 +569,7 @@ public:
     component(const string_type& t, string_size_type p) : text(t), position(p) {}
     
     bool is_text() const {
-        return tag.type == tag_type::invalid;
+        return tag.type == tag_type::text;
     }
 
     void walk_children(const walk_callback& callback) {
