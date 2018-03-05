@@ -615,9 +615,7 @@ private:
         std::vector<component<string_type>*> sections{&root_component};
         std::vector<string_size_type> section_starts;
         
-        string_size_type input_position{0};
-        while (input_position != input_size) {
-            
+        for (string_size_type input_position = 0; input_position != input_size;) {
             // Find the next tag start delimiter
             const string_size_type tag_location_start{input.find(ctx.delimiter_set.begin, input_position)};
             if (tag_location_start == string_type::npos) {
