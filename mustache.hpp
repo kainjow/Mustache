@@ -557,12 +557,7 @@ public:
     tag<string_type> tag;
     std::vector<component> children;
     string_size_type position = string_type::npos;
-    bool is_text() const {
-        return tag.type == tag_type::invalid;
-    }
-    component() {}
-    component(const string_type& t, string_size_type p) : text(t), position(p) {}
-    
+
     enum class walk_control {
         walk, // "continue" is reserved :/
         stop,
@@ -570,6 +565,13 @@ public:
     };
     using walk_callback = std::function<walk_control(component&)>;
     
+    component() {}
+    component(const string_type& t, string_size_type p) : text(t), position(p) {}
+    
+    bool is_text() const {
+        return tag.type == tag_type::invalid;
+    }
+
     void walk_children(const walk_callback& callback) {
         for (auto& child : children) {
             if (child.walk(callback) != walk_control::walk) {
