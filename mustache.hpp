@@ -598,19 +598,13 @@ template <typename string_type>
 class parser {
 public:
     parser(const string_type& input, context_internal<string_type>& ctx, component<string_type>& root_component, string_type& error_message)
-        : root_component_(root_component)
-        , error_message_(error_message)
     {
-        parse(input, ctx);
+        parse(input, ctx, root_component, error_message);
     }
 
 private:
-    using string_size_type = typename string_type::size_type;
-
-    component<string_type>& root_component_;
-    string_type& error_message_;
-
-    void parse(const string_type& input, context_internal<string_type>& ctx) {
+    void parse(const string_type& input, context_internal<string_type>& ctx, component<string_type>& root_component, string_type& error_message) const {
+        using string_size_type = typename string_type::size_type;
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
         
         const string_type brace_delimiter_end_unescaped(3, '}');
@@ -618,7 +612,7 @@ private:
         
         bool current_delimiter_is_brace{ctx.delimiter_set.is_default()};
         
-        std::vector<component<string_type>*> sections{&root_component_};
+        std::vector<component<string_type>*> sections{&root_component};
         std::vector<string_size_type> section_starts;
         
         string_size_type input_position{0};
@@ -649,7 +643,7 @@ private:
             if (tag_location_end == string_type::npos) {
                 streamstring ss;
                 ss << "Unclosed tag at " << tag_location_start;
-                error_message_.assign(ss.str());
+                error_message.assign(ss.str());
                 return;
             }
             
@@ -660,7 +654,7 @@ private:
                 if (!parse_set_delimiter_tag(tag_contents, ctx.delimiter_set)) {
                     streamstring ss;
                     ss << "Invalid set delimiter tag at " << tag_location_start;
-                    error_message_.assign(ss.str());
+                    error_message.assign(ss.str());
                     return;
                 }
                 current_delimiter_is_brace = ctx.delimiter_set.is_default();
@@ -684,7 +678,7 @@ private:
                 if (sections.size() == 1) {
                     streamstring ss;
                     ss << "Unopened section \"" << comp.tag.name << "\" at " << comp.position;
-                    error_message_.assign(ss.str());
+                    error_message.assign(ss.str());
                     return;
                 }
                 sections.back()->tag.section_text.reset(new string_type(input.substr(section_starts.back(), tag_location_start - section_starts.back())));
@@ -694,20 +688,20 @@ private:
         }
         
         // Check for sections without an ending tag
-        root_component_.walk_children([this](component<string_type>& comp) -> typename component<string_type>::walk_control {
+        root_component.walk_children([&error_message](component<string_type>& comp) -> typename component<string_type>::walk_control {
             if (!comp.tag.is_section_begin()) {
                 return component<string_type>::walk_control::walk;
             }
             if (comp.children.empty() || !comp.children.back().tag.is_section_end() || comp.children.back().tag.name != comp.tag.name) {
                 streamstring ss;
                 ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
-                error_message_.assign(ss.str());
+                error_message.assign(ss.str());
                 return component<string_type>::walk_control::stop;
             }
             comp.children.pop_back(); // remove now useless end section component
             return component<string_type>::walk_control::walk;
         });
-        if (!error_message_.empty()) {
+        if (!error_message.empty()) {
             return;
         }
     }
