@@ -611,7 +611,6 @@ private:
         
         const string_type brace_delimiter_end_unescaped(3, '}');
         const string_size_type input_size{input.size()};
-        const string_size_type input_size_minus_1{input_size > 0 ? input_size - 1 : 0};
 
         bool current_delimiter_is_brace{ctx.delimiter_set.is_default()};
         
@@ -631,11 +630,15 @@ private:
             }
         };
         
-        using string_value_type = typename string_type::value_type;
+        const std::vector<string_type> whitespace{
+            string_type(1, '\r') + string_type(1, '\n'),
+            string_type(1, '\n'),
+            string_type(1, '\r'),
+            string_type(1, ' '),
+            string_type(1, '\t'),
+        };
         
         for (string_size_type input_position = 0; input_position != input_size;) {
-            const string_value_type ch1 = input[input_position];
-            const string_value_type ch2 = input_position < input_size_minus_1 ? input[input_position + 1] : 0;
             bool parse_tag = false;
             
             if (input.compare(input_position, ctx.delimiter_set.begin.size(), ctx.delimiter_set.begin) == 0) {
@@ -643,26 +646,28 @@ private:
 
                 // Tag start delimiter
                 parse_tag = true;
-            } else if (ch1 == '\r' && ch2 == '\n') {
-                process_current_text();
-
-                // CFLR
-                const component<string_type> comp{{input, input_position, 2}, input_position};
-                sections.back()->children.push_back(comp);
-                input_position += 2;
-            } else if (ch1 == '\n' || ch1 == '\r' || ch1 == ' ' || ch1 == '\t') {
-                process_current_text();
-
-                // Newline or whitespace
-                const component<string_type> comp{{input, input_position, 1}, input_position};
-                sections.back()->children.push_back(comp);
-                input_position++;
             } else {
-                if (current_text.empty()) {
-                    current_text_position = input_position;
+                bool parsed_whitespace = false;
+                for (const auto& whitespace_text : whitespace) {
+                    if (input.compare(input_position, whitespace_text.size(), whitespace_text) == 0) {
+                        process_current_text();
+
+                        const component<string_type> comp{whitespace_text, input_position};
+                        sections.back()->children.push_back(comp);
+                        input_position += whitespace_text.size();
+                        
+                        parsed_whitespace = true;
+                        break;
+                    }
                 }
-                current_text.append(1, ch1);
-                input_position++;
+                
+                if (!parsed_whitespace) {
+                    if (current_text.empty()) {
+                        current_text_position = input_position;
+                    }
+                    current_text.append(1, input[input_position]);
+                    input_position++;
+                }
             }
             
             if (!parse_tag) {
