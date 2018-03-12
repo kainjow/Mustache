@@ -571,6 +571,15 @@ public:
     bool is_text() const {
         return tag.type == tag_type::text;
     }
+    
+    bool is_newline() const {
+        return is_text() && ((text.size() == 2 && text[0] == '\r' && text[1] == '\n') ||
+        (text.size() == 1 && (text[0] == '\n' || text[0] == '\r')));
+    }
+    
+    bool is_non_newline_whitespace() const {
+        return is_text() && !is_newline() && text.size() == 1 && (text[0] == ' ' || text[0] == '\t');
+    }
 
     void walk_children(const walk_callback& callback) {
         for (auto& child : children) {

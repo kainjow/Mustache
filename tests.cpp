@@ -1192,6 +1192,7 @@ TEST_CASE("standalone_lines") {
         CHECK(error_message.empty());
         const auto& root_children = root_component.children;
         const std::vector<mustache::string_type> text_components{"\n", "\r\n", "\t", " ", "\n", "\n", "\r"};
+        REQUIRE(root_component.children.size() == 7);
         REQUIRE(root_component.children.size() == text_components.size());
         std::vector<mustache::string_type>::size_type i = 0;
         for (const auto& child : root_component.children) {
@@ -1199,6 +1200,20 @@ TEST_CASE("standalone_lines") {
             CHECK(child.tag.type == tag_type::text);
             CHECK(child.children.empty());
         }
+        CHECK(root_component.children[0].is_newline());
+        CHECK_FALSE(root_component.children[0].is_non_newline_whitespace());
+        CHECK(root_component.children[1].is_newline());
+        CHECK_FALSE(root_component.children[1].is_non_newline_whitespace());
+        CHECK_FALSE(root_component.children[2].is_newline());
+        CHECK(root_component.children[2].is_non_newline_whitespace());
+        CHECK_FALSE(root_component.children[3].is_newline());
+        CHECK(root_component.children[3].is_non_newline_whitespace());
+        CHECK(root_component.children[4].is_newline());
+        CHECK_FALSE(root_component.children[4].is_non_newline_whitespace());
+        CHECK(root_component.children[5].is_newline());
+        CHECK_FALSE(root_component.children[5].is_non_newline_whitespace());
+        CHECK(root_component.children[6].is_newline());
+        CHECK_FALSE(root_component.children[6].is_non_newline_whitespace());
     }
     
     SECTION("parse_whitespace") {
