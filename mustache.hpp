@@ -611,25 +611,66 @@ private:
         
         const string_type brace_delimiter_end_unescaped(3, '}');
         const string_size_type input_size{input.size()};
-        
+        const string_size_type input_size_minus_1{input_size > 0 ? input_size - 1 : 0};
+
         bool current_delimiter_is_brace{ctx.delimiter_set.is_default()};
         
         std::vector<component<string_type>*> sections{&root_component};
         std::vector<string_size_type> section_starts;
+        string_type current_text;
+        string_size_type current_text_position = -1;
+        
+        current_text.reserve(input_size);
+        
+        const auto process_current_text = [&current_text, &current_text_position, &sections]() {
+            if (!current_text.empty()) {
+                const component<string_type> comp{current_text, current_text_position};
+                sections.back()->children.push_back(comp);
+                current_text.clear();
+                current_text_position = -1;
+            }
+        };
+        
+        using string_value_type = typename string_type::value_type;
         
         for (string_size_type input_position = 0; input_position != input_size;) {
-            // Find the next tag start delimiter
-            const string_size_type tag_location_start{input.find(ctx.delimiter_set.begin, input_position)};
-            if (tag_location_start == string_type::npos) {
-                // No tag found. Add the remaining text.
-                const component<string_type> comp{{input, input_position, input_size - input_position}, input_position};
+            const string_value_type ch1 = input[input_position];
+            const string_value_type ch2 = input_position < input_size_minus_1 ? input[input_position + 1] : 0;
+            bool parse_tag = false;
+            
+            if (input.compare(input_position, ctx.delimiter_set.begin.size(), ctx.delimiter_set.begin) == 0) {
+                process_current_text();
+
+                // Tag start delimiter
+                parse_tag = true;
+            } else if (ch1 == '\r' && ch2 == '\n') {
+                process_current_text();
+
+                // CFLR
+                const component<string_type> comp{{input, input_position, 2}, input_position};
                 sections.back()->children.push_back(comp);
-                break;
-            } else if (tag_location_start != input_position) {
-                // Tag found, add text up to this tag.
-                const component<string_type> comp{{input, input_position, tag_location_start - input_position}, input_position};
+                input_position += 2;
+            } else if (ch1 == '\n' || ch1 == '\r' || ch1 == ' ' || ch1 == '\t') {
+                process_current_text();
+
+                // Newline or whitespace
+                const component<string_type> comp{{input, input_position, 1}, input_position};
                 sections.back()->children.push_back(comp);
+                input_position++;
+            } else {
+                if (current_text.empty()) {
+                    current_text_position = input_position;
+                }
+                current_text.append(1, ch1);
+                input_position++;
             }
+            
+            if (!parse_tag) {
+                continue;
+            }
+            
+            // Find the next tag start delimiter
+            const string_size_type tag_location_start = input_position;
             
             // Find the next tag end delimiter
             string_size_type tag_contents_location{tag_location_start + ctx.delimiter_set.begin.size()};
@@ -686,6 +727,8 @@ private:
                 section_starts.pop_back();
             }
         }
+        
+        process_current_text();
         
         // Check for sections without an ending tag
         root_component.walk_children([&error_message](component<string_type>& comp) -> typename component<string_type>::walk_control {
