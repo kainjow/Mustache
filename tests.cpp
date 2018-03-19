@@ -310,7 +310,12 @@ TEST_CASE("section_object") {
         person.set("name", "Steve");
         person.set("age", "42");
         data data;
+        CHECK(data.is_empty_object() == true);
+        CHECK(data.is_non_empty_object() == false);
+
         data.set("employee", person);
+        CHECK(data.is_empty_object() == false);
+        CHECK(data.is_non_empty_object() == true);
         CHECK(tmpl.render(data) == "name=Steve, age=42");
     }
 
