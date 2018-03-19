@@ -360,6 +360,13 @@ public:
     bool is_non_empty_list() const {
         return is_list() && !list_->empty();
     }
+    bool is_empty_object() const {
+        return is_object() && obj_->empty();
+    }
+    bool is_non_empty_object() const {
+        return is_object() && !obj_->empty();
+    }
+
     basic_data& operator<< (const basic_data& data) {
         push_back(data);
         return *this;
