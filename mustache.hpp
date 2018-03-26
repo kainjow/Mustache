@@ -57,7 +57,18 @@ template <typename string_type>
 string_type html_escape(const string_type& s) {
     string_type ret;
     ret.reserve(s.size()*2);
+    bool previousCharWasCr = false;
     for (const auto ch : s) {
+        //convert linefeeds to <br>
+        if (previousCharWasCr) {
+            if (ch != '\n') {
+                //the previous char was a \r, but it was not followed by a \n
+                //=> we also replace single '\r's by a <br>
+                ret.append({'<','b','r','>'});
+            }
+            previousCharWasCr = false;
+        }
+
         switch (ch) {
             case '&':
                 ret.append({'&','a','m','p',';'});
@@ -74,11 +85,27 @@ string_type html_escape(const string_type& s) {
             case '\'':
                 ret.append({'&','a','p','o','s',';'});
                 break;
+            case '\r':
+                //don't append right now; a \n might follow.
+                previousCharWasCr = true;
+                break;
+            case '\n':
+                //append one single <br> tag for this \n, eventually
+                //including a preceding \r
+                ret.append({'<','b','r','>'});
+                break;
             default:
                 ret.append(1, ch);
                 break;
         }
+    } // end of loop
+
+    if (previousCharWasCr) {
+        //the last char was a single \r
+        //=> we also replace this one by a <br>
+        ret.append({'<','b','r','>'});
     }
+
     return ret;
 }
 
