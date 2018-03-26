@@ -102,7 +102,14 @@ TEST_CASE("variables") {
         data.set("name", "\"S\"<br>te&v\'e");
         CHECK(tmpl.render(data) == "Hello &quot;S&quot;&lt;br&gt;te&amp;v&apos;e");
     }
-    
+
+    SECTION("escape_line_breaks") {
+        mustache tmpl("{{text}}");
+        data data;
+        data.set("text", "1\r2\n3\r\n4\r");
+        CHECK(tmpl.render(data) == "1<br>2<br>3<br>4<br>");
+    }
+
     SECTION("unescaped1") {
         mustache tmpl("Hello {{{name}}}");
         data data;
