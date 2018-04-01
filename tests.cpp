@@ -393,6 +393,14 @@ TEST_CASE("data") {
         CHECK(dat["is_dog"].is_false());
         CHECK(dat["is_organic"].is_bool());
         CHECK(dat["is_organic"].is_true());
+
+        data emptyData;
+        CHECK(emptyData.is_empty_object() == true);
+        CHECK(emptyData.is_non_empty_object() == false);
+
+        data nonEmptyData("name", "foo");
+        CHECK(nonEmptyData.is_empty_object() == false);
+        CHECK(nonEmptyData.is_non_empty_object() == true);
     }
 
     SECTION("move_ctor") {

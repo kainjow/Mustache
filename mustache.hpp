@@ -325,6 +325,12 @@ public:
     }
 
     // Object data
+    bool is_empty_object() const {
+        return is_object() && obj_->empty();
+    }
+    bool is_non_empty_object() const {
+        return is_object() && !obj_->empty();
+    }
     void set(const string_type& name, const basic_data& var) {
         if (is_object()) {
             auto it = obj_->find(name);
