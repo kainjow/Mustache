@@ -325,6 +325,12 @@ public:
     }
 
     // Object data
+    bool is_empty_object() const {
+        return is_object() && obj_->empty();
+    }
+    bool is_non_empty_object() const {
+        return is_object() && !obj_->empty();
+    }
     void set(const string_type& name, const basic_data& var) {
         if (is_object()) {
             auto it = obj_->find(name);
@@ -996,8 +1002,8 @@ private:
     };
     
     bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, render_lambda_escape escape, const string_type& text, bool parse_with_same_context) {
-        const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parse_with_same_context, escape](const string_type& text, bool escaped) {
-            const auto process_template = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
+        const typename basic_renderer<string_type>::type2 render2 = [this, &ctx, parse_with_same_context, escape](const string_type& text, bool escaped) {
+            const auto process_template = [this, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
                     error_message_ = tmpl.error_message();
                     return {};
