@@ -1135,6 +1135,9 @@ TEST_CASE("custom_context") {
     SECTION("basic") {
         my_context<mustache::string_type> ctx;
         mustache tmpl("Hello {{what}}");
+        std::ostream& stream = tmpl.render(ctx, std::cout) << std::endl;
+        CHECK(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(ctx) == "Hello Steve");
     }
 
