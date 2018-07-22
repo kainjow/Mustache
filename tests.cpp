@@ -1187,3 +1187,114 @@ TEST_CASE("file_partial_context") {
     CHECK(tmpl.render(ctx) == "Hello World!");
 
 }
+
+TEST_CASE("standalone_lines") {
+    
+    SECTION("parse_whitespace_basic") {
+        const mustache::string_type input = "\n\r\n\t \n\n\r";
+        component<mustache::string_type> root_component;
+        mustache::string_type error_message;
+        context<mustache::string_type> ctx;
+        context_internal<mustache::string_type> context{ctx};
+        parser<mustache::string_type>{input, context, root_component, error_message};
+        CHECK(error_message.empty());
+        const auto& root_children = root_component.children;
+        const std::vector<mustache::string_type> text_components{"\n", "\r\n", "\t", " ", "\n", "\n", "\r"};
+        REQUIRE(root_component.children.size() == 7);
+        REQUIRE(root_component.children.size() == text_components.size());
+        std::vector<mustache::string_type>::size_type i = 0;
+        for (const auto& child : root_component.children) {
+            CHECK(child.text == text_components[i++]);
+            CHECK(child.tag.type == tag_type::text);
+            CHECK(child.children.empty());
+        }
+        CHECK(root_component.children[0].is_newline());
+        CHECK_FALSE(root_component.children[0].is_non_newline_whitespace());
+        CHECK(root_component.children[1].is_newline());
+        CHECK_FALSE(root_component.children[1].is_non_newline_whitespace());
+        CHECK_FALSE(root_component.children[2].is_newline());
+        CHECK(root_component.children[2].is_non_newline_whitespace());
+        CHECK_FALSE(root_component.children[3].is_newline());
+        CHECK(root_component.children[3].is_non_newline_whitespace());
+        CHECK(root_component.children[4].is_newline());
+        CHECK_FALSE(root_component.children[4].is_non_newline_whitespace());
+        CHECK(root_component.children[5].is_newline());
+        CHECK_FALSE(root_component.children[5].is_non_newline_whitespace());
+        CHECK(root_component.children[6].is_newline());
+        CHECK_FALSE(root_component.children[6].is_non_newline_whitespace());
+    }
+    
+    SECTION("parse_whitespace") {
+        const mustache::string_type input =
+        "|\n"
+        "| This Is\n"
+        "{{#boolean}}\n"
+        "|\n"
+        "{{/boolean}}\n"
+        "| A Line";
+        component<mustache::string_type> root_component;
+        mustache::string_type error_message;
+        context<mustache::string_type> ctx;
+        context_internal<mustache::string_type> context{ctx};
+        parser<mustache::string_type>{input, context, root_component, error_message};
+        CHECK(error_message.empty());
+        const auto& root_children = root_component.children;
+        REQUIRE(root_children.size() == 15);
+        CHECK(root_children[0].text == "|");
+        CHECK(root_children[0].tag.type == tag_type::text);
+        CHECK(root_children[0].children.empty());
+        CHECK(root_children[1].text == "\n");
+        CHECK(root_children[1].tag.type == tag_type::text);
+        CHECK(root_children[1].children.empty());
+        CHECK(root_children[2].text == "|");
+        CHECK(root_children[2].tag.type == tag_type::text);
+        CHECK(root_children[2].children.empty());
+        CHECK(root_children[3].text == " ");
+        CHECK(root_children[3].tag.type == tag_type::text);
+        CHECK(root_children[3].children.empty());
+        CHECK(root_children[4].text == "This");
+        CHECK(root_children[4].tag.type == tag_type::text);
+        CHECK(root_children[4].children.empty());
+        CHECK(root_children[5].text == " ");
+        CHECK(root_children[5].tag.type == tag_type::text);
+        CHECK(root_children[5].children.empty());
+        CHECK(root_children[6].text == "Is");
+        CHECK(root_children[6].tag.type == tag_type::text);
+        CHECK(root_children[6].children.empty());
+        CHECK(root_children[7].text == "\n");
+        CHECK(root_children[7].tag.type == tag_type::text);
+        CHECK(root_children[7].children.empty());
+        CHECK(root_children[8].text.empty());
+        CHECK(root_children[8].tag.type == tag_type::section_begin);
+        REQUIRE(root_children[8].children.size() == 3);
+        CHECK(root_children[8].children[0].text == "\n");
+        CHECK(root_children[8].children[0].tag.type == tag_type::text);
+        CHECK(root_children[8].children[0].children.empty());
+        CHECK(root_children[8].children[1].text == "|");
+        CHECK(root_children[8].children[1].tag.type == tag_type::text);
+        CHECK(root_children[8].children[1].children.empty());
+        CHECK(root_children[8].children[2].text == "\n");
+        CHECK(root_children[8].children[2].tag.type == tag_type::text);
+        CHECK(root_children[8].children[2].children.empty());
+        CHECK(root_children[9].text == "\n");
+        CHECK(root_children[9].tag.type == tag_type::text);
+        CHECK(root_children[9].children.empty());
+        CHECK(root_children[10].text == "|");
+        CHECK(root_children[10].tag.type == tag_type::text);
+        CHECK(root_children[10].children.empty());
+        CHECK(root_children[11].text == " ");
+        CHECK(root_children[11].tag.type == tag_type::text);
+        CHECK(root_children[11].children.empty());
+        CHECK(root_children[12].text == "A");
+        CHECK(root_children[12].tag.type == tag_type::text);
+        CHECK(root_children[12].children.empty());
+        CHECK(root_children[13].text == " ");
+        CHECK(root_children[13].tag.type == tag_type::text);
+        CHECK(root_children[13].children.empty());
+        CHECK(root_children[14].text == "Line");
+        CHECK(root_children[14].tag.type == tag_type::text);
+        CHECK(root_children[14].children.empty());
+    }
+    
+}
+
