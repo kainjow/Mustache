@@ -923,8 +923,8 @@ private:
     };
     
     bool renderLambda(const RenderHandler& handler, const basic_data<string_type>* var, context_internal& ctx, RenderLambdaEscape escape, const string_type& text, bool parseWithSameContext) {
-        const typename basic_renderer<string_type>::type2 render2 = [this, &handler, var, &ctx, parseWithSameContext, escape](const string_type& text, bool escaped) {
-            const auto processTemplate = [this, &handler, var, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
+        const typename basic_renderer<string_type>::type2 render2 = [this, &ctx, parseWithSameContext, escape](const string_type& text, bool escaped) {
+            const auto processTemplate = [this, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
                     errorMessage_ = tmpl.error_message();
                     return {};
