@@ -522,12 +522,12 @@ enum class tag_type {
 };
 
 template <typename string_type>
-class tag {
+class mstch_tag /* gcc doesn't allow "tag tag;" so rename the class :( */ {
 public:
     string_type name;
     tag_type type = tag_type::text;
     std::shared_ptr<string_type> section_text;
-    std::shared_ptr<delimiter_set<string_type>> delimiter_set;
+    std::shared_ptr<delimiter_set<string_type>> delim_set;
     bool is_section_begin() const {
         return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
     }
@@ -560,7 +560,7 @@ private:
 
 public:
     string_type text;
-    tag<string_type> tag;
+    mstch_tag<string_type> tag;
     std::vector<component> children;
     string_size_type position = string_type::npos;
 
@@ -720,7 +720,7 @@ private:
                 }
                 current_delimiter_is_brace = ctx.delim_set.is_default();
                 comp.tag.type = tag_type::set_delimiter;
-                comp.tag.delimiter_set.reset(new delimiter_set<string_type>(ctx.delim_set));
+                comp.tag.delim_set.reset(new delimiter_set<string_type>(ctx.delim_set));
             }
             if (comp.tag.type != tag_type::set_delimiter) {
                 parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
@@ -804,7 +804,7 @@ private:
         return true;
     }
     
-    void parse_tag_contents(bool is_unescaped_var, const string_type& contents, tag<string_type>& tag) const {
+    void parse_tag_contents(bool is_unescaped_var, const string_type& contents, mstch_tag<string_type>& tag) const {
         if (is_unescaped_var) {
             tag.type = tag_type::unescaped_variable;
             tag.name = contents;
@@ -940,7 +940,7 @@ private:
             return component<string_type>::walk_control::walk;
         }
         
-        const tag<string_type>& tag{comp.tag};
+        const mstch_tag<string_type>& tag{comp.tag};
         const basic_data<string_type>* var = nullptr;
         switch (tag.type) {
             case tag_type::variable:
@@ -986,7 +986,7 @@ private:
                 }
                 break;
             case tag_type::set_delimiter:
-                ctx.delim_set = *comp.tag.delimiter_set;
+                ctx.delim_set = *comp.tag.delim_set;
                 break;
             default:
                 break;
