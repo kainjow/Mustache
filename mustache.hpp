@@ -501,7 +501,7 @@ template <typename string_type>
 class context_internal {
 public:
     basic_context<string_type>& ctx;
-    delimiter_set<string_type> delimiter_set;
+    delimiter_set<string_type> delim_set;
     
     context_internal(basic_context<string_type>& a_ctx)
         : ctx(a_ctx)
@@ -627,7 +627,7 @@ private:
         const string_type brace_delimiter_end_unescaped(3, '}');
         const string_size_type input_size{input.size()};
 
-        bool current_delimiter_is_brace{ctx.delimiter_set.is_default()};
+        bool current_delimiter_is_brace{ctx.delim_set.is_default()};
         
         std::vector<component<string_type>*> sections{&root_component};
         std::vector<string_size_type> section_starts;
@@ -656,7 +656,7 @@ private:
         for (string_size_type input_position = 0; input_position != input_size;) {
             bool parse_tag = false;
             
-            if (input.compare(input_position, ctx.delimiter_set.begin.size(), ctx.delimiter_set.begin) == 0) {
+            if (input.compare(input_position, ctx.delim_set.begin.size(), ctx.delim_set.begin) == 0) {
                 process_current_text();
 
                 // Tag start delimiter
@@ -693,9 +693,9 @@ private:
             const string_size_type tag_location_start = input_position;
             
             // Find the next tag end delimiter
-            string_size_type tag_contents_location{tag_location_start + ctx.delimiter_set.begin.size()};
-            const bool tag_is_unescaped_var{current_delimiter_is_brace && tag_location_start != (input_size - 2) && input.at(tag_contents_location) == ctx.delimiter_set.begin.at(0)};
-            const string_type& current_tag_delimiter_end{tag_is_unescaped_var ? brace_delimiter_end_unescaped : ctx.delimiter_set.end};
+            string_size_type tag_contents_location{tag_location_start + ctx.delim_set.begin.size()};
+            const bool tag_is_unescaped_var{current_delimiter_is_brace && tag_location_start != (input_size - 2) && input.at(tag_contents_location) == ctx.delim_set.begin.at(0)};
+            const string_type& current_tag_delimiter_end{tag_is_unescaped_var ? brace_delimiter_end_unescaped : ctx.delim_set.end};
             const auto current_tag_delimiter_end_size = current_tag_delimiter_end.size();
             if (tag_is_unescaped_var) {
                 ++tag_contents_location;
@@ -712,15 +712,15 @@ private:
             const string_type tag_contents{trim(string_type{input, tag_contents_location, tag_location_end - tag_contents_location})};
             component<string_type> comp;
             if (!tag_contents.empty() && tag_contents[0] == '=') {
-                if (!parse_set_delimiter_tag(tag_contents, ctx.delimiter_set)) {
+                if (!parse_set_delimiter_tag(tag_contents, ctx.delim_set)) {
                     streamstring ss;
                     ss << "Invalid set delimiter tag at " << tag_location_start;
                     error_message.assign(ss.str());
                     return;
                 }
-                current_delimiter_is_brace = ctx.delimiter_set.is_default();
+                current_delimiter_is_brace = ctx.delim_set.is_default();
                 comp.tag.type = tag_type::set_delimiter;
-                comp.tag.delimiter_set.reset(new delimiter_set<string_type>(ctx.delimiter_set));
+                comp.tag.delimiter_set.reset(new delimiter_set<string_type>(ctx.delim_set));
             }
             if (comp.tag.type != tag_type::set_delimiter) {
                 parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
@@ -986,7 +986,7 @@ private:
                 }
                 break;
             case tag_type::set_delimiter:
-                ctx.delimiter_set = *comp.tag.delimiter_set;
+                ctx.delim_set = *comp.tag.delimiter_set;
                 break;
             default:
                 break;
