@@ -1061,7 +1061,6 @@ private:
     };
     
     bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, render_lambda_escape escape, const string_type& text, bool parse_with_same_context) {
-        render_current_line(handler, ctx, nullptr);
         const typename basic_renderer<string_type>::type2 render2 = [this, &ctx, parse_with_same_context, escape](const string_type& text, bool escaped) {
             const auto process_template = [this, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
                 if (!tmpl.is_valid()) {
@@ -1103,6 +1102,7 @@ private:
             const basic_renderer<string_type> renderer{render, render2};
             render_result(handler, ctx, var->lambda2_value()(text, renderer));
         } else {
+            render_current_line(handler, ctx, nullptr);
             render_result(handler, ctx, render(var->lambda_value()(text)));
         }
         return error_message_.empty();
