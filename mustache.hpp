@@ -884,13 +884,18 @@ public:
         return render(data, ss).str();
     }
 
+    template <typename stream_type>
+    stream_type& render(basic_context<string_type>& ctx, stream_type& stream) {
+        context_internal<string_type> context{ctx};
+        render([&stream](const string_type& str) {
+            stream << str;
+        }, context);
+        return stream;
+    }
+
     string_type render(basic_context<string_type>& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
-        context_internal<string_type> context{ctx};
-        render([&ss](const string_type& str) {
-            ss << str;
-        }, context);
-        return ss.str();
+        return render(ctx, ss).str();
     }
 
     using render_handler = std::function<void(const string_type&)>;
