@@ -885,7 +885,7 @@ public:
     }
 
     template <typename stream_type>
-    stream_type render(basic_context<string_type>& ctx, stream_type& stream) {
+    stream_type& render(basic_context<string_type>& ctx, stream_type& stream) {
         context_internal<string_type> context{ctx};
         render([&stream](const string_type& str) {
             stream << str;
@@ -893,7 +893,7 @@ public:
         return stream;
     }
 
-    string_type render(const basic_context<string_type>& ctx) {
+    string_type render(basic_context<string_type>& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
         return render(ctx, ss).str();
     }
