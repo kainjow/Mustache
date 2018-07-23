@@ -498,10 +498,33 @@ private:
 };
 
 template <typename string_type>
+class line_buffer_state {
+public:
+    string_type data;
+    bool contained_tag = false;
+
+    bool is_empty_or_contains_only_whitespace() const {
+        for (const auto ch : data) {
+            // don't look at newlines
+            if (ch != ' ' && ch != '\t') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void clear() {
+        data.clear();
+        contained_tag = false;
+    }
+};
+
+template <typename string_type>
 class context_internal {
 public:
     basic_context<string_type>& ctx;
     delimiter_set<string_type> delim_set;
+    line_buffer_state<string_type> line_buffer;
     
     context_internal(basic_context<string_type>& a_ctx)
         : ctx(a_ctx)
@@ -933,11 +956,44 @@ private:
         root_component_.walk_children([&handler, &ctx, this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             return render_component(handler, ctx, comp);
         });
+        // process the last line
+        render_current_line(handler, ctx, nullptr);
+    }
+    
+    void render_current_line(const render_handler& handler, context_internal<string_type>& ctx, const component<string_type>* comp) const {
+        // We're at the end of a line, so check the line buffer state to see
+        // if the line had tags in it, and also if the line is now empty or
+        // contains whitespace only. if this situation is true, skip the line.
+        bool output = true;
+        if (ctx.line_buffer.contained_tag && ctx.line_buffer.is_empty_or_contains_only_whitespace()) {
+            output = false;
+        }
+        if (output) {
+            handler(ctx.line_buffer.data);
+            if (comp) {
+                handler(comp->text);
+            }
+        }
+        ctx.line_buffer.clear();
+    }
+    
+    void render_result(const render_handler& handler, context_internal<string_type>& ctx, const string_type& text, bool from_tag) const {
+        (void)ctx;
+        if (from_tag) {
+            //ctx.line_buffer.contained_tag = true;
+        }
+        //ctx.line_buffer.data.append(text);
+        handler(text);
+        (void)handler;
     }
 
     typename component<string_type>::walk_control render_component(const render_handler& handler, context_internal<string_type>& ctx, component<string_type>& comp) {
         if (comp.is_text()) {
-            handler(comp.text);
+            if (comp.is_newline()) {
+                render_current_line(handler, ctx, &comp);
+            } else {
+                render_result(handler, ctx, comp.text, false);
+            }
             return component<string_type>::walk_control::walk;
         }
         
@@ -970,7 +1026,7 @@ private:
                 return component<string_type>::walk_control::skip;
             case tag_type::partial:
                 if ((var = ctx.ctx.get_partial(tag.name)) != nullptr && (var->is_partial() || var->is_string())) {
-                    const auto partial_result = var->is_partial() ? var->partial_value()() : var->string_value();
+                    const auto& partial_result = var->is_partial() ? var->partial_value()() : var->string_value();
                     basic_mustache tmpl{partial_result};
                     tmpl.set_custom_escape(escape_);
                     if (!tmpl.is_valid()) {
@@ -1042,17 +1098,17 @@ private:
         };
         if (var->is_lambda2()) {
             const basic_renderer<string_type> renderer{render, render2};
-            handler(var->lambda2_value()(text, renderer));
+            render_result(handler, ctx, var->lambda2_value()(text, renderer), false);
         } else {
-            handler(render(var->lambda_value()(text)));
+            render_result(handler, ctx, render(var->lambda_value()(text)), false);
         }
         return error_message_.empty();
     }
     
     bool render_variable(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, bool escaped) {
         if (var->is_string()) {
-            const auto varstr = var->string_value();
-            handler(escaped ? escape_(varstr) : varstr);
+            const auto& varstr = var->string_value();
+            render_result(handler, ctx, escaped ? escape_(varstr) : varstr, false);
         } else if (var->is_lambda()) {
             const render_lambda_escape escape_opt = escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
             return render_lambda(handler, var, ctx, escape_opt, {}, false);
