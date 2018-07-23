@@ -1317,6 +1317,24 @@ TEST_CASE("standalone_lines") {
             "| A Line"
         );
     }
-    
+
+    SECTION("crlf") {
+        mustache tmpl{"|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|"};
+        data data("boolean", true);
+        CHECK(tmpl.render(data) == "|\r\n|");
+    }
+
+    SECTION("without_previous_line") {
+        mustache tmpl{"  {{#boolean}}\n#{{/boolean}}\n/"};
+        data data("boolean", true);
+        CHECK(tmpl.render(data) == "#\n/");
+    }
+
+    SECTION("without_next_newline") {
+        mustache tmpl{"#{{#boolean}}\n/\n  {{/boolean}}"};
+        data data("boolean", true);
+        CHECK(tmpl.render(data) == "#\n/\n");
+    }
+
 }
 
