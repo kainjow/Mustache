@@ -80,6 +80,12 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## Release Notes
 
+#### 3.2.1 - July 22, 2018
+
+* Add an overload to render() that accepts a context and a stream (thanks Kitsune Ral)
+* Added checks for empty objects (thanks Snafuuz)
+* Refactored parser in preparation for future changes
+
 #### 3.2 - February 24, 2018
 
 * Added ability to provide a custom escape function (thanks to Kitsune Ral)
