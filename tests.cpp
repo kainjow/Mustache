@@ -992,19 +992,8 @@ TEST_CASE("custom_escape") {
         // make sure when using a custom escape that HTML is not escaped
         mustache tmpl("hello {{world}}");
         tmpl.set_custom_escape([](const std::string& s) {
-            std::string ret; ret.reserve(s.size());
-            for (const auto ch: s) {
-                switch (ch) {
-                    case '\"':
-                    case '\n':
-                        ret.append({'\\', ch});
-                        break;
-                    default:
-                        ret.append(1, ch);
-                        break;
-                }
-            }
-            return ret;
+            // doing nothing here
+            return s;
         });
         object data{ { "world", "<world>" } };
         CHECK(tmpl.render(data) == "hello <world>");
@@ -1156,24 +1145,18 @@ public:
 
     virtual const basic_data<string_type>* get_partial(const string_type& name) const override {
         const auto cached = cached_files_.find(name);
-        if (cached != cached_files_.end()) {
-            return &cached->second;
-        }
+        REQUIRE(cached == cached_files_.end());
         string_type result;
-        if (read_file(name, result)) {
-            return &cached_files_.insert(std::make_pair(name, basic_data<string_type>(result))).first->second;
-        }
-        return nullptr;
+        REQUIRE(read_file(name, result));
+        return &cached_files_.insert(std::make_pair(name, basic_data<string_type>(result))).first->second;
     }
 
 private:
     bool read_file(const string_type& name, string_type& file_contents) const {
         // read from file [name].mustache (fake the data for the test)
-        if (name == "what") {
-            file_contents = "World";
-            return true;
-        }
-        return false;
+        REQUIRE(name == "what");
+        file_contents = "World";
+        return true;
     }
 
     mutable std::unordered_map<string_type, basic_data<string_type>> cached_files_;
