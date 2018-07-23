@@ -921,10 +921,6 @@ private:
         parser<string_type> parser{input, ctx, root_component_, error_message_};
     }
     
-    void walk(const typename component<string_type>::walk_callback& callback) {
-        root_component_.walk_children(callback);
-    }
-
     string_type render(context_internal<string_type>& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
         render([&ss](const string_type& str) {
@@ -934,7 +930,7 @@ private:
     }
 
     void render(const render_handler& handler, context_internal<string_type>& ctx) {
-        walk([&handler, &ctx, this](component<string_type>& comp) -> typename component<string_type>::walk_control {
+        root_component_.walk_children([&handler, &ctx, this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             return render_component(handler, ctx, comp);
         });
     }
