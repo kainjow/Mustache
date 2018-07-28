@@ -977,10 +977,8 @@ private:
         ctx.line_buffer.clear();
     }
     
-    void render_result(const render_handler& handler, context_internal<string_type>& ctx, const string_type& text) const {
+    void render_result(context_internal<string_type>& ctx, const string_type& text) const {
         ctx.line_buffer.data.append(text);
-        //handler(text);
-        (void)handler;
     }
 
     typename component<string_type>::walk_control render_component(const render_handler& handler, context_internal<string_type>& ctx, component<string_type>& comp) {
@@ -988,7 +986,7 @@ private:
             if (comp.is_newline()) {
                 render_current_line(handler, ctx, &comp);
             } else {
-                render_result(handler, ctx, comp.text);
+                render_result(ctx, comp.text);
             }
             return component<string_type>::walk_control::walk;
         }
@@ -1100,10 +1098,10 @@ private:
         };
         if (var->is_lambda2()) {
             const basic_renderer<string_type> renderer{render, render2};
-            render_result(handler, ctx, var->lambda2_value()(text, renderer));
+            render_result(ctx, var->lambda2_value()(text, renderer));
         } else {
             render_current_line(handler, ctx, nullptr);
-            render_result(handler, ctx, render(var->lambda_value()(text)));
+            render_result(ctx, render(var->lambda_value()(text)));
         }
         return error_message_.empty();
     }
@@ -1111,7 +1109,7 @@ private:
     bool render_variable(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, bool escaped) {
         if (var->is_string()) {
             const auto& varstr = var->string_value();
-            render_result(handler, ctx, escaped ? escape_(varstr) : varstr);
+            render_result(ctx, escaped ? escape_(varstr) : varstr);
         } else if (var->is_lambda()) {
             const render_lambda_escape escape_opt = escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
             return render_lambda(handler, var, ctx, escape_opt, {}, false);
