@@ -80,6 +80,10 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## Release Notes
 
+#### 4.0 - in progress
+
+* Lines with sections that result in an empty line are removed, per the Mustache spec.
+
 #### 3.2.1 - July 22, 2018
 
 * Add an overload to render() that accepts a context and a stream (thanks Kitsune Ral)
