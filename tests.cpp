@@ -1282,5 +1282,59 @@ TEST_CASE("standalone_lines") {
         CHECK(root_children[14].children.empty());
     }
     
+    SECTION("remove_standalone_lines") {
+        mustache tmpl{
+            "|\n"
+            "| This Is\n"
+            "{{#boolean}}\n"
+            "|\n"
+            "{{/boolean}}\n"
+            "| A Line"
+        };
+        data data("boolean", true);
+        CHECK(tmpl.render(data) ==
+            "|\n"
+            "| This Is\n"
+            "|\n"
+            "| A Line"
+        );
+    }
+    
+    SECTION("remove_indented_standalone_lines") {
+        mustache tmpl{
+            "|\n"
+            "| This Is\n"
+            "  {{#boolean}}\n"
+            "|\n"
+            "  {{/boolean}}\n"
+            "| A Line"
+        };
+        data data("boolean", true);
+        CHECK(tmpl.render(data) ==
+            "|\n"
+            "| This Is\n"
+            "|\n"
+            "| A Line"
+        );
+    }
+
+    SECTION("crlf") {
+        mustache tmpl{"|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|"};
+        data data("boolean", true);
+        CHECK(tmpl.render(data) == "|\r\n|");
+    }
+
+    SECTION("without_previous_line") {
+        mustache tmpl{"  {{#boolean}}\n#{{/boolean}}\n/"};
+        data data("boolean", true);
+        CHECK(tmpl.render(data) == "#\n/");
+    }
+
+    SECTION("without_next_newline") {
+        mustache tmpl{"#{{#boolean}}\n/\n  {{/boolean}}"};
+        data data("boolean", true);
+        CHECK(tmpl.render(data) == "#\n/\n");
+    }
+
 }
 
