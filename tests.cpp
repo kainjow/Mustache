@@ -1358,5 +1358,70 @@ TEST_CASE("standalone_lines") {
         );
     }
     
+    SECTION("section_list_partial_inline") {
+        mustache tmpl{
+            "Text1\n"
+            "{{#section}}blah\n"
+            "{{/section}}\n"
+            "Text3\n"
+        };
+        const list section{
+            "Text2",
+            "Text2",
+            "Text2",
+        };
+        CHECK(tmpl.render(data{"section", section}) ==
+            "Text1\n"
+            "blah\n"
+            "blah\n"
+            "blah\n"
+            "Text3\n"
+        );
+    }
+    
+    SECTION("section_list_full_inline") {
+        mustache tmpl{
+            "Text1\n"
+            "{{#section}}blah{{/section}}\n"
+            "Text3\n"
+        };
+        const list section{
+            "Text2",
+            "Text2",
+            "Text2",
+        };
+        CHECK(tmpl.render(data{"section", section}) ==
+            "Text1\n"
+            "blahblahblah\n"
+            "Text3\n"
+        );
+    }
+    
+    SECTION("section_list_not_empty_lines") {
+        mustache tmpl{
+            "Text1\n"
+            "{{#section}}a\n"
+            "test {{.}}\n"
+            "{{/section}}b\n"
+            "Text3\n"
+        };
+        const list section{
+            "a",
+            "b",
+            "c",
+        };
+        CHECK(tmpl.render(data{"section", section}) ==
+            "Text1\n"
+            "a\n"
+            "test a\n"
+            "a\n"
+            "test b\n"
+            "a\n"
+            "test c\n"
+            "b\n"
+            "Text3\n"
+        );
+    }
+    
 }
 
