@@ -249,7 +249,7 @@ TEST_CASE("section_lists") {
     SECTION("list") {
         mustache tmpl("{{#people}}Hello {{name}}, {{/people}}");
         data people = data::type::list;
-        for (auto& name : {"Steve", "Bill", "Tim"}) {
+        for (const auto& name : {"Steve", "Bill", "Tim"}) {
             people.push_back(data("name", name));
         }
         data data("people", people);
