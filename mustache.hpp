@@ -1010,13 +1010,7 @@ private:
                             return component<string_type>::walk_control::stop;
                         }
                     } else if (!var->is_false() && !var->is_empty_list()) {
-                        // account for the section begin tag
-                        ctx.line_buffer.contained_section_tag = true;
-                        
                         render_section(handler, ctx, comp, var);
-                        
-                        // ctx may have been cleared. account for the section end tag
-                        ctx.line_buffer.contained_section_tag = true;
                     }
                 }
                 return component<string_type>::walk_control::skip;
@@ -1130,14 +1124,32 @@ private:
         };
         if (var && var->is_non_empty_list()) {
             for (const auto& item : var->list_value()) {
+                // account for the section begin tag
+                ctx.line_buffer.contained_section_tag = true;
+
                 const context_pusher<string_type> ctxpusher{ctx, &item};
                 incomp.walk_children(callback);
+
+                // ctx may have been cleared. account for the section end tag
+                ctx.line_buffer.contained_section_tag = true;
             }
         } else if (var) {
+            // account for the section begin tag
+            ctx.line_buffer.contained_section_tag = true;
+
             const context_pusher<string_type> ctxpusher{ctx, var};
             incomp.walk_children(callback);
+
+            // ctx may have been cleared. account for the section end tag
+            ctx.line_buffer.contained_section_tag = true;
         } else {
+            // account for the section begin tag
+            ctx.line_buffer.contained_section_tag = true;
+
             incomp.walk_children(callback);
+
+            // ctx may have been cleared. account for the section end tag
+            ctx.line_buffer.contained_section_tag = true;
         }
     }
 

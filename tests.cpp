@@ -1336,5 +1336,27 @@ TEST_CASE("standalone_lines") {
         CHECK(tmpl.render(data) == "#\n/\n");
     }
 
+    SECTION("section_list") {
+        mustache tmpl{
+            "Text1\n"
+            "{{#section}}\n"
+            "Text2\n"
+            "{{/section}}\n"
+            "Text3\n"
+        };
+        const list section{
+            "Text2",
+            "Text2",
+            "Text2",
+        };
+        CHECK(tmpl.render(data{"section", section}) ==
+            "Text1\n"
+            "Text2\n"
+            "Text2\n"
+            "Text2\n"
+            "Text3\n"
+        );
+    }
+    
 }
 
