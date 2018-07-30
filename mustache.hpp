@@ -629,7 +629,9 @@ private:
         }
         for (auto& child : children) {
             control = child.walk(callback);
-            assert(control == walk_control::walk);
+            if (control == walk_control::stop) {
+                return control;
+            }
         }
         return control;
     }

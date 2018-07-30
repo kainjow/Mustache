@@ -488,6 +488,12 @@ TEST_CASE("errors") {
         CHECK(tmpl.error_message() == "Unclosed section \"var1\" at 0");
     }
 
+    SECTION("unclosed_section_in_section") {
+        mustache tmpl("{{#a}}{{^b}}{{/c}}{{/a}}");
+        CHECK_FALSE(tmpl.is_valid());
+        CHECK(tmpl.error_message() == "Unclosed section \"b\" at 6");
+    }
+
     SECTION("unclosed_tag") {
         mustache tmpl("test {{employees");
         CHECK_FALSE(tmpl.is_valid());
