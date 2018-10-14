@@ -31,6 +31,7 @@
 #define KAINJOW_MUSTACHE_HPP
 
 #include <cassert>
+#include <cctype>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -44,11 +45,11 @@ namespace mustache {
 template <typename string_type>
 string_type trim(const string_type& s) {
     auto it = s.begin();
-    while (it != s.end() && isspace(*it)) {
+    while (it != s.end() && std::isspace(*it)) {
         it++;
     }
     auto rit = s.rbegin();
-    while (rit.base() != it && isspace(*rit)) {
+    while (rit.base() != it && std::isspace(*rit)) {
         rit++;
     }
     return {it, rit.base()};
@@ -448,7 +449,7 @@ public:
     virtual void pop() override {
         items_.erase(items_.begin());
     }
-    
+
     virtual const basic_data<string_type>* get(const string_type& name) const override {
         // process {{.}} name
         if (name.size() == 1 && name.at(0) == '.') {
@@ -526,7 +527,7 @@ public:
     basic_context<string_type>& ctx;
     delimiter_set<string_type> delim_set;
     line_buffer_state<string_type> line_buffer;
-    
+
     context_internal(basic_context<string_type>& a_ctx)
         : ctx(a_ctx)
     {
@@ -594,19 +595,19 @@ public:
         skip,
     };
     using walk_callback = std::function<walk_control(component&)>;
-    
+
     component() {}
     component(const string_type& t, string_size_type p) : text(t), position(p) {}
-    
+
     bool is_text() const {
         return tag.type == tag_type::text;
     }
-    
+
     bool is_newline() const {
         return is_text() && ((text.size() == 2 && text[0] == '\r' && text[1] == '\n') ||
         (text.size() == 1 && (text[0] == '\n' || text[0] == '\r')));
     }
-    
+
     bool is_non_newline_whitespace() const {
         return is_text() && !is_newline() && text.size() == 1 && (text[0] == ' ' || text[0] == '\t');
     }
@@ -618,7 +619,7 @@ public:
             }
         }
     }
-    
+
 private:
     walk_control walk(const walk_callback& callback) {
         walk_control control{callback(*this)};
@@ -649,19 +650,19 @@ private:
     void parse(const string_type& input, context_internal<string_type>& ctx, component<string_type>& root_component, string_type& error_message) const {
         using string_size_type = typename string_type::size_type;
         using streamstring = std::basic_ostringstream<typename string_type::value_type>;
-        
+
         const string_type brace_delimiter_end_unescaped(3, '}');
         const string_size_type input_size{input.size()};
 
         bool current_delimiter_is_brace{ctx.delim_set.is_default()};
-        
+
         std::vector<component<string_type>*> sections{&root_component};
         std::vector<string_size_type> section_starts;
         string_type current_text;
         string_size_type current_text_position = -1;
-        
+
         current_text.reserve(input_size);
-        
+
         const auto process_current_text = [&current_text, &current_text_position, &sections]() {
             if (!current_text.empty()) {
                 const component<string_type> comp{current_text, current_text_position};
@@ -670,7 +671,7 @@ private:
                 current_text_position = -1;
             }
         };
-        
+
         const std::vector<string_type> whitespace{
             string_type(1, '\r') + string_type(1, '\n'),
             string_type(1, '\n'),
@@ -678,10 +679,10 @@ private:
             string_type(1, ' '),
             string_type(1, '\t'),
         };
-        
+
         for (string_size_type input_position = 0; input_position != input_size;) {
             bool parse_tag = false;
-            
+
             if (input.compare(input_position, ctx.delim_set.begin.size(), ctx.delim_set.begin) == 0) {
                 process_current_text();
 
@@ -696,12 +697,12 @@ private:
                         const component<string_type> comp{whitespace_text, input_position};
                         sections.back()->children.push_back(comp);
                         input_position += whitespace_text.size();
-                        
+
                         parsed_whitespace = true;
                         break;
                     }
                 }
-                
+
                 if (!parsed_whitespace) {
                     if (current_text.empty()) {
                         current_text_position = input_position;
@@ -710,14 +711,14 @@ private:
                     input_position++;
                 }
             }
-            
+
             if (!parse_tag) {
                 continue;
             }
-            
+
             // Find the next tag start delimiter
             const string_size_type tag_location_start = input_position;
-            
+
             // Find the next tag end delimiter
             string_size_type tag_contents_location{tag_location_start + ctx.delim_set.begin.size()};
             const bool tag_is_unescaped_var{current_delimiter_is_brace && tag_location_start != (input_size - 2) && input.at(tag_contents_location) == ctx.delim_set.begin.at(0)};
@@ -733,7 +734,7 @@ private:
                 error_message.assign(ss.str());
                 return;
             }
-            
+
             // Parse tag
             const string_type tag_contents{trim(string_type{input, tag_contents_location, tag_location_end - tag_contents_location})};
             component<string_type> comp;
@@ -753,10 +754,10 @@ private:
             }
             comp.position = tag_location_start;
             sections.back()->children.push_back(comp);
-            
+
             // Start next search after this tag
             input_position = tag_location_end + current_tag_delimiter_end_size;
-            
+
             // Push or pop sections
             if (comp.tag.is_section_begin()) {
                 sections.push_back(&sections.back()->children.back());
@@ -773,9 +774,9 @@ private:
                 section_starts.pop_back();
             }
         }
-        
+
         process_current_text();
-        
+
         // Check for sections without an ending tag
         root_component.walk_children([&error_message](component<string_type>& comp) -> typename component<string_type>::walk_control {
             if (!comp.tag.is_section_begin()) {
@@ -794,17 +795,17 @@ private:
             return;
         }
     }
-    
+
     bool is_set_delimiter_valid(const string_type& delimiter) const {
         // "Custom delimiters may not contain whitespace or the equals sign."
         for (const auto ch : delimiter) {
-            if (ch == '=' || isspace(ch)) {
+            if (ch == '=' || std::isspace(ch)) {
                 return false;
             }
         }
         return true;
     }
-    
+
     bool parse_set_delimiter_tag(const string_type& contents, delimiter_set<string_type>& delimiter_set) const {
         // Smallest legal tag is "=X X="
         if (contents.size() < 5) {
@@ -829,7 +830,7 @@ private:
         delimiter_set.end = end;
         return true;
     }
-    
+
     void parse_tag_contents(bool is_unescaped_var, const string_type& contents, mstch_tag<string_type>& tag) const {
         if (is_unescaped_var) {
             tag.type = tag_type::unescaped_variable;
@@ -887,7 +888,7 @@ public:
     bool is_valid() const {
         return error_message_.empty();
     }
-    
+
     const string_type& error_message() const {
         return error_message_;
     }
@@ -904,7 +905,7 @@ public:
         });
         return stream;
     }
-    
+
     string_type render(const basic_data<string_type>& data) {
         std::basic_ostringstream<typename string_type::value_type> ss;
         return render(data, ss).str();
@@ -941,12 +942,12 @@ private:
         : escape_(html_escape<string_type>)
     {
     }
-    
+
     basic_mustache(const string_type& input, context_internal<string_type>& ctx)
         : basic_mustache() {
         parser<string_type> parser{input, ctx, root_component_, error_message_};
     }
-    
+
     string_type render(context_internal<string_type>& ctx) {
         std::basic_ostringstream<typename string_type::value_type> ss;
         render([&ss](const string_type& str) {
@@ -962,7 +963,7 @@ private:
         // process the last line
         render_current_line(handler, ctx, nullptr);
     }
-    
+
     void render_current_line(const render_handler& handler, context_internal<string_type>& ctx, const component<string_type>* comp) const {
         // We're at the end of a line, so check the line buffer state to see
         // if the line had tags in it, and also if the line is now empty or
@@ -979,7 +980,7 @@ private:
         }
         ctx.line_buffer.clear();
     }
-    
+
     void render_result(context_internal<string_type>& ctx, const string_type& text) const {
         ctx.line_buffer.data.append(text);
     }
@@ -993,7 +994,7 @@ private:
             }
             return component<string_type>::walk_control::walk;
         }
-        
+
         const mstch_tag<string_type>& tag{comp.tag};
         const basic_data<string_type>* var = nullptr;
         switch (tag.type) {
@@ -1045,7 +1046,7 @@ private:
             default:
                 break;
         }
-        
+
         return component<string_type>::walk_control::walk;
     }
 
@@ -1054,7 +1055,7 @@ private:
         unescape,
         optional,
     };
-    
+
     bool render_lambda(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, render_lambda_escape escape, const string_type& text, bool parse_with_same_context) {
         const typename basic_renderer<string_type>::type2 render2 = [this, &ctx, parse_with_same_context, escape](const string_type& text, bool escaped) {
             const auto process_template = [this, &ctx, escape, escaped](basic_mustache& tmpl) -> string_type {
@@ -1102,7 +1103,7 @@ private:
         }
         return error_message_.empty();
     }
-    
+
     bool render_variable(const render_handler& handler, const basic_data<string_type>* var, context_internal<string_type>& ctx, bool escaped) {
         if (var->is_string()) {
             const auto& varstr = var->string_value();
