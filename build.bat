@@ -26,7 +26,7 @@ cmake --build . --config Release
 if %errorlevel% neq 0 popd & exit /b %errorlevel%
 
 :: run tests
-Release\mustache.exe
+Release\mustache-unit-tests.exe
 if %errorlevel% neq 0 popd & exit /b %errorlevel%
 
 popd
@@ -44,7 +44,7 @@ cmake --build . --config Release
 if %errorlevel% neq 0 popd & exit /b %errorlevel%
 
 :: run tests
-Release\mustache.exe
+Release\mustache-unit-tests.exe
 if %errorlevel% neq 0 popd & exit /b %errorlevel%
 
 popd
