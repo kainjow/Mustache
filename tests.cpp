@@ -1091,7 +1091,7 @@ TEST_CASE("custom_escape") {
         mustache::escape_handler esc;
         tmpl.set_custom_escape(esc);
         object dat({ {"what", "\"friend\""} });
-        CHECK_THROWS_AS(tmpl.render(dat), std::bad_function_call);
+        CHECK_THROWS_AS(tmpl.render(dat), std::bad_function_call&);
     }
 
 }
