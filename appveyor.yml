@@ -11,6 +11,6 @@ environment:
       CMAKE_GENERATOR: 15
 platform: x64
 build_script:
-  - cmake -G "Visual Studio %CMAKE_GENERATOR% Win64" -DCMAKE_BUILD_TYPE=Release
+  - cmake -G "Visual Studio %CMAKE_GENERATOR% Win64" -DCMAKE_BUILD_TYPE=Release .
   - cmake --build . --config Release
   - Release\mustache.exe
