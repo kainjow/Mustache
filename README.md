@@ -41,6 +41,20 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 // ss.str() == "Hello World!"
 ````
 
+### Usage with cmake
+
+```cmake
+find_package(mustache REQUIRED)
+
+add_executable(my_main src/main.cpp)
+target_link_libraries(${PROJECT_NAME} mustache::mustache)
+```
+
+```cpp
+#include "mustache/mustache.hpp"
+// my code
+```
+
 ## Supported Features
 
 This library supports all current Mustache features:
