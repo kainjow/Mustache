@@ -43,6 +43,8 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 
 ### Usage with Cmake
 
+see also example project in example folder
+
 ```cmake
 find_package(mustache REQUIRED)
 
@@ -53,6 +55,8 @@ target_link_libraries(my_target kainjow::mustache)
 #include "kainjow/mustache.hpp"
 // my code
 ```
+
+see also example project in example folder
 
 ## Supported Features
 
