@@ -41,17 +41,16 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 // ss.str() == "Hello World!"
 ````
 
-### Usage with cmake
+### Usage with Cmake
 
 ```cmake
 find_package(mustache REQUIRED)
 
-add_executable(my_main src/main.cpp)
-target_link_libraries(${PROJECT_NAME} mustache::mustache)
+target_link_libraries(my_target kainjow::mustache)
 ```
 
 ```cpp
-#include "mustache/mustache.hpp"
+#include "kainjow/mustache.hpp"
 // my code
 ```
 

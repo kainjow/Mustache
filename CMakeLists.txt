@@ -13,18 +13,16 @@ target_include_directories(${PROJECT_NAME}
                                      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 if(MUSTACHE_BUILD_TESTS)
-  if(UNIX)
-    add_definitions(-Wall
-                    -Wextra
-                    -Werror
-                    -std=c++11)
-  elseif(MSVC)
-    add_definitions(/W3
-                    /WX)
-  endif()
   add_executable(${PROJECT_NAME}-test
                  ${PROJECT_NAME}.hpp # to show in IDE
                  tests.cpp)
+  target_compile_options(${PROJECT_NAME}-test
+                         PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall -Wextra -Werror>
+                                 $<$<CXX_COMPILER_ID:MSVC>:/W3 /WX>)
+  set_property(TARGET ${PROJECT_NAME}-test
+               PROPERTY CXX_STANDARD
+                        11)
+
 endif()
 
 include(GNUInstallDirs)
@@ -33,10 +31,10 @@ install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.hpp DESTINATION include/${PROJECT_NAME})
+install(FILES ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.hpp DESTINATION include/kainjow)
 install(EXPORT ${PROJECT_NAME}_Targets
         FILE ${PROJECT_NAME}Targets.cmake
-        NAMESPACE ${PROJECT_NAME}::
+        NAMESPACE kainjow::
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
 
 include(CMakePackageConfigHelpers)
