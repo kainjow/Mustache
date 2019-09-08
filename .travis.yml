@@ -14,8 +14,25 @@ matrix:
     - os: osx
       compiler: clang
 
-script:
-  - make coverage
+- stage: coverage
+  script:
+    - make coverage
+
+- stage: cmake_project
+  script:
+  # install header only lib with cmake
+  - rm -rf build || true
+  - mkdir build
+  - cd build
+  - cmake ..
+  - sudo cmake --build . --target install
+  # build example project using cmake find_package
+  - cd ../example
+  - mkdir example_build
+  - cd example_build
+  - cmake ..
+  - make
+  - my_executable
 
 after_success:
   # Use "-X gcov" to disable Codecov from running gcov. We already run this
