@@ -1435,6 +1435,7 @@ TEST_CASE("standalone_lines") {
             "    Indent\n"
             "    {{>partial1}}Indent\n"
             "    {{>partial2}}Indent\n"
+            "    {{>partial3}}    Indent\n"
             "No indent\n"
         };
         data dat;
@@ -1444,11 +1445,16 @@ TEST_CASE("standalone_lines") {
         dat.set("partial2", partial{[]{
             return "{{#invalidSection}}{{/invalidSection}}";
         }});
+        dat.set("partial3", partial{[]{
+            return "    {{#section}}Indent more{{/section}}\n";
+        }});
         dat.set("section", data::type::bool_true);
         CHECK(tmpl.render(dat) ==
             "No indent\n"
             "    Indent\n"
             "    Indent\n"
+            "    Indent\n"
+            "        Indent more\n"
             "    Indent\n"
             "No indent\n"
         );
