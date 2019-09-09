@@ -1428,23 +1428,28 @@ TEST_CASE("standalone_lines") {
             "Text3\n"
         );
     }
-    
-    SECTION("partial_indent") {
+
+    SECTION("partial_indent_bug") {
         mustache tmpl{
             "No indent\n"
             "    Indent\n"
-            "    {{>partial}}Indent\n"
+            "    {{>partial1}}Indent\n"
+            "    {{>partial2}}Indent\n"
             "No indent\n"
         };
         data dat;
-        dat.set("partial", partial{[]{
+        dat.set("partial1", partial{[]{
             return "{{#section}}{{/section}}";
+        }});
+        dat.set("partial2", partial{[]{
+            return "{{#invalidSection}}{{/invalidSection}}";
         }});
         dat.set("section", data::type::bool_true);
         CHECK(tmpl.render(dat) ==
             "No indent\n"
             "    Indent\n"
-            "Indent\n"
+            "    Indent\n"
+            "    Indent\n"
             "No indent\n"
         );
     }

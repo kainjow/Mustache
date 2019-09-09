@@ -957,12 +957,14 @@ private:
         return ss.str();
     }
 
-    void render(const render_handler& handler, context_internal<string_type>& ctx) {
+    void render(const render_handler& handler, context_internal<string_type>& ctx, bool root_renderer = true) {
         root_component_.walk_children([&handler, &ctx, this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             return render_component(handler, ctx, comp);
         });
-        // process the last line
-        render_current_line(handler, ctx, nullptr);
+        // process the last line, but only for the top-level renderer
+        if (root_renderer) {
+            render_current_line(handler, ctx, nullptr);
+        }
     }
 
     void render_current_line(const render_handler& handler, context_internal<string_type>& ctx, const component<string_type>* comp) const {
@@ -1031,7 +1033,7 @@ private:
                     if (!tmpl.is_valid()) {
                         error_message_ = tmpl.error_message();
                     } else {
-                        tmpl.render(handler, ctx);
+                        tmpl.render(handler, ctx, false);
                         if (!tmpl.is_valid()) {
                             error_message_ = tmpl.error_message();
                         }
