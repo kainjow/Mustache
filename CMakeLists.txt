@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7.2)
 
-project(mustache VERSION 4.0.0 LANGUAGES CXX)
+project(kainjow_mustache VERSION 4.0.0 LANGUAGES CXX)
 
 option(MUSTACHE_BUILD_TESTS
        "build the tests with catch"
@@ -14,11 +14,14 @@ target_include_directories(${PROJECT_NAME}
 
 if(MUSTACHE_BUILD_TESTS)
   add_executable(${PROJECT_NAME}-test
-                 ${PROJECT_NAME}.hpp # to show in IDE
+                 mustache.hpp # to show in IDE
                  tests.cpp)
   target_compile_options(${PROJECT_NAME}-test
-                         PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall -Wextra -Werror>
-                                 $<$<CXX_COMPILER_ID:MSVC>:/W3 /WX>)
+                         PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall>
+                                 $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wextra>
+                                 $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Werror>
+                                 $<$<CXX_COMPILER_ID:MSVC>:/W3>
+                                 $<$<CXX_COMPILER_ID:MSVC>:/WX>)
   set_property(TARGET ${PROJECT_NAME}-test
                PROPERTY CXX_STANDARD
                         11)
@@ -31,7 +34,7 @@ install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.hpp DESTINATION include/kainjow)
+install(FILES ${PROJECT_SOURCE_DIR}/mustache.hpp DESTINATION include/kainjow)
 install(EXPORT ${PROJECT_NAME}_Targets
         FILE ${PROJECT_NAME}Targets.cmake
         NAMESPACE kainjow::

@@ -41,7 +41,7 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 // ss.str() == "Hello World!"
 ````
 
-### Usage with Cmake
+### Usage with CMake
 
 see also example project in example folder
 
