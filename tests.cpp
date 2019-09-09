@@ -1429,5 +1429,25 @@ TEST_CASE("standalone_lines") {
         );
     }
     
+    SECTION("partial_indent") {
+        mustache tmpl{
+            "No indent\n"
+            "    Indent\n"
+            "    {{>partial}}Indent\n"
+            "No indent\n"
+        };
+        data dat;
+        dat.set("partial", partial{[]{
+            return "{{#section}}{{/section}}";
+        }});
+        dat.set("section", data::type::bool_true);
+        CHECK(tmpl.render(dat) ==
+            "No indent\n"
+            "    Indent\n"
+            "Indent\n"
+            "No indent\n"
+        );
+    }
+
 }
 
