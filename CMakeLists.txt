@@ -13,16 +13,16 @@ target_include_directories(${PROJECT_NAME}
                                      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 if(MUSTACHE_BUILD_TESTS)
-  add_executable(${PROJECT_NAME}-test
+  add_executable(mustache-test
                  mustache.hpp # to show in IDE
                  tests.cpp)
-  target_compile_options(${PROJECT_NAME}-test
+  target_compile_options(mustache-test
                          PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wall>
                                  $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Wextra>
                                  $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:-Werror>
                                  $<$<CXX_COMPILER_ID:MSVC>:/W3>
                                  $<$<CXX_COMPILER_ID:MSVC>:/WX>)
-  set_property(TARGET ${PROJECT_NAME}-test
+  set_property(TARGET mustache-test
                PROPERTY CXX_STANDARD
                         11)
 
