@@ -1437,6 +1437,7 @@ TEST_CASE("standalone_lines") {
             "    {{>partial2}}Indent\n"
             "    {{>partial3}}    Indent\n"
             "    {{>partial4}}    Indent\n"
+            "    {{>partial5}}\n"
             "No indent\n"
         };
         data dat;
@@ -1452,6 +1453,10 @@ TEST_CASE("standalone_lines") {
         dat.set("partial4", partial{[]{
             // produces a whitespace-only line, which gets removed, then a "Hello" line
             return "    {{#section}}{{/section}}\n    Hello\n";
+        }});
+        dat.set("partial5", partial{[]{
+            // produces whitespace-only, which gets removed because parent line is also whitespace only
+            return "    {{#section}}{{/section}}";
         }});
         dat.set("section", data::type::bool_true);
         CHECK(tmpl.render(dat) ==
