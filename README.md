@@ -80,7 +80,7 @@ For Visual Studio 2015 (CMake 3.1+ required):
 
 ## Release Notes
 
-#### 4.0 - in progress
+#### 4.0 - October 28, 2019
 
 * Lines with sections that result in an empty line are removed, per the Mustache spec.
 
