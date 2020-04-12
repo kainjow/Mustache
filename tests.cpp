@@ -969,6 +969,34 @@ TEST_CASE("lambda_render") {
         CHECK(tmpl.error_message() == "Lambda with render argument is not allowed for regular variables");
     }
 
+    SECTION("lambda-render-bug38") {
+        mustache tmpl{"It is true that {{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) {
+            const auto renderedText = render(text);
+            return "<b>" + renderedText + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "It is true that <b>Willy is awesome.</b>");
+    }
+
+    SECTION("lambda-render-multiple-times") {
+        mustache tmpl{"It is true that {{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) {
+            CHECK(text == "{{name}} is awesome.");
+            const auto pre_lambda_text = render("");
+            CHECK(pre_lambda_text.empty());
+            const auto renderedText = render(text);
+            CHECK(renderedText == "Willy is awesome.");
+            CHECK(render("").empty());
+            CHECK(render(text) == "Willy is awesome.");
+            return pre_lambda_text + "<b>" + renderedText + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "It is true that <b>Willy is awesome.</b>");
+    }
+
 }
 
 TEST_CASE("custom_escape") {
