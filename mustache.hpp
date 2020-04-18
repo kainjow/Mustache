@@ -1,8 +1,8 @@
 /*
  * Boost Software License - Version 1.0
  *
- * Mustache v4.0
- * Copyright 2015-2019 Kevin Wojniak
+ * Mustache v4.1
+ * Copyright 2015-2020 Kevin Wojniak
  *
  * Permission is hereby granted, free of charge, to any person or organization
  * obtaining a copy of the software and accompanying documentation covered by
