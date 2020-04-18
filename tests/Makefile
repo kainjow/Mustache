@@ -1,21 +1,21 @@
 default:
-	g++ -O3 -Wall -Wextra -Werror -std=c++11 -o mustache tests.cpp
+	g++ -O3 -Wall -Wextra -Werror -std=c++11 -I.. -o mustache tests.cpp
 	./mustache
 
 mac:
-	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -stdlib=libc++ -o mustache tests.cpp
+	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -I.. -stdlib=libc++ -o mustache tests.cpp
 	./mustache
 
 mac14:
-	clang++ -O3 -Wall -Wextra -Werror -std=c++14 -stdlib=libc++ -o mustache14 tests.cpp
+	clang++ -O3 -Wall -Wextra -Werror -std=c++14 -stdlib=libc++ -I.. -o mustache14 tests.cpp
 	./mustache14
 
 clang:
-	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -o mustache tests.cpp
+	clang++ -O3 -Wall -Wextra -Werror -std=c++11 -I.. -o mustache tests.cpp
 
 # https://gcc.gnu.org/onlinedocs/gcc/Invoking-Gcov.html
 coverage:
-	g++ -std=c++11 -coverage -O0 -o mustache tests.cpp
+	g++ -std=c++11 -coverage -O0 -I.. -o mustache tests.cpp
 	./mustache
 	gcov -l tests.cpp
 # We only want coverage for mustache.hpp and tests.cpp, so delete all the other *.gcov files
