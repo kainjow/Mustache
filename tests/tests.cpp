@@ -1158,7 +1158,7 @@ TEST_CASE("custom_context") {
     SECTION("basic") {
         my_context<mustache::string_type> ctx;
         mustache tmpl("Hello {{what}}");
-        std::ostream& stream = tmpl.render(ctx, std::cout) << std::endl;
+        tmpl.render(ctx, std::cout) << std::endl;
         CHECK(tmpl.is_valid());
         CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(ctx) == "Hello Steve");
@@ -1218,7 +1218,6 @@ TEST_CASE("standalone_lines") {
         context_internal<mustache::string_type> context{ctx};
         parser<mustache::string_type>{input, context, root_component, error_message};
         CHECK(error_message.empty());
-        const auto& root_children = root_component.children;
         const std::vector<mustache::string_type> text_components{"\n", "\r\n", "\t", " ", "\n", "\n", "\r"};
         REQUIRE(root_component.children.size() == 7);
         REQUIRE(root_component.children.size() == text_components.size());
