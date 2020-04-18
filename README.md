@@ -60,24 +60,6 @@ Additional features:
 
 - Custom escape function for use outside of HTML
 
-## Run Tests
-
-For *nix:
-
-    make
-
-For macOS:
-
-    make mac
-
-For Visual Studio 2013 (CMake 2.8+ required):
-
-    build.bat
-
-For Visual Studio 2015 (CMake 3.1+ required):
-
-    build.bat 14
-
 ## Release Notes
 
 #### 4.1 - April 18, 2020
