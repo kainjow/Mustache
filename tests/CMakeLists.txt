@@ -14,6 +14,7 @@ elseif (MSVC)
 	)
 endif()
 add_executable(mustache
-	mustache.hpp # to show in IDE
+	../mustache.hpp # to show in IDE
 	tests.cpp
 )
+include_directories(..)
