@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0 - pending
+
+* Removed support for Visual Studio 2013. The library may still continue to function, but tests will no longer be ran on this compiler.
+
 ## 4.1 - April 18, 2020
 
 * Fixed incorrect results when using lambda renderers
