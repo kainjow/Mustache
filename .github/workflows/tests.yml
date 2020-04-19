@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Tests
 
 on:
   push:
@@ -13,9 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - run: cd tests
     - name: Run CMake
-      run: cmake -DCMAKE_BUILD_TYPE=Release tests
+      run: cmake -DCMAKE_BUILD_TYPE=Release .
     - name: Build CMake
-      run: cmake --build tests --config Release
+      run: cmake --build . --config Release
     - name: Run Tests
       run: ./mustache
