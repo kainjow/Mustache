@@ -18,8 +18,8 @@ coverage:
 	g++ -std=c++11 -coverage -O0 -I.. -o mustache tests.cpp
 	./mustache
 	gcov -l tests.cpp
-# We only want coverage for mustache.hpp and tests.cpp, so delete all the other *.gcov files
-	find . -type f -name 'tests.cpp*.gcov' ! -name 'tests.cpp.gcov' ! -name 'tests.cpp##mustache.hpp.gcov' -delete
+# We only want coverage for mustache.hpp, so delete all the other *.gcov files
+	find . -type f -name 'tests.cpp*.gcov' ! -name 'tests.cpp##mustache.hpp.gcov' -delete
 
 xcode:
 	mkdir -p build_xcode
