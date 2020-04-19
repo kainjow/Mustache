@@ -6,7 +6,7 @@
 * Templated string type for compatibility with any STL-like string (std::string, std::wstring, etc)
 * Boost license
 
-[![travis](https://travis-ci.org/kainjow/Mustache.svg?branch=master)](https://travis-ci.org/kainjow/Mustache) [![appveyor](https://ci.appveyor.com/api/projects/status/6uh5d5weajrffkyw?svg=true)](https://ci.appveyor.com/project/kainjow/mustache) [![codecov](https://codecov.io/gh/kainjow/Mustache/branch/master/graph/badge.svg)](https://codecov.io/gh/kainjow/Mustache)
+[![travis](https://travis-ci.org/kainjow/Mustache.svg?branch=master)](https://travis-ci.org/kainjow/Mustache) [![appveyor](https://ci.appveyor.com/api/projects/status/6uh5d5weajrffkyw?svg=true)](https://ci.appveyor.com/project/kainjow/mustache) [![ghe](https://github.com/kainjow/Mustache/workflows/Tests/badge.svg)](https://github.com/kainjow/Mustache/actions) [![codecov](https://codecov.io/gh/kainjow/Mustache/branch/master/graph/badge.svg)](https://codecov.io/gh/kainjow/Mustache)
 
 ## Example usage
 
