@@ -20,7 +20,7 @@ jobs:
       run: cmake --build . --config Release
     - name: Run Tests
       run: ./mustache
-      if: ${{ runner.os }} != "Windows"
+      if: runner.os != "Windows"
     - name: Run Tests
       run: ./Release/mustache.exe
-      if: ${{ runner.os }} == "Windows"
+      if: runner.os == "Windows"
