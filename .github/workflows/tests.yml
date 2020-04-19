@@ -8,9 +8,10 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-16.04
-
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-16.04, ubuntu-18.04, windows-latest, macos-latest]
     steps:
     - uses: actions/checkout@v2
     - name: Run CMake
@@ -19,3 +20,7 @@ jobs:
       run: cmake --build . --config Release
     - name: Run Tests
       run: ./mustache
+      if: runner.os != 'Windows'
+    - name: Run Tests
+      run: ./Release/mustache.exe
+      if: runner.os == 'Windows'
