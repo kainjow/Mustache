@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "mustache.hpp"
+#include <mustache.hpp>
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"

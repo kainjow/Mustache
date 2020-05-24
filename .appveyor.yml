@@ -11,7 +11,6 @@ environment:
       CMAKE_GENERATOR: Visual Studio 16 2019
 platform: x64
 build_script:
-  - cd tests
   - cmake -G "%CMAKE_GENERATOR%" .
   - cmake --build . --config Release
-  - Release\mustache-unit-tests.exe
+  - tests\Release\mustache-unit-tests.exe
