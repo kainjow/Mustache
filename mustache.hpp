@@ -1,8 +1,8 @@
 /*
  * Boost Software License - Version 1.0
  *
- * Mustache v4.0
- * Copyright 2015-2018 Kevin Wojniak
+ * Mustache v4.1
+ * Copyright 2015-2020 Kevin Wojniak
  *
  * Permission is hereby granted, free of charge, to any person or organization
  * obtaining a copy of the software and accompanying documentation covered by
@@ -425,6 +425,7 @@ const string_type delimiter_set<string_type>::default_end(2, '}');
 template <typename string_type>
 class basic_context {
 public:
+    virtual ~basic_context() = default;
     virtual void push(const basic_data<string_type>* data) = 0;
     virtual void pop() = 0;
 
@@ -956,12 +957,14 @@ private:
         return ss.str();
     }
 
-    void render(const render_handler& handler, context_internal<string_type>& ctx) {
+    void render(const render_handler& handler, context_internal<string_type>& ctx, bool root_renderer = true) {
         root_component_.walk_children([&handler, &ctx, this](component<string_type>& comp) -> typename component<string_type>::walk_control {
             return render_component(handler, ctx, comp);
         });
-        // process the last line
-        render_current_line(handler, ctx, nullptr);
+        // process the last line, but only for the top-level renderer
+        if (root_renderer) {
+            render_current_line(handler, ctx, nullptr);
+        }
     }
 
     void render_current_line(const render_handler& handler, context_internal<string_type>& ctx, const component<string_type>* comp) const {
@@ -1030,7 +1033,7 @@ private:
                     if (!tmpl.is_valid()) {
                         error_message_ = tmpl.error_message();
                     } else {
-                        tmpl.render(handler, ctx);
+                        tmpl.render(handler, ctx, false);
                         if (!tmpl.is_valid()) {
                             error_message_ = tmpl.error_message();
                         }
@@ -1063,7 +1066,8 @@ private:
                     error_message_ = tmpl.error_message();
                     return {};
                 }
-                const string_type str{tmpl.render(ctx)};
+                context_internal<string_type> render_ctx{ctx.ctx}; // start a new line_buffer
+                const auto str = tmpl.render(render_ctx);
                 if (!tmpl.is_valid()) {
                     error_message_ = tmpl.error_message();
                     return {};

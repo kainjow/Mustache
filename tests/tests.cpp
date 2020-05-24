@@ -1,7 +1,7 @@
 /*
  * Boost Software License - Version 1.0
  *
- * Copyright 2015-2018 Kevin Wojniak
+ * Copyright 2015-2020 Kevin Wojniak
  *
  * Permission is hereby granted, free of charge, to any person or organization
  * obtaining a copy of the software and accompanying documentation covered by
@@ -32,14 +32,6 @@
 #include "catch.hpp"
 
 using namespace kainjow::mustache;
-
-#ifndef MUSTACHE_VS2013
-    #if defined(_MSC_VER) && _MSC_VER == 1800
-        #define MUSTACHE_VS2013 1
-    #else
-        #define MUSTACHE_VS2013 0
-    #endif
-#endif
 
 TEST_CASE("split") {
 
@@ -102,7 +94,7 @@ TEST_CASE("variables") {
         data.set("name", "\"S\"<br>te&v\'e");
         CHECK(tmpl.render(data) == "Hello &quot;S&quot;&lt;br&gt;te&amp;v&apos;e");
     }
-    
+
     SECTION("unescaped1") {
         mustache tmpl("Hello {{{name}}}");
         data data;
@@ -141,7 +133,7 @@ TEST_CASE("variables") {
 }
 
 TEST_CASE("comments") {
-    
+
     SECTION("simple") {
         mustache tmpl("<h1>Today{{! ignore me }}.</h1>");
         data data;
@@ -171,7 +163,7 @@ TEST_CASE("set_delimiter") {
         data.set("n", "s");
         CHECK(tmpl.render(data) == "sss");
     }
-    
+
     SECTION("noreset") {
         mustache tmpl("{{=[ ]=}}[name] [x] + [y] = [sum]");
         data data;
@@ -181,7 +173,7 @@ TEST_CASE("set_delimiter") {
         data.set("sum", "3");
         CHECK(tmpl.render(data) == "Steve 1 + 2 = 3");
     }
-    
+
     SECTION("whitespace") {
         mustache tmpl("|{{= @   @ =}}|");
         data data;
@@ -192,7 +184,7 @@ TEST_CASE("set_delimiter") {
 }
 
 TEST_CASE("sections") {
-    
+
     SECTION("nonexistant") {
         mustache tmpl("{{#var}}not shown{{/var}}");
         data data;
@@ -212,7 +204,7 @@ TEST_CASE("sections") {
         dat.set("var", data(data::type::list));
         CHECK(tmpl.render(dat) == "");
     }
-    
+
     SECTION("nested") {
         mustache tmpl("{{#var1}}hello{{#var2}}world{{/var2}}{{/var1}}");
         data data;
@@ -224,28 +216,28 @@ TEST_CASE("sections") {
 }
 
 TEST_CASE("sections_inverted") {
-    
+
     SECTION("nonexistant") {
         mustache tmpl("{{^var}}shown{{/var}}");
         CHECK(tmpl.render(data()) == "shown");
     }
-    
+
     SECTION("false") {
         mustache tmpl("{{^var}}shown{{/var}}");
         data dat("var", data(data::type::bool_false));
         CHECK(tmpl.render(dat) == "shown");
     }
-    
+
     SECTION("emptylist") {
         mustache tmpl("{{^var}}shown{{/var}}");
         data dat("var", data(data::type::list));
         CHECK(tmpl.render(dat) == "shown");
     }
-    
+
 }
 
 TEST_CASE("section_lists") {
-    
+
     SECTION("list") {
         mustache tmpl("{{#people}}Hello {{name}}, {{/people}}");
         data people = data::type::list;
@@ -255,7 +247,7 @@ TEST_CASE("section_lists") {
         data data("people", people);
         CHECK(tmpl.render(data) == "Hello Steve, Hello Bill, Hello Tim, ");
     }
-    
+
     SECTION("nested") {
         mustache tmpl("{{#families}}surname={{surname}}, members={{#members}}{{given}},{{/members}}|{{/families}}");
         data families = data::type::list;
@@ -277,7 +269,7 @@ TEST_CASE("section_lists") {
         data.set("families", families);
         CHECK(tmpl.render(data) == "surname=Smith, members=Steve,Joe,|surname=Lee, members=Bill,Peter,|");
     }
-    
+
     SECTION("dot") {
         mustache tmpl("{{#names}}Hello {{.}}, {{/names}}");
         data names = data::type::list;
@@ -303,7 +295,7 @@ TEST_CASE("section_lists") {
 }
 
 TEST_CASE("section_object") {
-    
+
     SECTION("basic") {
         mustache tmpl("{{#employee}}name={{name}}, age={{age}}{{/employee}}");
         data person;
@@ -329,7 +321,7 @@ TEST_CASE("section_object") {
 }
 
 TEST_CASE("examples") {
-    
+
     SECTION("one") {
         mustache tmpl{"Hello {{what}}!"};
         std::cout << tmpl.render({"what", "World"}) << std::endl;
@@ -447,7 +439,7 @@ TEST_CASE("data") {
         CHECK(l1.is_lambda2());
         CHECK(l2.is_lambda2());
     }
-    
+
     SECTION("data_set") {
         data data;
         data.set("var", data::type::bool_true);
@@ -467,7 +459,7 @@ TEST_CASE("errors") {
         CHECK_FALSE(tmpl.is_valid());
         CHECK(tmpl.error_message() == "Unclosed section \"employees\" at 5");
     }
-    
+
     SECTION("unclosed_section_nested") {
         mustache tmpl("{{#var1}}hello{{#var2}}world");
         data data;
@@ -499,13 +491,13 @@ TEST_CASE("errors") {
         CHECK_FALSE(tmpl.is_valid());
         CHECK(tmpl.error_message() == "Unclosed tag at 5");
     }
-    
+
     SECTION("unopened_section") {
         mustache tmpl("test {{/employees}}");
         CHECK_FALSE(tmpl.is_valid());
         CHECK(tmpl.error_message() == "Unopened section \"employees\" at 5");
     }
-    
+
     SECTION("invalid_set_delimiter") {
         std::vector<std::string> invalids;
         invalids.push_back("test {{=< =}}");  // not 5 characters
@@ -525,7 +517,7 @@ TEST_CASE("errors") {
         CHECK(total == invalids.size());
         CHECK(total == 7);
     }
-    
+
     SECTION("lambda") {
         mustache tmpl{"Hello {{lambda}}!"};
         data dat("lambda", data{lambda{[](const std::string&){
@@ -579,7 +571,7 @@ TEST_CASE("errors") {
         CHECK(tmpl.is_valid() == false);
         CHECK(tmpl.error_message() == "Unclosed section \"blah\" at 0");
     }
-    
+
     SECTION("section_lambda") {
         mustache tmpl{"{{#what}}asdf{{/what}}"};
         data data("what", lambda{[](const std::string&){
@@ -620,7 +612,7 @@ TEST_CASE("partials") {
         dat["name"] = "Steve";
         CHECK(tmpl.render(dat) == "Hello Steve");
     }
-    
+
     SECTION("nested") {
         mustache tmpl{"{{>header}}"};
         partial header{[]() {
@@ -650,7 +642,7 @@ TEST_CASE("partials") {
 }
 
 TEST_CASE("lambdas") {
-    
+
     SECTION("basic") {
         mustache tmpl{"{{lambda}}"};
         data dat("lambda", data{lambda{[](const std::string&){
@@ -662,11 +654,7 @@ TEST_CASE("lambdas") {
 
     SECTION("basic_t") {
         mustache tmpl{"{{lambda}}"};
-#if MUSTACHE_VS2013
-        data dat("lambda", data{lambda_t{lambda_t::type1{[](const std::string&){
-#else
         data dat("lambda", data{lambda_t{{[](const std::string&){
-#endif
             return "Hello {{planet}}";
         }}}});
         dat["planet"] = "world";
@@ -699,7 +687,7 @@ TEST_CASE("lambdas") {
         }}});
         CHECK(tmpl.render(dat) == "<&gt;>");
     }
-    
+
     SECTION("section") {
         mustache tmpl{"<{{#lambda}}{{x}}{{/lambda}}>"};
         data dat("lambda", data{lambda{[](const std::string& text){
@@ -746,7 +734,7 @@ TEST_CASE("lambdas") {
 }
 
 TEST_CASE("dotted_names") {
-    
+
     SECTION("basic") {
         mustache tmpl{"\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\""};
         data person{"name", "Joe"};
@@ -888,11 +876,7 @@ TEST_CASE("lambda_render") {
         mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
         data data;
         data["name"] = "Willy";
-#if MUSTACHE_VS2013
-        data["wrapped"] = lambda_t{lambda_t::type2{[](const std::string& text, const renderer&) {
-#else
         data["wrapped"] = lambda_t{{[](const std::string& text, const renderer&) {
-#endif
             CHECK(text == "{{name}} is awesome.");
             return "<b>" + text + "</b>";
         }}};
@@ -916,11 +900,7 @@ TEST_CASE("lambda_render") {
         mustache tmpl{"{{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
         data data;
         data["name"] = "Willy";
-#if MUSTACHE_VS2013
-        data["wrapped"] = lambda_t{lambda_t::type2{[](const std::string& text, const renderer& render) {
-#else
         data["wrapped"] = lambda_t{{[](const std::string& text, const renderer& render) {
-#endif
             CHECK(text == "{{name}} is awesome.");
             const auto renderedText = render(text);
             CHECK(renderedText == "Willy is awesome.");
@@ -967,6 +947,34 @@ TEST_CASE("lambda_render") {
         CHECK(tmpl.render(data) == "");
         CHECK_FALSE(tmpl.is_valid());
         CHECK(tmpl.error_message() == "Lambda with render argument is not allowed for regular variables");
+    }
+
+    SECTION("lambda-render-bug38") {
+        mustache tmpl{"It is true that {{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) {
+            const auto renderedText = render(text);
+            return "<b>" + renderedText + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "It is true that <b>Willy is awesome.</b>");
+    }
+
+    SECTION("lambda-render-multiple-times") {
+        mustache tmpl{"It is true that {{#wrapped}}{{name}} is awesome.{{/wrapped}}"};
+        data data;
+        data["name"] = "Willy";
+        data["wrapped"] = lambda2{[](const std::string& text, const renderer& render) {
+            CHECK(text == "{{name}} is awesome.");
+            const auto pre_lambda_text = render("");
+            CHECK(pre_lambda_text.empty());
+            const auto renderedText = render(text);
+            CHECK(renderedText == "Willy is awesome.");
+            CHECK(render("").empty());
+            CHECK(render(text) == "Willy is awesome.");
+            return pre_lambda_text + "<b>" + renderedText + "</b>";
+        }};
+        CHECK(tmpl.render(data) == "It is true that <b>Willy is awesome.</b>");
     }
 
 }
@@ -1030,18 +1038,10 @@ TEST_CASE("custom_escape") {
 
     SECTION("#lambda") {
         mustache tmpl{"hello {{#quote}}friend{{/quote}}"};
-#if MUSTACHE_VS2013
-        data dat1("quote", data{lambda_t{lambda_t::type2{[](const std::string& s, const renderer& r){
-#else
         data dat1("quote", data{lambda_t{{[](const std::string& s, const renderer& r){
-#endif
             return r("<\"" + s + "\">", true);
         }}}});
-#if MUSTACHE_VS2013
-        data dat2("quote", data{lambda_t{lambda_t::type2{[](const std::string& s, const renderer& r){
-#else
         data dat2("quote", data{lambda_t{{[](const std::string& s, const renderer& r){
-#endif
             return r("<\"" + s + "\">", false);
         }}}});
         tmpl.set_custom_escape([](const std::string& s) {
@@ -1130,7 +1130,7 @@ TEST_CASE("custom_context") {
     SECTION("basic") {
         my_context<mustache::string_type> ctx;
         mustache tmpl("Hello {{what}}");
-        std::ostream& stream = tmpl.render(ctx, std::cout) << std::endl;
+        tmpl.render(ctx, std::cout) << std::endl;
         CHECK(tmpl.is_valid());
         CHECK(tmpl.error_message() == "");
         CHECK(tmpl.render(ctx) == "Hello Steve");
@@ -1181,7 +1181,7 @@ TEST_CASE("file_partial_context") {
 }
 
 TEST_CASE("standalone_lines") {
-    
+
     SECTION("parse_whitespace_basic") {
         const mustache::string_type input = "\n\r\n\t \n\n\r";
         component<mustache::string_type> root_component;
@@ -1190,7 +1190,6 @@ TEST_CASE("standalone_lines") {
         context_internal<mustache::string_type> context{ctx};
         parser<mustache::string_type>{input, context, root_component, error_message};
         CHECK(error_message.empty());
-        const auto& root_children = root_component.children;
         const std::vector<mustache::string_type> text_components{"\n", "\r\n", "\t", " ", "\n", "\n", "\r"};
         REQUIRE(root_component.children.size() == 7);
         REQUIRE(root_component.children.size() == text_components.size());
@@ -1215,7 +1214,7 @@ TEST_CASE("standalone_lines") {
         CHECK(root_component.children[6].is_newline());
         CHECK_FALSE(root_component.children[6].is_non_newline_whitespace());
     }
-    
+
     SECTION("parse_whitespace") {
         const mustache::string_type input =
         "|\n"
@@ -1287,7 +1286,7 @@ TEST_CASE("standalone_lines") {
         CHECK(root_children[14].tag.type == tag_type::text);
         CHECK(root_children[14].children.empty());
     }
-    
+
     SECTION("remove_standalone_lines") {
         mustache tmpl{
             "|\n"
@@ -1305,7 +1304,7 @@ TEST_CASE("standalone_lines") {
             "| A Line"
         );
     }
-    
+
     SECTION("remove_indented_standalone_lines") {
         mustache tmpl{
             "|\n"
@@ -1363,7 +1362,7 @@ TEST_CASE("standalone_lines") {
             "Text3\n"
         );
     }
-    
+
     SECTION("section_list_partial_inline") {
         mustache tmpl{
             "Text1\n"
@@ -1384,7 +1383,7 @@ TEST_CASE("standalone_lines") {
             "Text3\n"
         );
     }
-    
+
     SECTION("section_list_full_inline") {
         mustache tmpl{
             "Text1\n"
@@ -1402,7 +1401,7 @@ TEST_CASE("standalone_lines") {
             "Text3\n"
         );
     }
-    
+
     SECTION("section_list_not_empty_lines") {
         mustache tmpl{
             "Text1\n"
@@ -1428,6 +1427,49 @@ TEST_CASE("standalone_lines") {
             "Text3\n"
         );
     }
-    
+
+    SECTION("partial_indent_bug") {
+        mustache tmpl{
+            "No indent\n"
+            "    Indent\n"
+            "    {{>partial1}}Indent\n"
+            "    {{>partial2}}Indent\n"
+            "    {{>partial3}}    Indent\n"
+            "    {{>partial4}}    Indent\n"
+            "    {{>partial5}}\n"
+            "No indent\n"
+        };
+        data dat;
+        dat.set("partial1", partial{[]{
+            return "{{#section}}{{/section}}";
+        }});
+        dat.set("partial2", partial{[]{
+            return "{{#invalidSection}}{{/invalidSection}}";
+        }});
+        dat.set("partial3", partial{[]{
+            return "    {{#section}}Indent more{{/section}}\n";
+        }});
+        dat.set("partial4", partial{[]{
+            // produces a whitespace-only line, which gets removed, then a "Hello" line
+            return "    {{#section}}{{/section}}\n    Hello\n";
+        }});
+        dat.set("partial5", partial{[]{
+            // produces whitespace-only, which gets removed because parent line is also whitespace only
+            return "    {{#section}}{{/section}}";
+        }});
+        dat.set("section", data::type::bool_true);
+        CHECK(tmpl.render(dat) ==
+            "No indent\n"
+            "    Indent\n"
+            "    Indent\n"
+            "    Indent\n"
+            "        Indent more\n"
+            "    Indent\n"
+            "    Hello\n"
+            "    Indent\n"
+            "No indent\n"
+        );
+    }
+
 }
 

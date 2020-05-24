@@ -15,7 +15,7 @@ matrix:
       compiler: clang
 
 script:
-  - make coverage
+  - cd tests && make coverage
 
 after_success:
   # Use "-X gcov" to disable Codecov from running gcov. We already run this

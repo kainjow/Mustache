@@ -20,3 +20,4 @@ target_include_directories(mustache INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include/mustache>
         )
+include_directories(..)
