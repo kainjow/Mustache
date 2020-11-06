@@ -13,6 +13,19 @@ matrix:
 
     - os: osx
       compiler: clang
+      
+    - os: linux
+      arch: ppc64le
+      compiler: gcc
+
+    - os: linux
+      arch: ppc64le
+      compiler: clang
+
+    - os: osx
+      arch: ppc64le
+      compiler: clang
+      
 
 script:
   - cd tests && make coverage
