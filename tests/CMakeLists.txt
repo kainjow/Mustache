@@ -1,21 +1,12 @@
-cmake_minimum_required(VERSION 2.8)
-project(mustache)
-if (UNIX)
-	add_definitions(
-		-Wall
-		-Wextra
-		-Werror
-		-std=c++11
-	)
-elseif (MSVC)
-	add_definitions(
-		/W3
-		/WX
-	)
-endif()
-add_executable(mustache
-	../mustache.hpp # to show in IDE
-	catch.hpp # to show in IDE
+add_executable(mustache-unit-tests
 	tests.cpp
 )
-include_directories(..)
+
+target_link_libraries(mustache-unit-tests PRIVATE mustache)
+
+if (UNIX)
+    target_compile_options(mustache-unit-tests PRIVATE -Wall -Wextra -Werror)
+elseif (MSVC)
+    target_compile_options(mustache-unit-tests PRIVATE /W3 /WX)
+endif()
+
