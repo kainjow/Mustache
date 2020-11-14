@@ -1,4 +1,6 @@
 add_executable(mustache-unit-tests
+    ../mustache.hpp # to show in IDE
+    catch.hpp # to show in IDE
 	tests.cpp
 )
 
