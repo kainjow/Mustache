@@ -1,5 +1,7 @@
 add_executable(mustache-unit-tests
-	tests.cpp
+    ../mustache.hpp # to show in IDE
+    catch.hpp # to show in IDE
+    tests.cpp
 )
 
 target_link_libraries(mustache-unit-tests PRIVATE mustache)
