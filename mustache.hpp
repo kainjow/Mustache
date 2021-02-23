@@ -936,13 +936,14 @@ public:
         render(handler, context);
     }
 
-private:
-    using string_size_type = typename string_type::size_type;
-
     basic_mustache()
         : escape_(html_escape<string_type>)
     {
     }
+    
+private:
+    using string_size_type = typename string_type::size_type;
+
 
     basic_mustache(const string_type& input, context_internal<string_type>& ctx)
         : basic_mustache() {
