@@ -1,7 +1,7 @@
 /*
  * Boost Software License - Version 1.0
  *
- * Mustache v4.1
+ * Mustache
  * Copyright 2015-2020 Kevin Wojniak
  *
  * Permission is hereby granted, free of charge, to any person or organization
@@ -38,6 +38,10 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+
+#define KAINJOW_MUSTACHE_VERSION_MAJOR 4
+#define KAINJOW_MUSTACHE_VERSION_MINOR 1
+#define KAINJOW_MUSTACHE_VERSION_PATCH 0
 
 namespace kainjow {
 namespace mustache {
