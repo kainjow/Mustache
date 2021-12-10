@@ -1472,4 +1472,3 @@ TEST_CASE("standalone_lines") {
     }
 
 }
-
