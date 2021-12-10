@@ -39,8 +39,8 @@
 #include <unordered_map>
 #include <vector>
 
-#define KAINJOW_MUSTACHE_VERSION_MAJOR 4
-#define KAINJOW_MUSTACHE_VERSION_MINOR 1
+#define KAINJOW_MUSTACHE_VERSION_MAJOR 5
+#define KAINJOW_MUSTACHE_VERSION_MINOR 0
 #define KAINJOW_MUSTACHE_VERSION_PATCH 0
 
 namespace kainjow {
