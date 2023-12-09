@@ -56,7 +56,7 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 });
 // ss.str() == "Hello World!"
 ````
-###
+
 
 
 
