@@ -30,7 +30,23 @@ tmpl.render({"employees", employees}, std::cout);
 // Steve, Bill,
 ````
 
-### Example 3 - Custom Render Handler
+
+### Example 3 - Objects
+
+````cpp
+mustache tmpl("{{greeting}}, {{name}}!");
+
+basic_object<std::string> data;
+// `basic_object` is an `unordered_map`.
+data["greeting"] = "Hello"; 
+data["name"    ] = "Jane";
+
+std::string result = tmpl.render(data);
+// result == "Hello, Jane!"
+````
+
+
+### Example 4 - Custom Render Handler
 
 ````cpp
 mustache tmpl("Hello {{what}}!");
@@ -40,6 +56,9 @@ tmpl.render({"what", "World"}, [&ss](const std::string& str) {
 });
 // ss.str() == "Hello World!"
 ````
+###
+
+
 
 ## Supported Features
 
